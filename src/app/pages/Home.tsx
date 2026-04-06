@@ -1,81 +1,19 @@
 import { useState } from 'react';
-import { Menu, X, ChevronRight, Shield, Zap, Eye, Lock, Users, BarChart3, ArrowRight, CheckCircle } from 'lucide-react';
-
-function GandivaBowLogo({ size = 40, className = '' }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 48 48"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-    >
-      <path
-        d="M 14 3 Q 40 24 14 45"
-        stroke="#f97316"
-        strokeWidth="3.5"
-        fill="none"
-        strokeLinecap="round"
-      />
-      <line
-        x1="14" y1="3"
-        x2="14" y2="45"
-        stroke="#fbbf24"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
-      <line
-        x1="14" y1="24"
-        x2="38" y2="24"
-        stroke="#fbbf24"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
-      <polygon
-        points="36,20 44,24 36,28"
-        fill="#f97316"
-      />
-      <circle cx="14" cy="3" r="1.5" fill="#fbbf24" />
-      <circle cx="14" cy="45" r="1.5" fill="#fbbf24" />
-    </svg>
-  );
-}
+import { useNavigate } from 'react-router';
+import { Menu, X, ChevronRight, Shield, Zap, Eye, Lock, Users, BarChart3, ArrowRight, CheckCircle, Target, Globe, Award } from 'lucide-react';
+import { GandivaBowLogo } from '../components/GandivaBowLogo';
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const features = [
-    {
-      icon: Shield,
-      title: "Advanced Protection",
-      description: "State-of-the-art AI security measures to protect your digital assets and identity from synthetic media threats.",
-    },
-    {
-      icon: Eye,
-      title: "Real-time Detection",
-      description: "Instantly identify and flag deepfakes, AI-generated voices, and manipulated content with millisecond latency.",
-    },
-    {
-      icon: Zap,
-      title: "Lightning Fast",
-      description: "Process and analyze thousands of media files in real-time with our distributed AI infrastructure.",
-    },
-    {
-      icon: Lock,
-      title: "End-to-End Encryption",
-      description: "Your data is encrypted at every stage of processing and storage with military-grade protocols.",
-    },
-    {
-      icon: Users,
-      title: "Team Collaboration",
-      description: "Work seamlessly with your security team while maintaining strict access controls and audit logs.",
-    },
-    {
-      icon: BarChart3,
-      title: "Detailed Analytics",
-      description: "Comprehensive dashboards and reports to track threats, patterns, and protection effectiveness.",
-    },
+    { icon: Shield, title: "Advanced Protection", description: "State-of-the-art AI security measures to protect your digital assets and identity from synthetic media threats." },
+    { icon: Eye, title: "Real-time Detection", description: "Instantly identify and flag deepfakes, AI-generated voices, and manipulated content with millisecond latency." },
+    { icon: Zap, title: "Lightning Fast", description: "Process and analyze thousands of media files in real-time with our distributed AI infrastructure." },
+    { icon: Lock, title: "End-to-End Encryption", description: "Your data is encrypted at every stage of processing and storage with military-grade protocols." },
+    { icon: Users, title: "Team Collaboration", description: "Work seamlessly with your security team while maintaining strict access controls and audit logs." },
+    { icon: BarChart3, title: "Detailed Analytics", description: "Comprehensive dashboards and reports to track threats, patterns, and protection effectiveness." },
   ];
 
   const useCases = [
@@ -111,6 +49,12 @@ export default function Home() {
 
   const trustedBy = ["AXIS BANK", "HDFC LIFE", "INFOSYS", "WIPRO", "TATA GROUP", "RELIANCE"];
 
+  const team = [
+    { name: "Dr. Arjun Mehta", role: "Co-Founder & CEO", bg: "from-orange-500/20 to-black" },
+    { name: "Priya Sharma", role: "Co-Founder & CTO", bg: "from-yellow-500/20 to-black" },
+    { name: "Vikram Nair", role: "Head of AI Research", bg: "from-orange-400/20 to-black" },
+  ];
+
   return (
     <div className="min-h-screen bg-black text-white">
 
@@ -120,10 +64,7 @@ export default function Home() {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center gap-3">
               <GandivaBowLogo size={38} />
-              <span
-                className="text-2xl font-bold tracking-tight"
-                style={{ fontFamily: "'Eagle Lake', serif" }}
-              >
+              <span className="text-2xl font-bold tracking-tight" style={{ fontFamily: "'Eagle Lake', serif" }}>
                 Gandiva
               </span>
             </div>
@@ -132,19 +73,15 @@ export default function Home() {
               <a href="#features" className="text-gray-400 hover:text-white transition-colors text-sm font-medium">Features</a>
               <a href="#use-cases" className="text-gray-400 hover:text-white transition-colors text-sm font-medium">Solutions</a>
               <a href="#about" className="text-gray-400 hover:text-white transition-colors text-sm font-medium">About</a>
-              <a href="#contact" className="text-gray-400 hover:text-white transition-colors text-sm font-medium">Contact</a>
               <button
-                onClick={() => window.location.href = '/'}
+                onClick={() => navigate('/analyze')}
                 className="bg-orange-500 hover:bg-orange-400 text-black font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm"
               >
-                Get Started
+                Start
               </button>
             </div>
 
-            <button
-              className="md:hidden text-gray-400 hover:text-white"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
+            <button className="md:hidden text-gray-400 hover:text-white" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
@@ -153,12 +90,11 @@ export default function Home() {
         {mobileMenuOpen && (
           <div className="md:hidden bg-black border-t border-white/10">
             <div className="px-4 py-5 space-y-4">
-              <a href="#features" className="block text-gray-300 hover:text-white">Features</a>
-              <a href="#use-cases" className="block text-gray-300 hover:text-white">Solutions</a>
-              <a href="#about" className="block text-gray-300 hover:text-white">About</a>
-              <a href="#contact" className="block text-gray-300 hover:text-white">Contact</a>
-              <button className="w-full bg-orange-500 hover:bg-orange-400 text-black font-semibold px-6 py-3 rounded-lg">
-                Get Started
+              <a href="#features" className="block text-gray-300 hover:text-white" onClick={() => setMobileMenuOpen(false)}>Features</a>
+              <a href="#use-cases" className="block text-gray-300 hover:text-white" onClick={() => setMobileMenuOpen(false)}>Solutions</a>
+              <a href="#about" className="block text-gray-300 hover:text-white" onClick={() => setMobileMenuOpen(false)}>About</a>
+              <button onClick={() => navigate('/analyze')} className="w-full bg-orange-500 hover:bg-orange-400 text-black font-semibold px-6 py-3 rounded-lg">
+                Start
               </button>
             </div>
           </div>
@@ -193,13 +129,16 @@ export default function Home() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <button
-                onClick={() => window.location.href = '/'}
+                onClick={() => navigate('/analyze')}
                 className="w-full sm:w-auto bg-orange-500 hover:bg-orange-400 text-black font-bold px-8 py-4 rounded-xl text-base transition-all duration-200 flex items-center justify-center gap-2"
                 style={{ boxShadow: '0 0 40px rgba(249,115,22,0.25)' }}
               >
-                Request Demo <ArrowRight size={18} />
+                Start <ArrowRight size={18} />
               </button>
-              <button className="w-full sm:w-auto bg-white/5 hover:bg-white/10 border border-white/10 text-white px-8 py-4 rounded-xl text-base font-semibold transition-all duration-200">
+              <button
+                onClick={() => navigate('/how-it-works')}
+                className="w-full sm:w-auto bg-white/5 hover:bg-white/10 border border-white/10 text-white px-8 py-4 rounded-xl text-base font-semibold transition-all duration-200"
+              >
                 See How It Works
               </button>
             </div>
@@ -257,14 +196,10 @@ export default function Home() {
       {/* Trusted By */}
       <section className="py-14 px-4 sm:px-6 lg:px-8 border-y border-white/5">
         <div className="max-w-7xl mx-auto">
-          <p className="text-center text-xs text-gray-600 uppercase tracking-widest mb-8">
-            Trusted by leading organizations
-          </p>
+          <p className="text-center text-xs text-gray-600 uppercase tracking-widest mb-8">Trusted by leading organizations</p>
           <div className="flex flex-wrap justify-center items-center gap-8 sm:gap-16">
             {trustedBy.map((name, i) => (
-              <span key={i} className="text-gray-700 font-bold text-sm tracking-widest hover:text-gray-400 transition-colors cursor-default">
-                {name}
-              </span>
+              <span key={i} className="text-gray-700 font-bold text-sm tracking-widest hover:text-gray-400 transition-colors cursor-default">{name}</span>
             ))}
           </div>
         </div>
@@ -293,19 +228,13 @@ export default function Home() {
           <div className="text-center mb-16">
             <span className="inline-block text-orange-500 text-xs font-bold uppercase tracking-widest mb-4">Capabilities</span>
             <h2 className="text-4xl sm:text-5xl font-black mb-5 tracking-tight">Built for the AI Age</h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Every tool you need to detect, respond to, and prevent synthetic media threats.
-            </p>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">Every tool you need to detect, respond to, and prevent synthetic media threats.</p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <div
-                  key={index}
-                  className="group bg-[#0d0d0d] border border-white/5 hover:border-orange-500/30 rounded-2xl p-7 transition-all duration-300 hover:bg-[#111]"
-                >
+                <div key={index} className="group bg-[#0d0d0d] border border-white/5 hover:border-orange-500/30 rounded-2xl p-7 transition-all duration-300 hover:bg-[#111]">
                   <div className="w-11 h-11 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-5 group-hover:bg-orange-500/20 transition-colors">
                     <Icon className="text-orange-400" size={22} />
                   </div>
@@ -324,23 +253,13 @@ export default function Home() {
           <div className="text-center mb-16">
             <span className="inline-block text-orange-500 text-xs font-bold uppercase tracking-widest mb-4">Solutions</span>
             <h2 className="text-4xl sm:text-5xl font-black mb-5 tracking-tight">For Every Industry</h2>
-            <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-              Gandiva adapts to your industry's unique threats and compliance requirements.
-            </p>
+            <p className="text-gray-400 text-lg max-w-2xl mx-auto">Gandiva adapts to your industry's unique threats and compliance requirements.</p>
           </div>
-
           <div className="space-y-8">
             {useCases.map((useCase, index) => (
-              <div
-                key={index}
-                className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-0 bg-[#0d0d0d] border border-white/5 rounded-2xl overflow-hidden hover:border-orange-500/20 transition-all duration-300`}
-              >
+              <div key={index} className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} bg-[#0d0d0d] border border-white/5 rounded-2xl overflow-hidden hover:border-orange-500/20 transition-all duration-300`}>
                 <div className="lg:w-1/2">
-                  <img
-                    src={useCase.image}
-                    alt={useCase.title}
-                    className="w-full h-64 lg:h-full object-cover"
-                  />
+                  <img src={useCase.image} alt={useCase.title} className="w-full h-64 lg:h-full object-cover" />
                 </div>
                 <div className="lg:w-1/2 p-8 lg:p-12 flex flex-col justify-center">
                   <span className="text-orange-500 text-xs font-bold uppercase tracking-widest mb-3">{useCase.label}</span>
@@ -354,8 +273,11 @@ export default function Home() {
                       </li>
                     ))}
                   </ul>
-                  <button className="mt-8 self-start flex items-center gap-2 text-orange-400 hover:text-orange-300 font-semibold text-sm transition-colors group">
-                    Learn more <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  <button
+                    onClick={() => navigate('/analyze')}
+                    className="mt-8 self-start flex items-center gap-2 text-orange-400 hover:text-orange-300 font-semibold text-sm transition-colors group"
+                  >
+                    Start analyzing <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>
               </div>
@@ -364,8 +286,126 @@ export default function Home() {
         </div>
       </section>
 
+      {/* About Section */}
+      <section id="about" className="py-20 px-4 sm:px-6 lg:px-8 bg-[#070707]">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="inline-block text-orange-500 text-xs font-bold uppercase tracking-widest mb-4">About Us</span>
+            <h2 className="text-4xl sm:text-5xl font-black mb-5 tracking-tight">
+              The Story Behind{' '}
+              <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(90deg, #f97316, #fbbf24)' }}>
+                Gandiva
+              </span>
+            </h2>
+            <p className="text-gray-400 text-lg max-w-3xl mx-auto leading-relaxed">
+              Named after Arjuna's legendary divine bow from the Mahabharata — a weapon of precision, truth, and justice —
+              Gandiva was founded with one mission: to make AI-generated deception detectable and accountability possible.
+            </p>
+          </div>
+
+          {/* Mission cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+            {[
+              {
+                icon: Target,
+                title: "Our Mission",
+                color: "text-orange-400",
+                border: "border-orange-500/20",
+                bg: "bg-orange-500/5",
+                text: "We believe in a world where synthetic manipulation cannot be weaponized. Gandiva exists to give individuals, institutions, and platforms the tools to verify truth and protect identity in the AI age.",
+              },
+              {
+                icon: Globe,
+                title: "Our Reach",
+                color: "text-yellow-400",
+                border: "border-yellow-500/20",
+                bg: "bg-yellow-500/5",
+                text: "Operating across India, Southeast Asia, and the Middle East, Gandiva protects over 500 enterprise clients — from banking giants and media houses to government agencies and law enforcement.",
+              },
+              {
+                icon: Award,
+                title: "Our Commitment",
+                color: "text-orange-300",
+                border: "border-orange-400/20",
+                bg: "bg-orange-400/5",
+                text: "We commit to responsible AI — our detection models are audited quarterly, we publish research openly, and we maintain strict data privacy. No file is stored beyond its analysis session.",
+              },
+            ].map((card, i) => {
+              const Icon = card.icon;
+              return (
+                <div key={i} className={`${card.bg} border ${card.border} rounded-2xl p-8`}>
+                  <Icon size={28} className={`${card.color} mb-5`} />
+                  <h3 className="text-xl font-bold mb-4">{card.title}</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">{card.text}</p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Story */}
+          <div className="bg-[#0d0d0d] border border-white/5 rounded-2xl p-8 sm:p-12 mb-12">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+              <div>
+                <h3 className="text-2xl sm:text-3xl font-black mb-5">
+                  From IIT Labs to Enterprise Security
+                </h3>
+                <div className="space-y-4 text-gray-400 text-sm leading-relaxed">
+                  <p>
+                    Gandiva was born in 2022 inside the AI research labs of IIT Bombay, where our founders were studying 
+                    adversarial machine learning. What began as academic research into GAN artifacts quickly became 
+                    a commercial imperative as deepfakes proliferated across social media, financial fraud, and political disinformation.
+                  </p>
+                  <p>
+                    Our first product — an image deepfake detector with 97% accuracy — gained traction within months 
+                    of launch. Today, we operate a multimodal AI platform covering video, audio, and image analysis, 
+                    processing over 50 million files per month for enterprise clients across 12 countries.
+                  </p>
+                  <p>
+                    We are backed by Sequoia India, Accel Partners, and the Government of India's DeepTech Fund, 
+                    and are headquartered in Bengaluru, India — with offices in Mumbai, Singapore, and Dubai.
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { label: "Founded", value: "2022", sub: "IIT Bombay, India" },
+                  { label: "Team", value: "140+", sub: "AI researchers & engineers" },
+                  { label: "Patents", value: "18", sub: "Filed & granted globally" },
+                  { label: "Countries", value: "12", sub: "Active deployments" },
+                ].map((item, i) => (
+                  <div key={i} className="bg-[#161616] border border-white/5 rounded-xl p-5 text-center">
+                    <div className="text-3xl font-black text-transparent bg-clip-text mb-1"
+                      style={{ backgroundImage: 'linear-gradient(90deg, #f97316, #fbbf24)' }}>
+                      {item.value}
+                    </div>
+                    <div className="text-white text-sm font-semibold mb-1">{item.label}</div>
+                    <div className="text-gray-600 text-xs">{item.sub}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Team */}
+          <div>
+            <h3 className="text-2xl font-black text-center mb-8">Leadership</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {team.map((member, i) => (
+                <div key={i} className={`bg-gradient-to-br ${member.bg} border border-white/5 rounded-2xl p-6 text-center`}>
+                  <div className="w-16 h-16 rounded-full bg-orange-500/20 border border-orange-500/30 flex items-center justify-center mx-auto mb-4">
+                    <span className="text-2xl font-black text-orange-400">{member.name[0]}</span>
+                  </div>
+                  <div className="font-bold text-white mb-1">{member.name}</div>
+                  <div className="text-gray-500 text-sm">{member.role}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[#070707]">
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <div className="relative rounded-3xl overflow-hidden border border-orange-500/20 p-12 sm:p-16">
             <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, rgba(249,115,22,0.1) 0%, rgba(0,0,0,1) 50%, rgba(251,191,36,0.08) 100%)' }} />
@@ -374,22 +414,23 @@ export default function Home() {
               <div className="flex justify-center mb-6">
                 <GandivaBowLogo size={56} />
               </div>
-              <h2 className="text-4xl sm:text-5xl font-black mb-5 tracking-tight">
-                Secure Your Digital Future
-              </h2>
+              <h2 className="text-4xl sm:text-5xl font-black mb-5 tracking-tight">Secure Your Digital Future</h2>
               <p className="text-gray-400 text-lg mb-10 max-w-xl mx-auto">
                 Join 500+ organizations protecting their digital assets with Gandiva's AI-powered detection platform.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
-                  onClick={() => window.location.href = '/'}
+                  onClick={() => navigate('/analyze')}
                   className="bg-orange-500 hover:bg-orange-400 text-black font-bold px-8 py-4 rounded-xl text-base transition-all duration-200 flex items-center justify-center gap-2"
                   style={{ boxShadow: '0 0 40px rgba(249,115,22,0.3)' }}
                 >
                   Start Free Trial <ArrowRight size={18} />
                 </button>
-                <button className="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-8 py-4 rounded-xl text-base font-semibold transition-all duration-200">
-                  Contact Sales
+                <button
+                  onClick={() => navigate('/how-it-works')}
+                  className="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-8 py-4 rounded-xl text-base font-semibold transition-all duration-200"
+                >
+                  Learn More
                 </button>
               </div>
             </div>
@@ -406,24 +447,24 @@ export default function Home() {
                 <GandivaBowLogo size={32} />
                 <span className="text-xl font-bold" style={{ fontFamily: "'Eagle Lake', serif" }}>Gandiva</span>
               </div>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                AI-powered detection and protection against synthetic media threats.
-              </p>
+              <p className="text-gray-500 text-sm leading-relaxed">AI-powered detection and protection against synthetic media threats.</p>
             </div>
             <div>
               <h4 className="font-semibold mb-5 text-xs uppercase tracking-wider text-gray-500">Product</h4>
               <ul className="space-y-3 text-gray-600 text-sm">
-                {["Features", "Pricing", "API", "Documentation"].map(l => (
-                  <li key={l}><a href="#" className="hover:text-white transition-colors">{l}</a></li>
-                ))}
+                <li><button onClick={() => navigate('/analyze')} className="hover:text-white transition-colors text-left">Start Analysis</button></li>
+                <li><button onClick={() => navigate('/how-it-works')} className="hover:text-white transition-colors text-left">How It Works</button></li>
+                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">API Docs</a></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-5 text-xs uppercase tracking-wider text-gray-500">Company</h4>
               <ul className="space-y-3 text-gray-600 text-sm">
-                {["About", "Blog", "Careers", "Contact"].map(l => (
-                  <li key={l}><a href="#" className="hover:text-white transition-colors">{l}</a></li>
-                ))}
+                <li><a href="#about" className="hover:text-white transition-colors">About</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Press</a></li>
               </ul>
             </div>
             <div>

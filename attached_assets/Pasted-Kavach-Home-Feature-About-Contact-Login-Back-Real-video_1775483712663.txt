@@ -1,0 +1,63 @@
+Kavach
+Home
+Feature
+About
+Contact
+Login
+Back
+Real video/audio/picture
+Deep fake video/audio/picture
+Download
+Share
+Learn about the formats  and requirements. See how we use your content in privacy policy.
+Detect deep fake easily in seconds
+Upload instantly  
+Upload your video, audio and pictures in one click in upload button and have patience for the Kavach to work for you. 
+Crop faces automatically
+The automatic face-cropping feature in the Deep Fake Detector simplifies the analysis process by quickly identifying and isolating faces within videos. This ensures that the focus remains on key areas, enhancing detection accuracy and saving users time. It's a smart, efficient way to streamline deep fake identification.
+Easy to use
+The Deep Fake Detector is incredibly easy to use, featuring an intuitive design that allows users to quickly upload and analyze videos with minimal effort. Clear instructions and a straightforward interface make the process accessible even for those with limited technical knowledge, ensuring a hassle-free experience for everyone.
+Analyse your video, audio and picture
+at one place 
+Artifact detection
+Identifying inconsistencies such as unnatural facial movements in videos, audio anomalies like irregular pitch or intonation, and visual artifacts like pixelation or unnatural lighting in images, which are common in deep fakes.
+AI-Powered Pattern Recognition
+Utilizing advanced machine learning models to detect subtle discrepancies in patterns, whether in speech cadence, image textures, or video frames, that are often overlooked by deep fake generation techniques.
+Forensic Analysis
+Applying forensic techniques to examine metadata, compression artifacts, and biometric features, providing a comprehensive evaluation that helps distinguish authentic content from deep fakes.
+Fantastic Features
+Real-Time Deep Fake Detection
+Comprehensive Media Analysis
+Multi-Format Support
+User-Friendly Interface
+Batch Processing
+Privacy and Data Security
+Customizable Alerts and Notifications
+Detailed Reporting and Insights
+API Integration
+Mobile Compatibility
+Ethical and Legal Guidance
+Support for Multiple Languages
+Features
+Information
+Impact of deep fake
+Support
+Download
+Follow us on
+Detect videos
+FAQ
+iOS
+Detect audio
+Research and development
+Contact
+Android
+Detect pictures
+Accuracy and Reliability
+Technical Support
+Windows
+Overview of deep fakes
+Troubleshooting Tips
+MAC
+Updates and Release Notes
+c
+2024 All Rights Reserved .This site is protected by  the Google Privacy Policy and Terms of Service apply.
