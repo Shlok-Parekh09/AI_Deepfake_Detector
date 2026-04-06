@@ -1,0 +1,491 @@
+
+> @figma/my-make-file@0.0.1 dev
+> vite
+
+[1G[0KFailed to resolve dependency: [36mreact[39m, present in client 'optimizeDeps.include'
+Failed to resolve dependency: [36mreact-dom[39m, present in client 'optimizeDeps.include'
+Failed to resolve dependency: [36mreact/jsx-dev-runtime[39m, present in client 'optimizeDeps.include'
+Failed to resolve dependency: [36mreact/jsx-runtime[39m, present in client 'optimizeDeps.include'
+
+  [32m[1mVITE[22m v6.3.5[39m  [2mready in [0m[1m259[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5000[22m/[39m
+  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.31.83.194:[1m5000[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m
+Error: The following dependencies are imported but could not be resolved:
+
+  [36mreact-dom/client[39m [37m[2m(imported by /home/runner/workspace/src/main.tsx)[22m[39m
+  [36mreact/jsx-runtime[39m [37m[2m(imported by /home/runner/workspace/src/app/pages/Login.tsx)[22m[39m
+  [36mreact[39m [37m[2m(imported by /home/runner/workspace/src/app/pages/Home.tsx)[22m[39m
+
+Are they installed?
+    at file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:14849:15
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:46985:28
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m1:45:35 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "react/jsx-dev-runtime" from "src/main.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/main.tsx[39m:6:54
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import { createRoot } from "react-dom/client";
+  3  |  import App from "./app/App.tsx";[39m
+      at TransformPluginContext._formatLog (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42499:41)
+      at TransformPluginContext.error (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42496:16)
+      at normalizeUrl (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40475:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+      at async file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40594:37
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40521:7)
+      at async EnvironmentPluginContainer.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42294:18)
+      at async loadAndTransform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:35735:27)
+[2m1:45:35 PM[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/main.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/main.tsx[39m:6:54
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import { createRoot } from "react-dom/client";
+  3  |  import App from "./app/App.tsx";[39m
+[2m1:45:35 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/App.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/app/App.tsx[39m:5:9
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "react"[0m
+
+    node_modules/react-router/dist/development/chunk-4LKRSAEJ.mjs:57:23:
+[37m      57 │ import * as React from [32m"react"[37m;
+         ╵                        [32m~~~~~~~[0m
+
+  You can mark the path "react" as external to exclude it from the bundle, which
+  will remove this error and leave the unresolved path in the bundle.
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "react"[0m
+
+    node_modules/react-router/dist/development/chunk-JZWAC4HX.mjs:5426:23:
+[37m      5426 │ import * as React from [32m"react"[37m;
+           ╵                        [32m~~~~~~~[0m
+
+  You can mark the path "react" as external to exclude it from the bundle, which
+  will remove this error and leave the unresolved path in the bundle.
+
+[2m1:45:35 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/pages/Login.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/app/pages/Login.tsx[39m:15:6
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+[2m1:45:35 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/pages/Home.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/app/pages/Home.tsx[39m:14:6
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+[2m1:45:35 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [31merror while updating dependencies:
+Error: Build failed with 2 errors:
+node_modules/react-router/dist/development/chunk-4LKRSAEJ.mjs:57:23: ERROR: Could not resolve "react"
+node_modules/react-router/dist/development/chunk-JZWAC4HX.mjs:5426:23: ERROR: Could not resolve "react"
+    at failureErrorWithLog (/home/runner/workspace/node_modules/esbuild/lib/main.js:1467:15)
+    at /home/runner/workspace/node_modules/esbuild/lib/main.js:926:25
+    at /home/runner/workspace/node_modules/esbuild/lib/main.js:1345:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+[2m1:45:36 PM[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/main.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/main.tsx[39m:6:54
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import { createRoot } from "react-dom/client";
+  3  |  import App from "./app/App.tsx";[39m
+[2m1:45:36 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/App.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/app/App.tsx[39m:5:9
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "react"[0m
+
+    node_modules/react-router/dist/development/chunk-4LKRSAEJ.mjs:57:23:
+[37m      57 │ import * as React from [32m"react"[37m;
+         ╵                        [32m~~~~~~~[0m
+
+  You can mark the path "react" as external to exclude it from the bundle, which
+  will remove this error and leave the unresolved path in the bundle.
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "react"[0m
+
+    node_modules/react-router/dist/development/chunk-JZWAC4HX.mjs:5426:23:
+[37m      5426 │ import * as React from [32m"react"[37m;
+           ╵                        [32m~~~~~~~[0m
+
+  You can mark the path "react" as external to exclude it from the bundle, which
+  will remove this error and leave the unresolved path in the bundle.
+
+[2m1:45:36 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [31merror while updating dependencies:
+Error: Build failed with 2 errors:
+node_modules/react-router/dist/development/chunk-4LKRSAEJ.mjs:57:23: ERROR: Could not resolve "react"
+node_modules/react-router/dist/development/chunk-JZWAC4HX.mjs:5426:23: ERROR: Could not resolve "react"
+    at failureErrorWithLog (/home/runner/workspace/node_modules/esbuild/lib/main.js:1467:15)
+    at /home/runner/workspace/node_modules/esbuild/lib/main.js:926:25
+    at /home/runner/workspace/node_modules/esbuild/lib/main.js:1345:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m1:45:41 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "react/jsx-dev-runtime" from "src/main.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/main.tsx[39m:6:54
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import { createRoot } from "react-dom/client";
+  3  |  import App from "./app/App.tsx";[39m
+      at TransformPluginContext._formatLog (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42499:41)
+      at TransformPluginContext.error (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42496:16)
+      at normalizeUrl (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40475:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+      at async file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40594:37
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40521:7)
+      at async EnvironmentPluginContainer.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42294:18)
+      at async loadAndTransform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:35735:27)
+      at async viteTransformMiddleware (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:37250:24)
+[2m1:45:41 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/App.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/app/App.tsx[39m:5:9
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "react"[0m
+
+    node_modules/react-router/dist/development/chunk-4LKRSAEJ.mjs:57:23:
+[37m      57 │ import * as React from [32m"react"[37m;
+         ╵                        [32m~~~~~~~[0m
+
+  You can mark the path "react" as external to exclude it from the bundle, which
+  will remove this error and leave the unresolved path in the bundle.
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "react"[0m
+
+    node_modules/react-router/dist/development/chunk-JZWAC4HX.mjs:5426:23:
+[37m      5426 │ import * as React from [32m"react"[37m;
+           ╵                        [32m~~~~~~~[0m
+
+  You can mark the path "react" as external to exclude it from the bundle, which
+  will remove this error and leave the unresolved path in the bundle.
+
+[2m1:45:41 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [31merror while updating dependencies:
+Error: Build failed with 2 errors:
+node_modules/react-router/dist/development/chunk-4LKRSAEJ.mjs:57:23: ERROR: Could not resolve "react"
+node_modules/react-router/dist/development/chunk-JZWAC4HX.mjs:5426:23: ERROR: Could not resolve "react"
+    at failureErrorWithLog (/home/runner/workspace/node_modules/esbuild/lib/main.js:1467:15)
+    at /home/runner/workspace/node_modules/esbuild/lib/main.js:926:25
+    at /home/runner/workspace/node_modules/esbuild/lib/main.js:1345:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+[2m1:45:55 PM[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/main.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/main.tsx[39m:6:54
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import { createRoot } from "react-dom/client";
+  3  |  import App from "./app/App.tsx";[39m
+[2m1:45:55 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/App.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/app/App.tsx[39m:5:9
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m1:45:55 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "react/jsx-dev-runtime" from "src/main.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/main.tsx[39m:6:54
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import { createRoot } from "react-dom/client";
+  3  |  import App from "./app/App.tsx";[39m
+      at TransformPluginContext._formatLog (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42499:41)
+      at TransformPluginContext.error (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42496:16)
+      at normalizeUrl (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40475:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+      at async file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40594:37
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40521:7)
+      at async EnvironmentPluginContainer.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42294:18)
+      at async loadAndTransform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:35735:27)
+      at async viteTransformMiddleware (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:37250:24)
+[2m1:45:55 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/App.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/app/App.tsx[39m:5:9
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "react"[0m
+
+    node_modules/react-router/dist/development/chunk-4LKRSAEJ.mjs:57:23:
+[37m      57 │ import * as React from [32m"react"[37m;
+         ╵                        [32m~~~~~~~[0m
+
+  You can mark the path "react" as external to exclude it from the bundle, which
+  will remove this error and leave the unresolved path in the bundle.
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCould not resolve "react"[0m
+
+    node_modules/react-router/dist/development/chunk-JZWAC4HX.mjs:5426:23:
+[37m      5426 │ import * as React from [32m"react"[37m;
+           ╵                        [32m~~~~~~~[0m
+
+  You can mark the path "react" as external to exclude it from the bundle, which
+  will remove this error and leave the unresolved path in the bundle.
+
+[2m1:45:55 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [31merror while updating dependencies:
+Error: Build failed with 2 errors:
+node_modules/react-router/dist/development/chunk-4LKRSAEJ.mjs:57:23: ERROR: Could not resolve "react"
+node_modules/react-router/dist/development/chunk-JZWAC4HX.mjs:5426:23: ERROR: Could not resolve "react"
+    at failureErrorWithLog (/home/runner/workspace/node_modules/esbuild/lib/main.js:1467:15)
+    at /home/runner/workspace/node_modules/esbuild/lib/main.js:926:25
+    at /home/runner/workspace/node_modules/esbuild/lib/main.js:1345:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m1:46:27 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m_tmp_1506_1ba54b096111145b225d6b7f4e8cf31a[22m
+[2m1:46:27 PM[22m [31m[1m[vite][22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/main.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/main.tsx[39m:6:54
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import { createRoot } from "react-dom/client";
+  3  |  import App from "./app/App.tsx";[39m
+[2m1:46:27 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/App.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/app/App.tsx[39m:5:9
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+[2m1:46:27 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/pages/Login.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/app/pages/Login.tsx[39m:15:6
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+[2m1:46:27 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/pages/Home.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/app/pages/Home.tsx[39m:14:6
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mCannot read file: /home/runner/workspace/node_modules/react-router/dist/development/index.mjs[0m
+
+[2m1:46:27 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [31merror while updating dependencies:
+Error: Build failed with 1 error:
+error: Cannot read file: /home/runner/workspace/node_modules/react-router/dist/development/index.mjs
+    at failureErrorWithLog (/home/runner/workspace/node_modules/esbuild/lib/main.js:1467:15)
+    at /home/runner/workspace/node_modules/esbuild/lib/main.js:926:25
+    at /home/runner/workspace/node_modules/esbuild/lib/main.js:1345:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m1:46:27 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: Failed to resolve import "react/jsx-dev-runtime" from "src/main.tsx". Does the file exist?[39m
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/main.tsx[39m:6:54
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import { createRoot } from "react-dom/client";
+  3  |  import App from "./app/App.tsx";[39m
+      at TransformPluginContext._formatLog (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42499:41)
+      at TransformPluginContext.error (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42496:16)
+      at normalizeUrl (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40475:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+      at async file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40594:37
+      at async Promise.all (index 0)
+      at async TransformPluginContext.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40521:7)
+      at async EnvironmentPluginContainer.transform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:42294:18)
+      at async loadAndTransform (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:35735:27)
+      at async viteTransformMiddleware (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:37250:24)
+[2m1:46:27 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m Pre-transform error: Failed to resolve import "react/jsx-dev-runtime" from "src/app/App.tsx". Does the file exist?
+  Plugin: [35mvite:import-analysis[39m
+  File: [36m/home/runner/workspace/src/app/App.tsx[39m:5:9
+[33m  1  |  import { jsxDEV } from "react/jsx-dev-runtime";
+     |                          ^
+  2  |  import * as RefreshRuntime from "/@react-refresh";
+  3  |  const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;[39m
+[2m1:46:27 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [31merror while updating dependencies:
+Error: ENOENT: no such file or directory, open '/home/runner/workspace/node_modules/react-router/dist/development/index.mjs'
+    at async open (node:internal/fs/promises:634:25)
+    at async Object.readFile (node:internal/fs/promises:1236:14)
+    at async extractExportsData (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:15346:24)
+    at async optimizedDepNeedsInterop (file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:15526:7)
+    at async file:///home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js:40601:38
+    at async Promise.all (index 3)[39m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m1:46:27 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2m.local/share/pnpm/store/v10/files/b1/a6a477b155955eec074949c4f01acb0909f11ebd8c2ff540ed9ed937152e5f190da71ca22f70a28f2c7212fab552612b24fca72cb899246089a7b6e3c3fdee[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[1;1H[0J[2m1:46:28 PM[22m [31m[1m[vite][22m[39m [31mInternal server error: Cannot find module '/home/runner/workspace/node_modules/vite/dist/node/chunks/dep-CvfTChi5.js' imported from /home/runner/workspace/node_modules/vite/dist/node/chunks/dep-DBxKXgDP.js[39m
+      at finalizeResolution (node:internal/modules/esm/resolve:283:11)
+      at moduleResolve (node:internal/modules/esm/resolve:952:10)
+      at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+      at nextResolve (node:internal/modules/esm/hooks:864:28)
+      at o (file:///home/runner/workspace/node_modules/@tailwindcss/node/dist/esm-cache.loader.mjs:1:69)
+      at nextResolve (node:internal/modules/esm/hooks:864:28)
+      at Hooks.resolve (node:internal/modules/esm/hooks:306:30)
+      at MessagePort.handleMessage (node:internal/modules/esm/worker:196:24)
+      at [nodejs.internal.kHybridDispatch] (node:internal/event_target:831:20)
+      at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28)
