@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { GandivaBowLogo } from '../components/GandivaBowLogo';
+import { NexusLogo } from '../components/NexusLogo';
 import { ArrowLeft, Upload, X, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 
 type AnalysisType = 'video' | 'audio' | 'image';
@@ -224,67 +224,65 @@ export default function AnalysisPage() {
     if (preview) URL.revokeObjectURL(preview);
   };
 
+  const S = { fontFamily: "'Inter', sans-serif" } as React.CSSProperties;
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', ...S }}>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+      {/* FULL-PAGE ANIMATED BACKGROUND */}
+      <div className="page-bg" />
+      <div className="page-overlay" />
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <button onClick={() => navigate('/home')} className="flex items-center gap-3">
-              <GandivaBowLogo size={36} />
-              <span className="text-xl font-bold" style={{ fontFamily: "'Eagle Lake', serif" }}>Gandiva</span>
-            </button>
-            <div className="flex items-center gap-4">
-              {phase === 'done' && (
-                <button onClick={reset} className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1">
-                  <X size={14} /> New Analysis
-                </button>
-              )}
-              <button
-                onClick={() => navigate('/analyze')}
-                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
-              >
-                <ArrowLeft size={16} /> Back
+      <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: 'rgba(5,5,15,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 40px' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
+          <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <NexusLogo size={32} />
+            <span style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Nexus</span>
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {phase === 'done' && (
+              <button onClick={reset} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 50, padding: '7px 16px', color: 'rgba(255,255,255,0.6)', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <X size={13} /> New Analysis
               </button>
-            </div>
+            )}
+            <button onClick={() => navigate('/analyze')} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 50, padding: '7px 18px', color: 'rgba(255,255,255,0.6)', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <ArrowLeft size={13} /> Back
+            </button>
           </div>
         </div>
       </nav>
 
-      <div className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+      <div style={{ position: 'relative', zIndex: 2, paddingTop: 100, paddingBottom: 60, padding: '100px 24px 60px', maxWidth: 900, margin: '0 auto' }}>
         {/* Phase: Upload */}
         {phase === 'upload' && (
-          <div className="mt-8">
-            <div className="text-center mb-10">
-              <span className="text-orange-500 text-xs font-bold uppercase tracking-widest block mb-3">{config.label}</span>
-              <h1 className="text-3xl sm:text-4xl font-black mb-3">Upload Your File</h1>
-              <p className="text-gray-400">Supported formats: <span className="text-gray-300">{config.formats.join(', ')}</span></p>
+          <div style={{ marginTop: 24 }}>
+            <div style={{ textAlign: 'center', marginBottom: 40 }}>
+              <span style={{ color: '#a78bfa', fontSize: 11, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase', display: 'block', marginBottom: 10 }}>{config.label}</span>
+              <h1 style={{ fontSize: 40, fontWeight: 900, letterSpacing: '-1px', marginBottom: 10 }}>Upload Your File</h1>
+              <p style={{ color: 'rgba(255,255,255,0.45)' }}>Supported: <span style={{ color: 'rgba(255,255,255,0.65)' }}>{config.formats.join(', ')}</span></p>
             </div>
-
             <div
               onClick={() => inputRef.current?.click()}
               onDrop={handleDrop}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
-              className={`border-2 border-dashed rounded-2xl p-16 text-center cursor-pointer transition-all duration-300 ${
-                dragOver
-                  ? 'border-orange-500 bg-orange-500/5'
-                  : 'border-white/10 hover:border-orange-500/50 hover:bg-white/2'
-              }`}
+              style={{
+                border: `2px dashed ${dragOver ? '#7c3aed' : 'rgba(255,255,255,0.1)'}`,
+                borderRadius: 20, padding: '72px 24px', textAlign: 'center', cursor: 'pointer',
+                background: dragOver ? 'rgba(124,58,237,0.08)' : 'rgba(255,255,255,0.02)',
+                backdropFilter: 'blur(12px)', transition: 'all .25s',
+              }}
             >
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-20 h-20 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
-                  <Upload size={32} className="text-orange-400" />
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Upload size={30} color="#a78bfa" />
                 </div>
                 <div>
-                  <p className="text-white font-semibold text-lg mb-1">
-                    {dragOver ? 'Drop it here!' : 'Drop your file or click to browse'}
-                  </p>
-                  <p className="text-gray-500 text-sm">Maximum file size: 500MB</p>
+                  <p style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>{dragOver ? 'Drop it here!' : 'Drop your file or click to browse'}</p>
+                  <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 14 }}>Maximum file size: 500MB</p>
                 </div>
-                <div className="flex flex-wrap justify-center gap-2 mt-2">
+                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 8 }}>
                   {config.formats.map(f => (
-                    <span key={f} className="text-xs bg-white/5 border border-white/10 text-gray-400 rounded-full px-3 py-1">{f}</span>
+                    <span key={f} style={{ fontSize: 12, background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.25)', color: '#a78bfa', borderRadius: 50, padding: '3px 12px' }}>{f}</span>
                   ))}
                 </div>
               </div>
@@ -301,50 +299,41 @@ export default function AnalysisPage() {
 
         {/* Phase: Processing */}
         {phase === 'processing' && (
-          <div className="mt-8">
-            <div className="text-center mb-10">
-              <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-full px-4 py-2 text-orange-400 text-sm font-medium mb-6">
-                <Loader2 size={14} className="animate-spin" />
-                AI Processing
+          <div style={{ marginTop: 24 }}>
+            <div style={{ textAlign: 'center', marginBottom: 40 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(124,58,237,0.4)', borderRadius: 50, padding: '7px 18px', color: '#a78bfa', fontSize: 13, fontWeight: 600, marginBottom: 24 }}>
+                <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> AI Processing
               </div>
-              <h1 className="text-3xl font-black mb-2">Analyzing Your File</h1>
-              <p className="text-gray-500">{file?.name}</p>
+              <h1 style={{ fontSize: 36, fontWeight: 900, marginBottom: 8 }}>Analyzing Your File</h1>
+              <p style={{ color: 'rgba(255,255,255,0.35)' }}>{file?.name}</p>
             </div>
-
-            <div className="max-w-xl mx-auto">
-              <div className="bg-[#0d0d0d] border border-white/5 rounded-2xl p-8">
-                <div className="space-y-6">
+            <div style={{ maxWidth: 540, margin: '0 auto' }}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: 32, backdropFilter: 'blur(12px)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                   {[
                     { label: 'Preprocessing & normalization', threshold: 20 },
                     { label: 'Running AI detection models', threshold: 50 },
                     { label: 'Generating visualizations', threshold: 80 },
                     { label: 'Compiling anomaly report', threshold: 95 },
                   ].map((step) => (
-                    <div key={step.label} className="flex items-center gap-3">
+                    <div key={step.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       {progress > step.threshold ? (
-                        <CheckCircle size={16} className="text-orange-400 flex-shrink-0" />
+                        <CheckCircle size={16} color="#a78bfa" style={{ flexShrink: 0 }} />
                       ) : progress > step.threshold - 20 ? (
-                        <Loader2 size={16} className="text-orange-400 animate-spin flex-shrink-0" />
+                        <Loader2 size={16} color="#a78bfa" style={{ flexShrink: 0, animation: 'spin 1s linear infinite' }} />
                       ) : (
-                        <div className="w-4 h-4 rounded-full border border-white/20 flex-shrink-0" />
+                        <div style={{ width: 16, height: 16, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', flexShrink: 0 }} />
                       )}
-                      <span className={`text-sm ${progress > step.threshold ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {step.label}
-                      </span>
+                      <span style={{ fontSize: 14, color: progress > step.threshold ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.3)' }}>{step.label}</span>
                     </div>
                   ))}
                 </div>
-
-                <div className="mt-8">
-                  <div className="flex justify-between text-xs text-gray-500 mb-2">
-                    <span>Progress</span>
-                    <span>{Math.round(progress)}%</span>
+                <div style={{ marginTop: 28 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 8 }}>
+                    <span>Progress</span><span>{Math.round(progress)}%</span>
                   </div>
-                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-200"
-                      style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #f97316, #fbbf24)' }}
-                    />
+                  <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', borderRadius: 4, width: `${progress}%`, background: 'linear-gradient(90deg,#7c3aed,#60a5fa)', transition: 'width .2s' }} />
                   </div>
                 </div>
               </div>
@@ -368,12 +357,12 @@ export default function AnalysisPage() {
             </div>
 
             {/* Graph Visualization */}
-            <div className="bg-[#0d0d0d] border border-white/5 rounded-2xl p-5 mb-5">
+            <div style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: 20, marginBottom: 20 }}>
               <div className="flex justify-between items-center mb-3">
                 <span className="text-xs text-gray-500 uppercase tracking-wider">{config.graphTitle}</span>
                 <span className="text-xs text-gray-600">{file?.name}</span>
               </div>
-              <div className="rounded-lg overflow-hidden bg-[#070707] p-2">
+              <div style={{ borderRadius: 12, overflow: 'hidden', background: 'rgba(5,5,15,0.6)', padding: 8 }}>
                 {analysisType === 'audio' && <SpectrogramSVG />}
                 {analysisType === 'image' && <ROCCurveSVG />}
                 {analysisType === 'video' && <SpatiotemporalSVG />}
@@ -381,8 +370,8 @@ export default function AnalysisPage() {
             </div>
 
             {/* Score + Anomalies */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-              <div className={`rounded-2xl p-6 border ${results.isDeepfake ? 'bg-red-500/5 border-red-500/20' : 'bg-green-500/5 border-green-500/20'}`}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+              <div style={{ borderRadius: 20, padding: 24, border: `1px solid ${results.isDeepfake ? 'rgba(239,68,68,0.25)' : 'rgba(74,222,128,0.2)'}`, background: results.isDeepfake ? 'rgba(239,68,68,0.06)' : 'rgba(74,222,128,0.05)' }}>
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Deepfake Probability</div>
@@ -411,7 +400,7 @@ export default function AnalysisPage() {
                 </div>
               </div>
 
-              <div className="bg-[#0d0d0d] border border-white/5 rounded-2xl p-6">
+              <div style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, padding: 24 }}>
                 <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Anomalies Detected</div>
                 <div className="text-5xl font-black text-orange-400 mb-3">{results.anomalies}</div>
                 <div className="space-y-1">
@@ -460,17 +449,11 @@ export default function AnalysisPage() {
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3 mt-6">
-              <button
-                onClick={reset}
-                className="flex-1 bg-orange-500 hover:bg-orange-400 text-black font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
-              >
-                <Upload size={16} /> Analyze Another File
+            <div style={{ display: 'flex', gap: 12, marginTop: 24, flexWrap: 'wrap' }}>
+              <button onClick={reset} style={{ flex: 1, minWidth: 200, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', border: 'none', borderRadius: 50, padding: '13px 28px', color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 0 28px rgba(124,58,237,0.35)' }}>
+                <Upload size={15} /> Analyze Another File
               </button>
-              <button
-                onClick={() => navigate('/analyze')}
-                className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white py-3 rounded-xl transition-colors"
-              >
+              <button onClick={() => navigate('/analyze')} style={{ flex: 1, minWidth: 200, background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.15)', borderRadius: 50, padding: '13px 28px', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', backdropFilter: 'blur(8px)' }}>
                 Different Analysis Type
               </button>
             </div>
