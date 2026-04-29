@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router';
-import { NexusLogo } from '../components/NexusLogo';
+import { NeuroLogo } from '../components/NeuroLogo';
 import { ArrowLeft, Upload, Cpu, BarChart3, Shield, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-react';
 
 export default function HowItWorks() {
@@ -9,7 +9,7 @@ export default function HowItWorks() {
     {
       number: '01',
       title: 'Upload Your Media',
-      description: 'Upload any video, audio, or image file. Nexus supports all major formats including MP4, AVI, MOV for video; MP3, WAV, FLAC for audio; and JPEG, PNG, WebP for images.',
+      description: 'Upload any video, audio, or image file. Neuro supports all major formats including MP4, AVI, MOV for video; MP3, WAV, FLAC for audio; and JPEG, PNG, WebP for images.',
       icon: Upload,
     },
     {
@@ -21,7 +21,7 @@ export default function HowItWorks() {
     {
       number: '03',
       title: 'Multimodal Detection',
-      description: "Nexus's AI ensemble runs multiple specialized neural networks simultaneously — vision transformers for spatial artifacts, RNNs for temporal inconsistencies, and spectral CNNs for audio frequency anomalies.",
+      description: "Neuro's AI ensemble runs multiple specialized neural networks simultaneously — vision transformers for spatial artifacts, RNNs for temporal inconsistencies, and spectral CNNs for audio frequency anomalies.",
       icon: Shield,
     },
     {
@@ -66,8 +66,8 @@ export default function HowItWorks() {
       <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: 'rgba(5,5,15,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 40px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <NexusLogo size={32} />
-            <span style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Nexus</span>
+            <NeuroLogo size={32} />
+            <span style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Neuro</span>
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button onClick={() => navigate('/')} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 50, padding: '7px 18px', color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: 'all .2s' }}

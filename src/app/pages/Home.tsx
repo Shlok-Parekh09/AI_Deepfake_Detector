@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Menu, X, Shield, Eye, Zap, Lock, ArrowRight, CheckCircle, ChevronRight, Scan, Brain, FileSearch } from 'lucide-react';
-import { NexusLogo } from '../components/NexusLogo';
+import { NeuroLogo } from '../components/NeuroLogo';
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -46,8 +46,8 @@ export default function Home() {
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <NexusLogo size={34} />
-            <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff' }}>Nexus</span>
+            <NeuroLogo size={34} />
+            <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.5px', color: '#fff' }}>Neuro</span>
           </div>
 
           <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 36 }}>
@@ -153,7 +153,7 @@ export default function Home() {
                   <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#ff5f57' }} />
                   <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#febc2e' }} />
                   <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#28c840' }} />
-                  <span style={{ marginLeft: 12, fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>Nexus Â· Live Detection Dashboard</span>
+                  <span style={{ marginLeft: 12, fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>Neuro — Live Detection Dashboard</span>
                   <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#4ade80', fontWeight: 700 }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', display: 'inline-block', animation: 'pulse 2s infinite' }} /> LIVE
                   </span>
@@ -257,7 +257,7 @@ export default function Home() {
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 64 }}>
             <span style={{ color: '#a78bfa', fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' }}>Process</span>
-            <h2 style={{ fontSize: 44, fontWeight: 900, marginTop: 12, marginBottom: 16, letterSpacing: '-1px' }}>How Nexus Works</h2>
+            <h2 style={{ fontSize: 44, fontWeight: 900, marginTop: 12, marginBottom: 16, letterSpacing: '-1px' }}>How Neuro Works</h2>
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 17, maxWidth: 520, margin: '0 auto' }}>Three steps. Seconds to results. Forensic-grade confidence.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 24 }}>

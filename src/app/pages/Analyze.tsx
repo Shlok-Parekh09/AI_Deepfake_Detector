@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router';
-import { NexusLogo } from '../components/NexusLogo';
+import { NeuroLogo } from '../components/NeuroLogo';
 import { ArrowLeft, Video, Mic, ImageIcon, ArrowRight } from 'lucide-react';
 
 const options = [
@@ -51,8 +51,8 @@ export default function Analyze() {
       <nav style={NAV}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <NexusLogo size={32} />
-            <span style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Nexus</span>
+            <NeuroLogo size={32} />
+            <span style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Neuro</span>
           </button>
           <button onClick={() => navigate('/')} style={{
             background: 'none', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 50,

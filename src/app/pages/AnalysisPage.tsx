@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { NexusLogo } from '../components/NexusLogo';
+import { NeuroLogo } from '../components/NeuroLogo';
 import { ArrowLeft, Upload, X, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 
 type AnalysisType = 'video' | 'audio' | 'image';
@@ -235,8 +235,8 @@ export default function AnalysisPage() {
       <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: 'rgba(5,5,15,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 40px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
           <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <NexusLogo size={32} />
-            <span style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Nexus</span>
+            <NeuroLogo size={32} />
+            <span style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Neuro</span>
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {phase === 'done' && (
