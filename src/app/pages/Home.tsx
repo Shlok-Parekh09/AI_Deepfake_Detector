@@ -1,19 +1,17 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Menu, X, Shield, Eye, Zap, Lock, ArrowRight, CheckCircle, ChevronRight, Scan, Brain, FileSearch } from 'lucide-react';
+import { Shield, Eye, Zap, Lock, ArrowRight, Scan, Brain } from 'lucide-react';
 import { NeuroLogo } from '../components/NeuroLogo';
 
 export default function Home() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   const features = [
-    { icon: Shield, title: 'Pixel-Level Analysis', desc: 'Break visuals down to raw pixel structure and detect manipulation at its origin â€” no matter how subtle.' },
+    { icon: Shield, title: 'Pixel-Level Analysis', desc: 'Break visuals down to raw pixel structure and detect manipulation at its origin — no matter how subtle.' },
     { icon: Eye, title: 'Voice Analysis', desc: 'Analyze the raw audio spectrum to uncover artifacts left by voice synthesis and cloning.' },
-    { icon: Zap, title: 'Forensic File Analysis', desc: 'Inspect every technical signature inside the file â€” codecs, metadata, timestamps â€” to reveal hidden manipulation.' },
+    { icon: Zap, title: 'Forensic File Analysis', desc: 'Inspect every technical signature inside the file — codecs, metadata, timestamps — to reveal hidden manipulation.' },
     { icon: Lock, title: 'Multi-Layer Detection', desc: 'Stack independent forensic signals for certainty that single-layer detectors simply cannot match.' },
     { icon: Scan, title: 'Forensic Reports', desc: 'Court-ready reports with full audit trails, confidence scores, and admissible forensic documentation.' },
-    { icon: Brain, title: 'Real-Time Results', desc: 'Upload files or URLs and get a comprehensive multi-layer assessment in seconds â€” not hours.' },
+    { icon: Brain, title: 'Real-Time Results', desc: 'Upload files or URLs and get a comprehensive multi-layer assessment in seconds — not hours.' },
   ];
 
   const stats = [
@@ -23,14 +21,8 @@ export default function Home() {
     { value: '30+', label: 'Countries Deployed' },
   ];
 
-  const detectionTypes = [
-    { label: 'pixel level analysis', active: true },
-    { label: 'voice analysis', active: false },
-    { label: 'file forensic analysis', active: false },
-  ];
-
   return (
-    <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', fontFamily: "'Inter', sans-serif" }}>
+    <div style={{ height: '100vh', overflow: 'hidden', background: 'transparent', color: '#fff', fontFamily: "'Inter', sans-serif" }}>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
       {/* FULL-PAGE ANIMATED BACKGROUND */}
@@ -41,7 +33,7 @@ export default function Home() {
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
         background: 'rgba(5,5,15,0.85)', backdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        
         padding: '0 40px',
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
@@ -52,14 +44,13 @@ export default function Home() {
 
           <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 36 }}>
             {['Features', 'Solutions', 'How It Works'].map(l => (
-              <a key={l} href={`#${l.toLowerCase().replace(/ /g, '-')}`}
-                style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, fontWeight: 500, textDecoration: 'none', transition: 'color .2s' }}
+              <a key={l} onClick={() => navigate(`/${l.toLowerCase().replace(/ /g, '-' )}`)}
+                style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, fontWeight: 500, textDecoration: 'none', transition: 'color .2s', cursor: 'pointer' }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
                 onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
               >{l}</a>
             ))}
           </div>
-
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             <button onClick={() => navigate('/analyze')} style={{
               border: '1.5px solid rgba(255,255,255,0.25)', borderRadius: 50,
@@ -84,13 +75,13 @@ export default function Home() {
 
       {/* HERO */}
       <section style={{
-        position: 'relative', minHeight: '100vh', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', textAlign: 'center', overflow: 'hidden', paddingTop: 100,
+        position: 'relative', minHeight: 'calc(100vh - 68px)', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', textAlign: 'center', overflow: 'hidden', padding: '68px 24px 24px',
         zIndex: 2,
       }}>
 
         {/* Floating pill badge */}
-        <div style={{ position: 'relative', zIndex: 2, maxWidth: 900, margin: '0 auto', padding: '0 24px' }}>
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 860, margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             border: '1px solid rgba(124,58,237,0.6)', borderRadius: 50,
@@ -144,59 +135,11 @@ export default function Home() {
             </button>
           </div>
 
-          {/* Dashboard Preview - floating */}
-          <div style={{ marginTop: 72, animation: 'float 6s ease-in-out infinite' }}>
-            <div style={{ position: 'relative' }}>
-              <div style={{ position: 'absolute', inset: -1, borderRadius: 24, background: 'linear-gradient(135deg,rgba(124,58,237,0.5),rgba(96,165,250,0.2),rgba(124,58,237,0.15))', zIndex: 0 }} />
-              <div style={{ position: 'relative', zIndex: 1, borderRadius: 22, background: 'rgba(6,6,18,0.96)', overflow: 'hidden', backdropFilter: 'blur(20px)', boxShadow: '0 40px 80px rgba(0,0,0,0.6),0 0 60px rgba(124,58,237,0.08)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-                  <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#ff5f57' }} />
-                  <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#febc2e' }} />
-                  <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#28c840' }} />
-                  <span style={{ marginLeft: 12, fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 500 }}>Neuro — Live Detection Dashboard</span>
-                  <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#4ade80', fontWeight: 700 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ade80', display: 'inline-block', animation: 'pulse 2s infinite' }} /> LIVE
-                  </span>
-                </div>
-                <div style={{ padding: 24, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
-                  {[
-                    { label: 'Threats Blocked', value: '1,247', delta: 'â†‘ 12% today', color: '#a78bfa', bg: 'rgba(124,58,237,0.1)', border: 'rgba(124,58,237,0.2)' },
-                    { label: 'Detection Rate', value: '99.8%', delta: 'Industry leading', color: '#60a5fa', bg: 'rgba(96,165,250,0.08)', border: 'rgba(96,165,250,0.2)' },
-                    { label: 'Response Time', value: '8ms', delta: 'Real-time analysis', color: '#34d399', bg: 'rgba(52,211,153,0.08)', border: 'rgba(52,211,153,0.2)' },
-                  ].map((card, i) => (
-                    <div key={i} style={{ background: card.bg, border: `1px solid ${card.border}`, borderRadius: 16, padding: '18px 20px' }}>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{card.label}</div>
-                      <div style={{ fontSize: 28, fontWeight: 900, color: card.color, marginBottom: 4 }}>{card.value}</div>
-                      <div style={{ fontSize: 11, color: '#4ade80' }}>{card.delta}</div>
-                    </div>
-                  ))}
-                  <div style={{ gridColumn: '1 / -1', background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 16, padding: '16px 20px' }}>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 }}>Live Threat Feed</div>
-                    {[
-                      { type: 'Deepfake Video', source: 'Social Media Upload', status: 'BLOCKED', dot: '#f87171' },
-                      { type: 'Voice Clone', source: 'Call Center API', status: 'FLAGGED', dot: '#fbbf24' },
-                      { type: 'Face Swap Image', source: 'Document Verification', status: 'BLOCKED', dot: '#f87171' },
-                      { type: 'GAN-generated Face', source: 'KYC Portal', status: 'CLEARED', dot: '#4ade80' },
-                    ].map((item, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.04)' : 'none', fontSize: 13 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{ width: 7, height: 7, borderRadius: '50%', background: item.dot, boxShadow: `0 0 6px ${item.dot}` }} />
-                          <span style={{ color: 'rgba(255,255,255,0.75)' }}>{item.type}</span>
-                        </div>
-                        <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>{item.source}</span>
-                        <span style={{ fontSize: 11, fontWeight: 800, color: item.dot, letterSpacing: 0.5 }}>{item.status}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
       {/* STATS */}
-      <section style={{ padding: '80px 24px', position: 'relative' }}>
+      <section style={{ padding: '56px 24px', position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, borderTop: '1px solid rgba(124,58,237,0.15)', borderBottom: '1px solid rgba(124,58,237,0.15)' }} />
         <div style={{ maxWidth: 1000, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 40, textAlign: 'center', position: 'relative', zIndex: 1 }}>
           {stats.map((s, i) => (
@@ -209,12 +152,12 @@ export default function Home() {
       </section>
 
       {/* FEATURES */}
-      <section id="features" style={{ padding: '100px 24px' }}>
+      <section id="features" style={{ padding: '72px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+          <div style={{ textAlign: 'center', marginBottom: 44 }}>
             <span style={{ color: '#a78bfa', fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' }}>Capabilities</span>
             <h2 style={{ fontSize: 44, fontWeight: 900, marginTop: 12, marginBottom: 16, letterSpacing: '-1px' }}>Multi-Layer Detection Engine</h2>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 17, maxWidth: 520, margin: '0 auto' }}>Every dimension analyzed â€” visual, acoustic, metadata, and cross-modal inconsistencies.</p>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 17, maxWidth: 520, margin: '0 auto' }}>Every dimension analyzed — visual, acoustic, metadata, and cross-modal inconsistencies.</p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(320px,1fr))', gap: 20 }}>
@@ -253,16 +196,16 @@ export default function Home() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" style={{ padding: '100px 24px', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+      <section id="how-it-works" style={{ padding: '72px 24px', borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+          <div style={{ textAlign: 'center', marginBottom: 44 }}>
             <span style={{ color: '#a78bfa', fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' }}>Process</span>
             <h2 style={{ fontSize: 44, fontWeight: 900, marginTop: 12, marginBottom: 16, letterSpacing: '-1px' }}>How Neuro Works</h2>
             <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 17, maxWidth: 520, margin: '0 auto' }}>Three steps. Seconds to results. Forensic-grade confidence.</p>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 24 }}>
             {[
-              { step: '01', title: 'Upload Media', desc: 'Drop any video, image, or audio file â€” or paste a URL. Our engine accepts all major formats.' },
+              { step: '01', title: 'Upload Media', desc: 'Drop any video, image, or audio file — or paste a URL. Our engine accepts all major formats.' },
               { step: '02', title: 'Multi-Layer Scan', desc: 'Our AI analyzes pixel structure, audio waveforms, metadata, and cross-modal patterns simultaneously.' },
               { step: '03', title: 'Forensic Report', desc: 'Receive a confidence score, visual indicators, and a detailed court-ready report within seconds.' },
             ].map((s, i) => (
@@ -277,9 +220,9 @@ export default function Home() {
       </section>
 
       {/* SOLUTIONS */}
-      <section id="solutions" style={{ padding: '100px 24px' }}>
+      <section id="solutions" style={{ padding: '72px 24px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+          <div style={{ textAlign: 'center', marginBottom: 44 }}>
             <span style={{ color: '#a78bfa', fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: 'uppercase' }}>Solutions</span>
             <h2 style={{ fontSize: 44, fontWeight: 900, marginTop: 12, marginBottom: 16, letterSpacing: '-1px' }}>Built for Every Use Case</h2>
           </div>
@@ -327,8 +270,8 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section style={{ padding: '80px 24px' }}>
-        <div style={{ maxWidth: 800, margin: '0 auto', position: 'relative', borderRadius: 28, overflow: 'hidden', border: '1px solid rgba(124,58,237,0.35)', textAlign: 'center', padding: '80px 40px', background: 'rgba(5,5,15,0.4)', backdropFilter: 'blur(8px)' }}>
+      <section style={{ padding: '56px 24px' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', position: 'relative', borderRadius: 28, overflow: 'hidden', border: '1px solid rgba(124,58,237,0.35)', textAlign: 'center', padding: '56px 32px', background: 'rgba(5,5,15,0.4)', backdropFilter: 'blur(8px)' }}>
           <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.2) 0%, transparent 70%)' }} />
           <div style={{ position: 'relative', zIndex: 1 }}>
             <h2 style={{ fontSize: 42, fontWeight: 900, marginBottom: 16, letterSpacing: '-1px' }}>Ready to Detect Deepfakes?</h2>
@@ -369,3 +312,7 @@ export default function Home() {
     </div>
   );
 }
+
+
+
+

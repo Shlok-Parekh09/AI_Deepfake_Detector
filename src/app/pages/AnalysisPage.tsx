@@ -229,8 +229,8 @@ export default function AnalysisPage() {
     <div style={{ minHeight: '100vh', background: 'transparent', color: '#fff', ...S }}>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
       {/* FULL-PAGE ANIMATED BACKGROUND */}
-      <div className="page-bg" />
-      <div className="page-overlay" />
+
+
       {/* Nav */}
       <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, background: 'rgba(5,5,15,0.85)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 40px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>

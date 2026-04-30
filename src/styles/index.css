@@ -15,7 +15,7 @@ html {
 }
 
 body {
-  background: #05050f;
+  background: #0D0D12;
   color: #fff;
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -25,7 +25,7 @@ body {
 
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #05050f; }
+::-webkit-scrollbar-track { background: #0D0D12; }
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, #7c3aed, #4f46e5);
   border-radius: 10px;
@@ -82,11 +82,27 @@ body {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background-image: url(/hero-bg.png);
+  background:
+    radial-gradient(1200px 700px at 15% 8%, rgba(124, 58, 237, 0.24) 0%, rgba(124, 58, 237, 0) 65%),
+    radial-gradient(1000px 650px at 85% 0%, rgba(56, 189, 248, 0.18) 0%, rgba(56, 189, 248, 0) 62%),
+    radial-gradient(700px 500px at 50% 70%, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0) 70%),
+    linear-gradient(180deg, #04050e 0%, #070818 45%, #050611 100%);
   background-size: cover;
   background-position: center;
   animation: cloudDrift 28s ease-in-out infinite, nebulaPulse 14s ease-in-out infinite;
   will-change: transform;
+}
+
+.page-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.08) 1px, transparent 1px);
+  background-size: 36px 36px, 36px 36px;
+  mask-image: radial-gradient(circle at 50% 30%, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.25) 65%, transparent 100%);
+  opacity: 0.35;
 }
 
 /* Permanent dark overlay on top of moving bg */
@@ -94,7 +110,9 @@ body {
   position: fixed;
   inset: 0;
   z-index: 1;
-  background: radial-gradient(ellipse at 50% 40%, rgba(76,29,149,0.1) 0%, rgba(5,5,15,0.3) 100%);
+  background:
+    radial-gradient(ellipse at 50% 40%, rgba(76, 29, 149, 0.16) 0%, rgba(5, 5, 15, 0.4) 70%),
+    linear-gradient(180deg, rgba(5, 5, 15, 0.2) 0%, rgba(3, 3, 12, 0.5) 100%);
   pointer-events: none;
 }
 

@@ -44,8 +44,8 @@ export default function Analyze() {
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
       {/* FULL-PAGE ANIMATED BACKGROUND */}
-      <div className="page-bg" />
-      <div className="page-overlay" />
+
+
 
       {/* Nav */}
       <nav style={NAV}>
