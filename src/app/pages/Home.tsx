@@ -23,10 +23,10 @@ export default function Home() {
       const maxScroll = 1200; // Virtual scroll distance required
       virtualScroll.current += e.deltaY;
       virtualScroll.current = Math.max(0, Math.min(virtualScroll.current, maxScroll));
-      
+
       let progress = (virtualScroll.current / maxScroll) * 100;
       setScrollProgress(progress);
-      
+
       if (progress >= 100) {
         setIsGameUnlocked(true);
       }
@@ -34,7 +34,7 @@ export default function Home() {
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('wheel', handleWheel, { passive: true });
-    
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('wheel', handleWheel);
@@ -43,11 +43,11 @@ export default function Home() {
 
   return (
     <div style={{ height: '100vh', overflow: 'hidden', background: '#05050f', color: '#fff', fontFamily: "'Inter', sans-serif", cursor: 'none' }}>
-      
+
       {/* SQUARE GRID BACKGROUND */}
       <SquareGridBackground />
       {/* Removed page-overlay to eliminate darkness */}
-      
+
       {/* GIANT POINTED ARROW CURSOR */}
       <div style={{
         position: 'fixed',
@@ -59,8 +59,8 @@ export default function Home() {
         zIndex: 9999,
         transform: 'translate(-10px, -10px)',
       }}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '100%', height: '100%', filter: 'drop-shadow(0 0 10px rgba(56,189,248,0.8))' }}>
-          <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="rgba(56,189,248,0.3)" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ffffffff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '100%', height: '100%', filter: 'drop-shadow(0 0 10px rgba(56,189,248,0.8))' }}>
+          <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="rgba(0, 0, 0, 0.3)" />
         </svg>
       </div>
 
@@ -80,7 +80,7 @@ export default function Home() {
 
           <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 36 }}>
             {['Features', 'Solutions', 'How It Works'].map(l => (
-              <a key={l} onClick={() => navigate(`/${l.toLowerCase().replace(/ /g, '-' )}`)}
+              <a key={l} onClick={() => navigate(`/${l.toLowerCase().replace(/ /g, '-')}`)}
                 style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, fontWeight: 500, textDecoration: 'none', transition: 'color .2s', cursor: 'none' }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
                 onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
@@ -104,8 +104,8 @@ export default function Home() {
       </nav>
 
       {/* INTERACTIVE HERO SECTION (VIRTUAL SCROLL) */}
-      <section style={{ 
-        height: '100vh', 
+      <section style={{
+        height: '100vh',
         position: 'relative',
         zIndex: 3,
         display: 'flex',
@@ -130,9 +130,16 @@ export default function Home() {
                 AI-Powered Deepfake & Synthetic Media Detection
               </div>
 
-              <h1 style={{ fontSize: 'clamp(44px, 8vw, 88px)', fontWeight: 900, lineHeight: 1.05, marginBottom: 24, letterSpacing: '-2px' }}>
-                Detect. Verify.{' '}
-                <span style={{ background: 'linear-gradient(90deg, #a78bfa, #60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Protect Reality.</span>
+              <h1 style={{
+                fontSize: 'clamp(44px, 8vw, 88px)',
+                fontWeight: 900,
+                lineHeight: 1.05,
+                marginBottom: 24,
+                letterSpacing: '-2px',
+                color: '#17b4f7ff',
+                textShadow: '0 0 15px rgba(0, 0, 0, 0.6), 1px 1px 0 #165c5c, 2px 2px 0 #165c5c, 3px 3px 0 #165c5c, 4px 4px 0 #165c5c, 5px 5px 0 #165c5c, 6px 6px 0 #165c5c, 6px 6px 20px rgba(68,216,216,0.8)'
+              }}>
+                Detect. Verify. Protect Reality.
               </h1>
 
               <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.6)', maxWidth: 560, margin: '0 auto 40px', lineHeight: 1.7 }}>
@@ -142,10 +149,10 @@ export default function Home() {
 
             {/* Loading Bar Below Text */}
             <div style={{ width: '100%', maxWidth: 400, marginTop: 20 }}>
-              <div style={{ 
-                width: '100%', 
-                height: 10, 
-                background: 'rgba(255,255,255,0.05)', 
+              <div style={{
+                width: '100%',
+                height: 10,
+                background: 'rgba(255,255,255,0.05)',
                 borderRadius: 5,
                 overflow: 'hidden',
                 position: 'relative',
