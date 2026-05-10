@@ -143,8 +143,7 @@ const TechnicalBackground: React.FC = () => {
     };
 
     const animate = () => {
-      ctx.fillStyle = '#0D0D12';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       drawDotGrid();
       drawParticles();
@@ -171,7 +170,8 @@ const TechnicalBackground: React.FC = () => {
         left: 0,
         width: '100%',
         height: '100%',
-        zIndex: 2,
+        zIndex: 0,
+        pointerEvents: 'none',
       }}
     />
   );
