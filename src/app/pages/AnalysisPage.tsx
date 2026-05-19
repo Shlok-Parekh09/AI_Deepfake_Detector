@@ -345,12 +345,13 @@ export default function AnalysisPage() {
         {phase === 'done' && results && (
           <div className="mt-4">
             {/* Top row: AI Processing badge + Graph title */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
-              <div className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-full px-4 py-2 text-orange-400 text-sm font-medium">
-                <CheckCircle size={14} />
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6" style={{marginBottom: 20}}>
+              <div className="flex items-center justify-center gap-2 w-64 bg-orange-500/10 border border-orange-500/30 rounded-full py-2 text-orange-400 text-sm font-medium">
+                <CheckCircle size={16} />
                 AI Processing Complete
               </div>
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-gray-300 font-medium">
+              <div className="flex items-center justify-center
+               gap-2 w-64 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-gray-300 font-medium">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: config.graphColor }} />
                 {config.graphTitle}
               </div>
@@ -371,7 +372,7 @@ export default function AnalysisPage() {
 
             {/* Score + Anomalies */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
-              <div style={{ borderRadius: 20, padding: 24, border: `1px solid ${results.isDeepfake ? 'rgba(239,68,68,0.25)' : 'rgba(74,222,128,0.2)'}`, background: results.isDeepfake ? 'rgba(239,68,68,0.06)' : 'rgba(74,222,128,0.05)' }}>
+              <div style={{ borderRadius: 20, padding: 24, border: `1px solid ${results.isDeepfake ? 'rgba(239,68,68,0.25)' : 'rgba(74,222,128,0.2)'}`, background: results.isDeepfake ? 'rgba(239,68,68,0.06)' : 'rgba(74,222,128,0.05)'}}>
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <div className="text-xs text-gray-500 uppercase tracking-wider mb-1">Deepfake Probability</div>
@@ -424,13 +425,13 @@ export default function AnalysisPage() {
                   ? <AlertTriangle size={16} className="text-red-400" />
                   : <CheckCircle size={16} className="text-green-400" />
                 }
-                <span className="font-bold text-sm uppercase tracking-wide text-gray-300">
+                <span className="font-bold text-sm uppercase tracking-wide text-gray-300" style={{marginBottom : 10,marginTop:5}}>
                   {results.isDeepfake ? 'Reasons Flagged as DEEPFAKE' : 'Reasons Classified as AUTHENTIC'}
                 </span>
               </div>
               <div className="space-y-4">
                 {results.reasons.map((r, i) => (
-                  <div key={i} className={`flex gap-4 p-4 rounded-xl border ${results.isDeepfake ? 'bg-red-500/5 border-red-500/10' : 'bg-green-500/5 border-green-500/10'}`}>
+                  <div key={i} className={`flex gap-4 p-4 rounded-xl border ${results.isDeepfake ? 'bg-red-500/5 border-red-500/10' : 'bg-green-500/5 border-green-500/10'}`} style={{marginBottom: 10}}>
                     <div className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5 ${results.isDeepfake ? 'bg-red-500/20' : 'bg-green-500/20'}`}>
                       {results.isDeepfake
                         ? <X size={10} className="text-red-400" />
