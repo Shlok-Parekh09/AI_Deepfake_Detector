@@ -1,0 +1,42 @@
+# ============================================================
+# AI Deepfake Detector - Python Dependencies
+# ============================================================
+
+# Web Framework
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Deep Learning
+torch
+torchvision
+torchaudio
+
+# Image & Video Processing
+opencv-python
+Pillow
+numpy
+
+# Face Detection
+# facenet-pytorch        # MTCNN face detection
+# dlib                   # Alternative face detector
+
+# Audio Processing
+# librosa                # Audio feature extraction
+# pydub                  # Audio manipulation
+
+# Data & ML Utilities
+pandas
+scikit-learn
+matplotlib
+seaborn
+
+# Logging & Monitoring
+# tensorboard            # Training visualization
+
+# Video Downloading
+# yt-dlp                 # YouTube/video platform downloads
+
+# Model Export
+# onnx                   # ONNX model export
+# onnxruntime            # ONNX inference runtime
