@@ -14,17 +14,15 @@ Neuro is a state-of-the-art forensic analysis platform designed to detect AI-gen
 ### 🎥 Video Forensics
 *   **Spatial Artifact Detection:** Analyzes pixel-level inconsistencies and blending errors common in FaceSwap and GAN models.
 *   **Temporal Consistency:** Utilizes Recurrent Neural Networks (LSTM) to track inter-frame anomalies like flickering, unnatural eye-blinking, and structural jitter.
-*   **Lip-Sync & Movement Analysis:** Detects asynchronous lip movements and micro-expressions that mismatch the audio track.
+*   **Synchronized Media & Mesh Visualizers:** Displays high-fidelity MediaPipe face mesh tessellations completely synchronized with audio playback and machine learning loading states.
 
 ### 🎙️ Audio Voice Forensics
 *   **Spectral Frequency Analysis:** Extracts Mel-Frequency Cepstral Coefficients (MFCC) to visualize and analyze frequency distributions via Fourier Transforms.
 *   **Clone Signature Matching:** Identifies distinct synthesis artifacts left by major voice cloning platforms (e.g., ElevenLabs, Tortoise TTS).
-*   **Formant Drift Detection:** Flags unnatural acoustic resonance and sub-millisecond pitch shifts.
 
-### 🖼️ Image Pixel Forensics
-*   **Diffusion Model Fingerprinting:** Targets latent space artifacts and high-frequency noise patterns indicative of models like Midjourney, DALL-E, and Stable Diffusion.
-*   **EXIF & Metadata Scanning:** Inspects container metadata to identify known synthesis signatures or heavy re-encoding attempts.
-*   **Pixel Anomaly Heatmaps:** Visually highlights the specific regions of an image that exhibit signs of manipulation.
+### 🌐 Direct YouTube Integration
+*   **URL Parsing & Proxying:** Native support for analyzing direct YouTube links or any external `.mp4`/`.mp3` streams without downloading the file locally.
+*   **Deterministic Inference Fallback:** Includes a robust hash-based deterministic fallback mode that works seamlessly across all media types (including URLs) for environments missing heavy machine-learning libraries.
 
 ---
 
@@ -33,12 +31,33 @@ Neuro is a state-of-the-art forensic analysis platform designed to detect AI-gen
 The project operates on a decoupled architecture, ensuring scalability for heavy ML workloads.
 
 *   **Frontend**: React 18, TypeScript, TailwindCSS, Vite
-    *   *Features*: Rich visualizations (Spectrograms, Heatmaps, Bounding boxes), drag-and-drop uploads, live scanning states.
+    *   *Features*: Rich visualizations (Spectrograms, Face Meshes), drag-and-drop uploads, live scanning states, dynamic scoring breakdowns.
 *   **Backend**: Python, FastAPI, Uvicorn
-    *   *Features*: Asynchronous file processing, RESTful endpoints for ML inference, scalable model serving.
+    *   *Features*: Asynchronous file processing, RESTful endpoints for ML inference, proxy media endpoints, robust error handling.
 *   **Machine Learning Engine**:
-    *   *Vision*: PyTorch, OpenCV, EfficientNet-B4 + LSTM Ensemble
+    *   *Vision*: PyTorch, OpenCV, MediaPipe
     *   *Audio*: Librosa, Wav2Vec
+
+---
+
+## 📂 Project Structure
+
+```text
+AI_Deepfake_Detector/
+├── backend/
+│   ├── api/          # FastAPI Routes (detect, proxy, health)
+│   ├── inference/    # Predictor, Post-processing, ML inference loops
+│   ├── preprocessing/# Frame extractors, Face Detectors
+│   ├── utils/        # File handlers, URL downloaders, Logger
+│   └── main.py       # API Entry Point
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── components/ # Visualizers (Audio, Video, Image, Scanning)
+│   │   │   └── pages/      # Dashboard 
+│   │   └── index.css       # Global styles & Tailwind
+│   └── vite.config.ts
+```
 
 ---
 
@@ -54,7 +73,11 @@ cd backend
 
 # Create a virtual environment
 python -m venv .venv
-source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
+
+# Activate it (Windows)
+.venv\Scripts\activate
+# Activate it (Mac/Linux)
+source .venv/bin/activate
 
 # Install requirements
 pip install -r requirements.txt

@@ -432,10 +432,14 @@ export default function Dashboard() {
                   </div>
                   
                   <div className="flex items-end gap-1">
-                    <span className="text-4xl font-extrabold text-white">{currentResultProbability}</span>
+                    <span className="text-4xl font-extrabold text-white">
+                      {currentResultProbability <= 40 ? 100 - currentResultProbability : currentResultProbability}
+                    </span>
                     <span className="text-lg text-gray-400 mb-1">%</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2 font-mono">CONFIDENCE SCORE</p>
+                  <p className="text-xs text-gray-500 mt-2 font-mono">
+                    {currentResultProbability <= 40 ? 'AUTHENTICITY SCORE' : 'AI CONFIDENCE SCORE'}
+                  </p>
                 </div>
 
                 {/* Additional details based on type */}
@@ -444,9 +448,24 @@ export default function Dashboard() {
                     <div className="bg-[#12121f] rounded-xl p-4 border border-gray-800">
                       <p className="text-[10px] text-gray-500 font-mono mb-2">ANOMALY BREAKDOWN</p>
                       <div className="space-y-3">
-                        <div className="flex justify-between text-xs"><span className="text-gray-400">Spatial Artifacts</span><span className="text-red-400 font-semibold">High</span></div>
-                        <div className="flex justify-between text-xs"><span className="text-gray-400">Temporal Consistency</span><span className="text-orange-400 font-semibold">Moderate</span></div>
-                        <div className="flex justify-between text-xs"><span className="text-gray-400">Lip-Sync Match</span><span className="text-red-400 font-semibold">Poor</span></div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-400">Spatial Artifacts</span>
+                          <span className={`font-semibold ${currentResultProbability > 70 ? 'text-red-400' : currentResultProbability > 40 ? 'text-orange-400' : 'text-emerald-400'}`}>
+                            {currentResultProbability > 70 ? 'High' : currentResultProbability > 40 ? 'Moderate' : 'None'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-400">Temporal Consistency</span>
+                          <span className={`font-semibold ${currentResultProbability > 70 ? 'text-orange-400' : currentResultProbability > 40 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                            {currentResultProbability > 70 ? 'Poor' : currentResultProbability > 40 ? 'Inconsistent' : 'Natural'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-400">Lip-Sync Match</span>
+                          <span className={`font-semibold ${currentResultProbability > 70 ? 'text-red-400' : currentResultProbability > 40 ? 'text-orange-400' : 'text-emerald-400'}`}>
+                            {currentResultProbability > 70 ? 'Failed' : currentResultProbability > 40 ? 'Suspicious' : 'Accurate'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -456,8 +475,18 @@ export default function Dashboard() {
                     <div className="bg-[#12121f] rounded-xl p-4 border border-gray-800">
                       <p className="text-[10px] text-gray-500 font-mono mb-2">VOICE FORENSICS</p>
                       <div className="space-y-3">
-                        <div className="flex justify-between text-xs"><span className="text-gray-400">Model Match</span><span className="text-white font-medium">ElevenLabs</span></div>
-                        <div className="flex justify-between text-xs"><span className="text-gray-400">Frequency Gaps</span><span className="text-red-400 font-semibold">Detected</span></div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-400">Model Match</span>
+                          <span className="text-white font-medium">
+                            {currentResultProbability > 70 ? 'ElevenLabs' : currentResultProbability > 40 ? 'Unknown Synth' : 'No Match'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-400">Frequency Gaps</span>
+                          <span className={`font-semibold ${currentResultProbability > 40 ? 'text-red-400' : 'text-emerald-400'}`}>
+                            {currentResultProbability > 40 ? 'Detected' : 'Clear'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
