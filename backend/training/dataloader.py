@@ -1,44 +1,92 @@
 """
 DataLoader Setup for Deepfake Detection Training.
 Configures PyTorch DataLoaders with proper batching, shuffling,
-and worker settings.
+worker settings, and optional class-imbalance handling.
 """
 
-# TODO: Import required modules
-# from torch.utils.data import DataLoader
-# from .dataset import DeepfakeDataset, VideoDataset
-# from .augmentations import get_train_transforms, get_val_transforms
-# from ..config import BATCH_SIZE
+import numpy as np
+import torch
+from torch.utils.data import DataLoader, WeightedRandomSampler
+
+from backend.config import BATCH_SIZE
+from backend.training.dataset import DeepfakeDataset, VideoDataset
+from backend.training.augmentations import get_train_transforms, get_val_transforms
 
 
-def get_train_loader(data_path, batch_size=None, num_workers=4):
-    """
-    Create training DataLoader with augmentations.
-    
-    TODO:
-    - Initialize DeepfakeDataset with train transforms
-    - Create DataLoader with shuffling, pin_memory, drop_last
-    - Handle class imbalance with WeightedRandomSampler
-    """
-    pass
+def _build_sampler(dataset: DeepfakeDataset) -> WeightedRandomSampler:
+    """Create a ``WeightedRandomSampler`` to counter class imbalance."""
+    labels = np.array(dataset.labels)
+    class_counts = np.bincount(labels)
+    class_weights = 1.0 / class_counts
+    sample_weights = class_weights[labels]
+    return WeightedRandomSampler(
+        weights=torch.from_numpy(sample_weights).double(),
+        num_samples=len(sample_weights),
+        replacement=True,
+    )
 
 
-def get_val_loader(data_path, batch_size=None, num_workers=4):
+def get_train_loader(
+    data_path: str,
+    batch_size: int | None = None,
+    num_workers: int = 4,
+    balance_classes: bool = True,
+) -> DataLoader:
     """
-    Create validation DataLoader (no augmentations).
-    
-    TODO:
-    - Initialize DeepfakeDataset with validation transforms (resize + normalize only)
-    - Create DataLoader without shuffling
+    Create the training ``DataLoader`` with augmentations.
+
+    When *balance_classes* is True, a ``WeightedRandomSampler`` is used
+    so that each class is sampled roughly equally.
     """
-    pass
+    bs = batch_size or BATCH_SIZE
+    dataset = DeepfakeDataset(data_path, transform=get_train_transforms(), split="train")
+
+    sampler = _build_sampler(dataset) if balance_classes and dataset.labels else None
+
+    return DataLoader(
+        dataset,
+        batch_size=bs,
+        shuffle=(sampler is None),
+        sampler=sampler,
+        num_workers=num_workers,
+        pin_memory=True,
+        drop_last=True,
+    )
 
 
-def get_test_loader(data_path, batch_size=None, num_workers=4):
+def get_val_loader(
+    data_path: str,
+    batch_size: int | None = None,
+    num_workers: int = 4,
+) -> DataLoader:
     """
-    Create test DataLoader for final evaluation.
-    
-    TODO:
-    - Similar to val_loader but on test split
+    Create the validation ``DataLoader`` (no augmentations, no shuffling).
     """
-    pass
+    bs = batch_size or BATCH_SIZE
+    dataset = DeepfakeDataset(data_path, transform=get_val_transforms(), split="val")
+    return DataLoader(
+        dataset,
+        batch_size=bs,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True,
+    )
+
+
+def get_test_loader(
+    data_path: str,
+    batch_size: int | None = None,
+    num_workers: int = 4,
+) -> DataLoader:
+    """
+    Create the test ``DataLoader`` for final evaluation.
+    """
+    bs = batch_size or BATCH_SIZE
+    dataset = DeepfakeDataset(data_path, transform=get_val_transforms(), split="test")
+    return DataLoader(
+        dataset,
+        batch_size=bs,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True,
+    )

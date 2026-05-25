@@ -3,58 +3,103 @@ Audio Extraction from Video Files.
 Extracts audio tracks for voice deepfake analysis.
 """
 
-# TODO: Import required modules
-# import subprocess  # for ffmpeg
-# or: from pydub import AudioSegment
+import json
+import os
+import subprocess
+import tempfile
+
+import numpy as np
+
+from backend.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class AudioExtractor:
     """
-    Extract audio tracks from video files for audio deepfake analysis.
-    
-    TODO:
-    - Extract audio using ffmpeg or pydub
-    - Convert to standard format (WAV, 16kHz, mono)
-    - Support various input formats
-    - Extract audio features (mel spectrogram, MFCC) for model input
+    Extract audio tracks from video files and compute audio features
+    for deepfake analysis.
+
+    Requires ``ffmpeg`` / ``ffprobe`` on the system PATH.
     """
 
-    def __init__(self, sample_rate=16000, mono=True):
+    def __init__(self, sample_rate: int = 16000, mono: bool = True):
         self.sample_rate = sample_rate
         self.mono = mono
 
-    def extract(self, video_path, output_path=None):
-        """
-        Extract audio track from a video file.
-        
-        Args:
-            video_path: Path to video file
-            output_path: Path to save extracted audio (optional)
-            
-        Returns:
-            str: Path to extracted audio file
-        """
-        # TODO: Use ffmpeg to extract audio
-        # ffmpeg -i video.mp4 -vn -acodec pcm_s16le -ar 16000 -ac 1 audio.wav
-        pass
+    # ── extraction ─────────────────────────────────────────────
 
-    def extract_features(self, audio_path):
+    def extract(self, video_path: str, output_path: str | None = None) -> str:
         """
-        Extract audio features for model input.
-        
-        Features:
-        - Mel spectrogram
-        - MFCC (Mel-Frequency Cepstral Coefficients)
-        - Chroma features
-        
-        TODO: Implement feature extraction using librosa or torchaudio
-        """
-        pass
+        Extract the audio track from *video_path* as 16-bit PCM WAV.
 
-    def has_audio(self, video_path):
+        Returns the path to the extracted audio file.
         """
-        Check if a video file contains an audio track.
-        
-        TODO: Probe video file for audio streams
+        if output_path is None:
+            output_path = tempfile.mktemp(suffix=".wav", prefix="audio_")
+
+        channels = "1" if self.mono else "2"
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", video_path,
+            "-vn",                         # drop video
+            "-acodec", "pcm_s16le",        # 16-bit PCM
+            "-ar", str(self.sample_rate),   # target sample rate
+            "-ac", channels,               # mono / stereo
+            output_path,
+        ]
+        logger.info("Extracting audio: %s → %s", video_path, output_path)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=120,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"ffmpeg failed:\n{result.stderr}")
+        return output_path
+
+    # ── feature extraction ─────────────────────────────────────
+
+    def extract_features(self, audio_path: str) -> dict[str, np.ndarray]:
         """
-        pass
+        Extract spectral features using ``librosa``.
+
+        Returns
+        -------
+        dict
+            ``mel_spectrogram``, ``mfcc``, ``chroma`` — each a 2-D numpy array.
+        """
+        import librosa
+
+        y, sr = librosa.load(audio_path, sr=self.sample_rate, mono=self.mono)
+
+        mel = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128)
+        mel_db = librosa.power_to_db(mel, ref=np.max)
+
+        mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)
+
+        chroma = librosa.feature.chroma_stft(y=y, sr=sr)
+
+        return {
+            "mel_spectrogram": mel_db,
+            "mfcc": mfcc,
+            "chroma": chroma,
+        }
+
+    # ── probing ────────────────────────────────────────────────
+
+    def has_audio(self, video_path: str) -> bool:
+        """Return ``True`` if *video_path* contains at least one audio stream."""
+        cmd = [
+            "ffprobe", "-v", "quiet",
+            "-print_format", "json",
+            "-show_streams",
+            "-select_streams", "a",
+            video_path,
+        ]
+        try:
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=30,
+            )
+            data = json.loads(result.stdout)
+            return len(data.get("streams", [])) > 0
+        except Exception:
+            return False

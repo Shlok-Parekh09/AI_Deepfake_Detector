@@ -1,64 +1,87 @@
 """
 Loss Functions for Deepfake Detection Training.
-Includes standard and custom loss functions optimized for
+Includes standard and custom loss functions optimised for
 binary classification with potential class imbalance.
 """
 
-# TODO: Import PyTorch
-# import torch
-# import torch.nn as nn
-# import torch.nn.functional as F
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 
-class FocalLoss:
+class FocalLoss(nn.Module):
     """
     Focal Loss for handling class imbalance.
-    Reduces the loss contribution from easy examples and focuses
-    on hard-to-classify samples.
-    
+
+    FL(p_t) = -α_t (1 − p_t)^γ · log(p_t)
+
     Reference: "Focal Loss for Dense Object Detection" (Lin et al., 2017)
-    
-    TODO:
-    - Implement __init__ with alpha and gamma parameters
-    - Implement forward: FL(p_t) = -alpha_t * (1 - p_t)^gamma * log(p_t)
     """
 
-    def __init__(self, alpha=0.25, gamma=2.0):
+    def __init__(self, alpha: float = 0.25, gamma: float = 2.0):
+        super().__init__()
         self.alpha = alpha
         self.gamma = gamma
 
-    def __call__(self, predictions, targets):
-        # TODO: Implement focal loss computation
-        pass
+    def forward(self, predictions: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        """
+        Parameters
+        ----------
+        predictions : torch.Tensor
+            Raw logits ``[B, C]``.
+        targets : torch.Tensor
+            Ground-truth class indices ``[B]``.
+        """
+        ce_loss = F.cross_entropy(predictions, targets, reduction="none")
+        pt = torch.exp(-ce_loss)
+        focal = self.alpha * ((1 - pt) ** self.gamma) * ce_loss
+        return focal.mean()
 
 
-class WeightedBCELoss:
+class WeightedBCELoss(nn.Module):
     """
-    Weighted Binary Cross-Entropy Loss.
-    Applies different weights to positive (fake) and negative (real) classes.
-    
-    TODO:
-    - Compute class weights from training data distribution
-    - Apply weights to BCE loss
+    Weighted Binary Cross-Entropy Loss using ``BCEWithLogitsLoss``.
+
+    Applies a heavier penalty for mis-classifying the positive (fake) class.
     """
 
-    def __init__(self, pos_weight=1.0):
-        # TODO: Initialize with class weights
-        # self.criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([pos_weight]))
-        pass
+    def __init__(self, pos_weight: float = 1.0):
+        super().__init__()
+        self.criterion = nn.BCEWithLogitsLoss(
+            pos_weight=torch.tensor([pos_weight]),
+        )
 
-    def __call__(self, predictions, targets):
-        # TODO: Compute weighted BCE loss
-        pass
+    def forward(self, predictions: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        """
+        Parameters
+        ----------
+        predictions : torch.Tensor
+            Raw logits ``[B, 1]`` (single-output) or ``[B]``.
+        targets : torch.Tensor
+            Ground truth ``[B]`` with values in {0, 1}.
+        """
+        predictions = predictions.view(-1)
+        targets = targets.float()
+        return self.criterion(predictions, targets)
 
 
-def get_loss_function(loss_type="focal", **kwargs):
+def get_loss_function(loss_type: str = "focal", **kwargs) -> nn.Module:
     """
-    Factory function to get the appropriate loss function.
-    
-    Args:
-        loss_type: "focal", "bce", "weighted_bce"
-    
-    TODO: Return the appropriate loss function instance
+    Factory that returns the requested loss function.
+
+    Parameters
+    ----------
+    loss_type : str
+        ``"focal"``, ``"bce"``, or ``"weighted_bce"``.
     """
-    pass
+    if loss_type == "focal":
+        return FocalLoss(
+            alpha=kwargs.get("alpha", 0.25),
+            gamma=kwargs.get("gamma", 2.0),
+        )
+    if loss_type == "bce":
+        return nn.CrossEntropyLoss()
+    if loss_type == "weighted_bce":
+        return WeightedBCELoss(pos_weight=kwargs.get("pos_weight", 2.0))
+
+    raise ValueError(f"Unknown loss type: {loss_type!r}")

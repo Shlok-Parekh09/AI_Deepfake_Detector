@@ -1,42 +1,68 @@
 # ============================================================
-# AI Deepfake Detector - Python Dependencies
+# Enterprise AI Deepfake Detector & Neuro Engine
+# Complete Python Dependencies (Production-Ready)
 # ============================================================
 
-# Web Framework
+# --- Neuro Engine API Integration & Async HTTP ---
+requests>=2.31.0
+httpx>=0.27.0            # Advanced async HTTP client for high-throughput API communication
+aiohttp>=3.9.3           # Alternative highly-concurrent async client
+
+# --- Core Web Framework & Security ---
 fastapi
 uvicorn[standard]
-python-multipart
+python-multipart         # Required for handling file/media uploads in FastAPI
+pydantic-settings        # Environment variable management (.env parsing)
+python-dotenv            # Alternative localized environment configuration
+python-jose[cryptography] # Secure JWT tokens for multi-user API access
+passlib[bcrypt]          # Password hashing for user authentication dashboards
 
-# Deep Learning
+# --- Distributed Asynchronous Task Processing (Crucial for Video) ---
+celery                   # Offloads heavy video processing & API long-polling to background tasks
+redis                    # High-performance message broker and cache for Celery
+flower                   # Real-time monitoring dashboard for background deepfake tasks
+
+# --- Cloud Storage & File Handling ---
+boto3                    # AWS S3 integration for securely storing and archiving uploaded media
+python-magic             # Detects actual file mime-types by signature, stopping malicious uploads
+
+# --- Deep Learning & Pre-trained Vision Models ---
 torch
 torchvision
 torchaudio
+timm                     # PyTorch Image Models (Massive repository of pre-trained SOTA backbones)
 
-# Image & Video Processing
-opencv-python
+# --- Advanced Biometrics & Object Detection ---
+ultralytics              # SOTA YOLO for ultra-fast face bounding-box cropping in videos
+insightface              # Advanced deep face analysis (age, gender, structural identity preservation)
+facenet-pytorch          # MTCNN face detection and extraction pipeline
+
+# --- Image & Video Processing ---
+opencv-python-headless   # Server-optimized OpenCV (runs flawlessly in Docker/Linux environments)
 Pillow
 numpy
 
-# Face Detection
-# facenet-pytorch        # MTCNN face detection
-# dlib                   # Alternative face detector
+# --- Advanced Audio & Signal Processing ---
+librosa                  # Audio feature extraction (spectrograms, MFCCs)
+pydub                    # Audio format slicing, conversion, and normalization
+soundfile                # High-fidelity reading and writing of audio data (WAV/FLAC)
+scipy                    # Signal processing filters to clean noise before spectral checking
 
-# Audio Processing
-# librosa                # Audio feature extraction
-# pydub                  # Audio manipulation
-
-# Data & ML Utilities
+# --- Data Science & Analytics ---
 pandas
 scikit-learn
 matplotlib
 seaborn
 
-# Logging & Monitoring
-# tensorboard            # Training visualization
+# --- Explainable AI (XAI) & Model Interpretability ---
+shap                     # Generates heatmaps showing *why* a frame was flagged as a deepfake
+lime                     # Local Interpretable Model-agnostic Explanations
 
-# Video Downloading
-# yt-dlp                 # YouTube/video platform downloads
+# --- Performance & Utilities ---
+tqdm                     # Console progress bars for long multi-frame video extraction loops
+numexpr                  # Speeds up heavy math element-wise array calculations
 
-# Model Export
-# onnx                   # ONNX model export
-# onnxruntime            # ONNX inference runtime
+# --- Logging, Monitoring & Deployment ---
+tensorboard              # Local training and metric visualization
+onnx                     # Cross-platform model export
+onnxruntime              # High-efficiency local CPU/GPU inference engine

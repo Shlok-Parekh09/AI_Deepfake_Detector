@@ -1,0 +1,13 @@
+{
+  "name": "ai-deepfake-detector-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev:backend": ".venv\\Scripts\\python.exe -X utf8 -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload",
+    "dev": "concurrently -c \"cyan,magenta\" \"npm run dev:frontend\" \"npm run dev:backend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
