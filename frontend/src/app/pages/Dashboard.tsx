@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Upload, X, Monitor, Moon, Sun, Paperclip, ChevronLeft, ShieldAlert, ShieldCheck } from 'lucide-react';
 import svgPaths from '../../imports/MacBookPro166/svg-vk1owfvmuu';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 // Visualizers
 import { ScanningView } from '../components/visualizers/ScanningView';
 import { VideoVisualizer } from '../components/visualizers/VideoVisualizer';
@@ -89,7 +91,7 @@ export default function Dashboard() {
       setCurrentMediaUrl(URL.createObjectURL(selectedFile));
     } else {
       // Proxy the URL through our backend to avoid CORS and ensure it loads properly
-      setCurrentMediaUrl(`http://localhost:8000/api/v1/proxy-media?url=${encodeURIComponent(urlInput)}`); 
+      setCurrentMediaUrl(`${API_BASE_URL}/api/v1/proxy-media?url=${encodeURIComponent(urlInput)}`); 
     }
 
     setScanState('scanning');
@@ -116,13 +118,13 @@ export default function Dashboard() {
       if (selectedFile) {
         const formData = new FormData();
         formData.append('file', selectedFile);
-        const res = await fetch('http://localhost:8000/api/v1/detect', {
+        const res = await fetch(`${API_BASE_URL}/api/v1/detect`, {
           method: 'POST',
           body: formData,
         });
         resultData = await res.json();
       } else {
-        const res = await fetch('http://localhost:8000/api/v1/detect/url', {
+        const res = await fetch(`${API_BASE_URL}/api/v1/detect/url`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url: urlInput }),
