@@ -46,7 +46,8 @@ class DeepfakeDataset(Dataset):
         if os.path.isfile(csv_path):
             self._load_from_csv(csv_path)
         else:
-            self._load_from_directory(data_path)
+            split_dir = os.path.join(data_path, split)
+            self._load_from_directory(split_dir)
 
         logger.info(
             "DeepfakeDataset [%s]: %d samples  (real=%d  fake=%d)",

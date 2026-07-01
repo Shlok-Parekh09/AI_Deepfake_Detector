@@ -1,92 +1,42 @@
-"""
-DataLoader Setup for Deepfake Detection Training.
-Configures PyTorch DataLoaders with proper batching, shuffling,
-worker settings, and optional class-imbalance handling.
-"""
+import os
+from torch.utils.data import Dataset, DataLoader
+from PIL import Image
 
-import numpy as np
-import torch
-from torch.utils.data import DataLoader, WeightedRandomSampler
-
-from backend.config import BATCH_SIZE
-from backend.training.dataset import DeepfakeDataset, VideoDataset
-from backend.training.augmentations import get_train_transforms, get_val_transforms
-
-
-def _build_sampler(dataset: DeepfakeDataset) -> WeightedRandomSampler:
-    """Create a ``WeightedRandomSampler`` to counter class imbalance."""
-    labels = np.array(dataset.labels)
-    class_counts = np.bincount(labels)
-    class_weights = 1.0 / class_counts
-    sample_weights = class_weights[labels]
-    return WeightedRandomSampler(
-        weights=torch.from_numpy(sample_weights).double(),
-        num_samples=len(sample_weights),
-        replacement=True,
-    )
-
-
-def get_train_loader(
-    data_path: str,
-    batch_size: int | None = None,
-    num_workers: int = 4,
-    balance_classes: bool = True,
-) -> DataLoader:
+class UniversalDeepfakeDataset(Dataset):
     """
-    Create the training ``DataLoader`` with augmentations.
-
-    When *balance_classes* is True, a ``WeightedRandomSampler`` is used
-    so that each class is sampled roughly equally.
+    Unified Dataset loader supporting FaceForensics++, DFDC, Celeb-DF, and WildDeepfake.
+    Expects data in standard structure: /path/to/dataset/{real,fake}/
     """
-    bs = batch_size or BATCH_SIZE
-    dataset = DeepfakeDataset(data_path, transform=get_train_transforms(), split="train")
+    def __init__(self, root_dir: str, transform=None):
+        self.root_dir = root_dir
+        self.transform = transform
+        self.samples = []
+        
+        real_dir = os.path.join(root_dir, 'real')
+        fake_dir = os.path.join(root_dir, 'fake')
+        
+        if os.path.isdir(real_dir):
+            for f in os.listdir(real_dir):
+                self.samples.append((os.path.join(real_dir, f), 0)) # 0 = REAL
+                
+        if os.path.isdir(fake_dir):
+            for f in os.listdir(fake_dir):
+                self.samples.append((os.path.join(fake_dir, f), 1)) # 1 = FAKE
 
-    sampler = _build_sampler(dataset) if balance_classes and dataset.labels else None
+    def __len__(self):
+        return len(self.samples)
 
-    return DataLoader(
-        dataset,
-        batch_size=bs,
-        shuffle=(sampler is None),
-        sampler=sampler,
-        num_workers=num_workers,
-        pin_memory=True,
-        drop_last=True,
-    )
+    def __getitem__(self, idx):
+        img_path, label = self.samples[idx]
+        try:
+            image = Image.open(img_path).convert('RGB')
+            if self.transform:
+                image = self.transform(image)
+            return image, label
+        except Exception:
+            # Return dummy on failure
+            return None, label
 
-
-def get_val_loader(
-    data_path: str,
-    batch_size: int | None = None,
-    num_workers: int = 4,
-) -> DataLoader:
-    """
-    Create the validation ``DataLoader`` (no augmentations, no shuffling).
-    """
-    bs = batch_size or BATCH_SIZE
-    dataset = DeepfakeDataset(data_path, transform=get_val_transforms(), split="val")
-    return DataLoader(
-        dataset,
-        batch_size=bs,
-        shuffle=False,
-        num_workers=num_workers,
-        pin_memory=True,
-    )
-
-
-def get_test_loader(
-    data_path: str,
-    batch_size: int | None = None,
-    num_workers: int = 4,
-) -> DataLoader:
-    """
-    Create the test ``DataLoader`` for final evaluation.
-    """
-    bs = batch_size or BATCH_SIZE
-    dataset = DeepfakeDataset(data_path, transform=get_val_transforms(), split="test")
-    return DataLoader(
-        dataset,
-        batch_size=bs,
-        shuffle=False,
-        num_workers=num_workers,
-        pin_memory=True,
-    )
+def get_dataloader(data_path: str, batch_size: int = 16, shuffle: bool = True):
+    dataset = UniversalDeepfakeDataset(data_path)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=4)

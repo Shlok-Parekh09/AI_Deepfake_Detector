@@ -7,7 +7,7 @@ to produce a final deepfake probability score.
 import torch
 import torch.nn as nn
 
-from backend.models.cnn_model import CNNDetector
+from backend.models.vit_model import ViTDetector
 from backend.models.rnn_model import RNNDetector
 from backend.utils.logger import get_logger
 
@@ -33,7 +33,7 @@ class EnsembleDetector(nn.Module):
         fusion: str = "weighted_average",
     ):
         super().__init__()
-        self.cnn = CNNDetector(num_classes=num_classes)
+        self.cnn = ViTDetector(num_classes=num_classes)
         self.rnn = RNNDetector(
             input_size=self.cnn.backbone.num_features,
             num_classes=num_classes,

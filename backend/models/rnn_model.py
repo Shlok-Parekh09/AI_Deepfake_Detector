@@ -26,7 +26,7 @@ class RNNDetector(nn.Module):
 
     def __init__(
         self,
-        input_size: int = 1792,
+        input_size: int = 768,
         hidden_size: int = 256,
         num_layers: int = 2,
         num_classes: int = 2,

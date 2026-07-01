@@ -11,7 +11,7 @@ import numpy as np
 import torch
 
 from backend.config import FAKE_THRESHOLD, CHECKPOINTS_DIR
-from backend.models.cnn_model import CNNDetector
+from backend.models.vit_model import ViTDetector
 from backend.preprocessing.face_detector import FaceDetector
 from backend.preprocessing.frame_extractor import FrameExtractor
 from backend.preprocessing.image_preprocessor import ImagePreprocessor
@@ -29,7 +29,7 @@ class DeepfakeDetector:
     Internally uses:
     * ``FaceDetector`` to locate faces.
     * ``ImagePreprocessor`` to prepare tensors.
-    * ``CNNDetector`` for spatial classification.
+    * ``ViTDetector`` for spatial classification.
     * ``FrameExtractor`` for video processing.
     """
 
@@ -48,7 +48,7 @@ class DeepfakeDetector:
         self.file_handler = FileHandler()
 
         # Initialise model
-        self.model = CNNDetector()
+        self.model = ViTDetector()
         if checkpoint_path and os.path.isfile(checkpoint_path):
             self.model.load_weights(checkpoint_path)
         self.model.to(self.device)
