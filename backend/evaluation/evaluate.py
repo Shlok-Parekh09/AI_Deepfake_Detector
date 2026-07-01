@@ -19,7 +19,7 @@ from backend.evaluation.confusion_matrix import (
     plot_roc_curve,
 )
 from backend.evaluation.metrics import compute_all_metrics, print_classification_report
-from backend.models.cnn_model import CNNDetector
+from backend.models.vit_model import ViTDetector
 from backend.training.dataloader import get_test_loader
 from backend.utils.gpu_utils import get_device
 from backend.utils.logger import get_logger
@@ -97,7 +97,7 @@ def evaluate_from_checkpoint(
     Load a checkpoint, build a test DataLoader, and run evaluation.
     """
     device = get_device()
-    model = CNNDetector()
+    model = ViTDetector()
     model.load_weights(checkpoint_path)
     test_loader = get_test_loader(test_data_path)
     return evaluate_model(model, test_loader, device, save_dir=save_dir)

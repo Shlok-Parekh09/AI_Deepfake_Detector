@@ -10,7 +10,7 @@ import numpy as np
 import torch
 
 from backend.config import CHECKPOINTS_DIR, IMAGE_SIZE
-from backend.models.cnn_model import CNNDetector
+from backend.models.vit_model import ViTDetector
 from backend.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -126,7 +126,7 @@ if __name__ == "__main__":
     parser.add_argument("--verify", action="store_true")
     args = parser.parse_args()
 
-    model = CNNDetector()
+    model = ViTDetector()
     if os.path.isfile(args.checkpoint):
         model.load_weights(args.checkpoint)
 

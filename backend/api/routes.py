@@ -42,6 +42,9 @@ class DetectionResult(BaseModel):
     fake_probability: float
     is_fake: bool
     confidence: str
+    reasons: list[str] = []
+    raw_scores: dict = {}
+    explainability_heatmap: str | None = None
     file_type: str | None = None
     num_faces_analysed: int | None = None
     frames_analysed: int | None = None

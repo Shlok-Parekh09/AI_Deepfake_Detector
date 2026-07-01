@@ -1,182 +1,113 @@
-"""
-Main Training Loop for the Deepfake Detector.
-Handles the full training pipeline: data loading, forward/backward pass,
-validation, checkpointing, and logging.
-"""
-
+import os
 import argparse
-import time
-
 import torch
-from torch.cuda.amp import GradScaler, autocast
-from tqdm import tqdm
+import torch.nn as nn
+import torch.optim as optim
+from torchvision import transforms
+import timm
 
-from backend.config import (
-    BATCH_SIZE, CHECKPOINTS_DIR, LEARNING_RATE, LOGS_DIR,
-    MIXED_PRECISION, NUM_EPOCHS, WEIGHT_DECAY,
-)
-from backend.models.cnn_model import CNNDetector
-from backend.training.callbacks import EarlyStopping, ModelCheckpoint, TensorBoardLogger
-from backend.training.dataloader import get_train_loader, get_val_loader
-from backend.training.loss_functions import get_loss_function
-from backend.training.optimizer import get_optimizer, get_scheduler
-from backend.utils.gpu_utils import get_device, set_seed
-from backend.utils.logger import get_logger
+# Fix sys.path so we can import from the root module
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-logger = get_logger(__name__)
+from training.dataloader import get_dataloader
 
+def train(data_dir: str, epochs: int, batch_size: int, output_dir: str):
+    # Hardware constraints: Use MPS (Metal Performance Shaders) for Apple Silicon
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+        print("--- Hardware Accel: Apple Silicon MPS Engine detected! ---")
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+        print("--- Hardware Accel: Nvidia CUDA Engine detected! ---")
+    else:
+        device = torch.device("cpu")
+        print("--- Hardware Accel: CPU (Warning: Slow) ---")
 
-def train_model(
-    model: torch.nn.Module,
-    train_loader,
-    val_loader,
-    num_epochs: int = NUM_EPOCHS,
-    learning_rate: float = LEARNING_RATE,
-    device: torch.device | None = None,
-) -> dict:
-    """
-    Full training loop with AMP, gradient clipping, validation,
-    checkpointing, and early stopping.
+    print(f"Initializing EfficientNet-B0 (Lightweight architecture for edge devices)...")
+    model = timm.create_model('efficientnet_b0', pretrained=True, num_classes=2)
+    model.to(device)
 
-    Returns the metrics of the best epoch.
-    """
-    device = device or get_device()
-    model = model.to(device)
+    # Transform matching our dataloader
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
 
-    criterion = get_loss_function("focal")
-    optimizer = get_optimizer(model, learning_rate=learning_rate, weight_decay=WEIGHT_DECAY)
-    scheduler = get_scheduler(optimizer, "cosine", num_epochs)
+    print(f"Loading dataset from {data_dir}...")
+    loader = get_dataloader(data_dir, batch_size=batch_size, shuffle=True)
+    
+    # We apply transform explicitly in the loop for the generic dataloader
+    loader.dataset.transform = transform
 
-    early_stopping = EarlyStopping(patience=10)
-    checkpoint = ModelCheckpoint(CHECKPOINTS_DIR)
-    tb_logger = TensorBoardLogger(LOGS_DIR)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.AdamW(model.parameters(), lr=1e-4)
 
-    scaler = GradScaler(enabled=MIXED_PRECISION)
-    best_metrics: dict = {}
+    os.makedirs(output_dir, exist_ok=True)
+    best_loss = float('inf')
 
-    for epoch in range(num_epochs):
-        t0 = time.time()
+    print("Starting Training Loop...")
+    for epoch in range(epochs):
+        model.train()
+        running_loss = 0.0
+        
+        # Initialize metric counters
+        tp = 0
+        fp = 0
+        tn = 0
+        fn = 0
+        
+        for batch_idx, (inputs, labels) in enumerate(loader):
+            if inputs is None:
+                continue
+            
+            inputs = inputs.to(device)
+            labels = labels.to(device)
 
-        # ── Train ──
-        train_metrics = train_one_epoch(
-            model, train_loader, optimizer, criterion, device, scaler,
-        )
-
-        # ── Validate ──
-        val_metrics = validate(model, val_loader, criterion, device)
-
-        # ── Scheduler step ──
-        if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
-            scheduler.step(val_metrics["loss"])
-        else:
-            scheduler.step()
-
-        elapsed = time.time() - t0
-        lr_now = optimizer.param_groups[0]["lr"]
-
-        logger.info(
-            "Epoch %d/%d  [%.1fs]  train_loss=%.4f  val_loss=%.4f  "
-            "val_acc=%.4f  lr=%.2e",
-            epoch + 1, num_epochs, elapsed,
-            train_metrics["loss"], val_metrics["loss"],
-            val_metrics["accuracy"], lr_now,
-        )
-
-        # ── TensorBoard ──
-        tb_logger.log_metrics(train_metrics, epoch, prefix="train")
-        tb_logger.log_metrics(val_metrics, epoch, prefix="val")
-        tb_logger.log_scalar("learning_rate", lr_now, epoch)
-
-        # ── Checkpoint ──
-        all_metrics = {"val_loss": val_metrics["loss"], **val_metrics}
-        checkpoint.save(model, optimizer, epoch, all_metrics)
-        if val_metrics["loss"] == checkpoint.best_metric:
-            best_metrics = all_metrics
-
-        # ── Early stopping ──
-        if early_stopping(val_metrics["loss"]):
-            logger.info("Early stopping at epoch %d", epoch + 1)
-            break
-
-    tb_logger.close()
-    return best_metrics
-
-
-def train_one_epoch(model, train_loader, optimizer, criterion, device, scaler) -> dict:
-    """Train for a single epoch. Returns loss and accuracy."""
-    model.train()
-    running_loss = 0.0
-    correct = total = 0
-
-    for images, labels in tqdm(train_loader, desc="Training", leave=False):
-        images = images.to(device, non_blocking=True)
-        labels = labels.to(device, non_blocking=True)
-
-        optimizer.zero_grad(set_to_none=True)
-
-        with autocast(enabled=MIXED_PRECISION):
-            outputs = model(images)
+            optimizer.zero_grad()
+            
+            outputs = model(inputs)
             loss = criterion(outputs, labels)
+            
+            loss.backward()
+            optimizer.step()
+            
+            running_loss += loss.item()
+            
+            # Calculate predictions for metrics
+            _, preds = torch.max(outputs, 1)
+            tp += ((preds == 1) & (labels == 1)).sum().item()
+            fp += ((preds == 1) & (labels == 0)).sum().item()
+            tn += ((preds == 0) & (labels == 0)).sum().item()
+            fn += ((preds == 0) & (labels == 1)).sum().item()
+            
+            if batch_idx % 5 == 0:
+                print(f"Epoch [{epoch+1}/{epochs}] Batch [{batch_idx}/{len(loader)}] Loss: {loss.item():.4f}")
 
-        scaler.scale(loss).backward()
-        scaler.unscale_(optimizer)
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-        scaler.step(optimizer)
-        scaler.update()
+        epoch_loss = running_loss / len(loader)
+        accuracy = (tp + tn) / (tp + tn + fp + fn) if (tp + tn + fp + fn) > 0 else 0.0
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        f1_score = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+        
+        print(f"--> Epoch {epoch+1} Complete. Avg Loss: {epoch_loss:.4f}")
+        print(f"    Metrics: Accuracy: {accuracy:.4f} | Precision: {precision:.4f} | Recall: {recall:.4f} | F1: {f1_score:.4f}")
+        
+        if epoch_loss < best_loss:
+            best_loss = epoch_loss
+            save_path = os.path.join(output_dir, "spatial_cnn_best.pth")
+            torch.save(model.state_dict(), save_path)
+            print(f"--> Saved new best weights to {save_path}")
 
-        running_loss += loss.item() * images.size(0)
-        preds = outputs.argmax(dim=1)
-        correct += (preds == labels).sum().item()
-        total += labels.size(0)
-
-    return {
-        "loss": running_loss / total if total else 0.0,
-        "accuracy": correct / total if total else 0.0,
-    }
-
-
-@torch.no_grad()
-def validate(model, val_loader, criterion, device) -> dict:
-    """Run validation. Returns loss and accuracy."""
-    model.eval()
-    running_loss = 0.0
-    correct = total = 0
-
-    for images, labels in tqdm(val_loader, desc="Validating", leave=False):
-        images = images.to(device, non_blocking=True)
-        labels = labels.to(device, non_blocking=True)
-
-        with autocast(enabled=MIXED_PRECISION):
-            outputs = model(images)
-            loss = criterion(outputs, labels)
-
-        running_loss += loss.item() * images.size(0)
-        preds = outputs.argmax(dim=1)
-        correct += (preds == labels).sum().item()
-        total += labels.size(0)
-
-    return {
-        "loss": running_loss / total if total else 0.0,
-        "accuracy": correct / total if total else 0.0,
-    }
-
+    print("Training Completed Successfully!")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train the Deepfake Detector")
-    parser.add_argument("--data", type=str, required=True, help="Path to data directory")
-    parser.add_argument("--epochs", type=int, default=NUM_EPOCHS)
-    parser.add_argument("--lr", type=float, default=LEARNING_RATE)
-    parser.add_argument("--batch_size", type=int, default=BATCH_SIZE)
-    parser.add_argument("--seed", type=int, default=42)
+    parser = argparse.ArgumentParser(description="Train the Spatial CNN Deepfake Detector")
+    parser.add_argument("--data", type=str, default="/Users/parampatel/Desktop/deepfake_detector/datasets/sample", help="Path to dataset containing real/ and fake/ dirs")
+    parser.add_argument("--epochs", type=int, default=3, help="Number of epochs to train")
+    parser.add_argument("--batch-size", type=int, default=16, help="Batch size")
+    parser.add_argument("--output", type=str, default="/Users/parampatel/Desktop/deepfake_detector/outputs", help="Where to save .pth files")
+    
     args = parser.parse_args()
-
-    set_seed(args.seed)
-    device = get_device()
-    logger.info("Device: %s", device)
-
-    model = CNNDetector()
-    train_loader = get_train_loader(args.data, batch_size=args.batch_size)
-    val_loader = get_val_loader(args.data, batch_size=args.batch_size)
-
-    best = train_model(model, train_loader, val_loader, args.epochs, args.lr, device)
-    logger.info("Training complete. Best metrics: %s", best)
+    train(args.data, args.epochs, args.batch_size, args.output)

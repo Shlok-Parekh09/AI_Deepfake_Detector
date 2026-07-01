@@ -8,9 +8,50 @@ import random
 
 import numpy as np
 from PIL import Image, ImageFilter
+import torch
 import torchvision.transforms as T
 
 from backend.config import IMAGE_SIZE, AUGMENTATION_PROBABILITY
+
+
+class HighFrequencySpectralBlend:
+    """
+    Computes the 2D FFT, applies a high-pass filter to extract high-frequency
+    GAN/Diffusion artifacts, and blends it back into the RGB channels.
+    This forces the ViT's attention mechanism to focus heavily on spectral artifacts.
+    """
+    def __init__(self, alpha: float = 0.5, radius: int = 20):
+        self.alpha = alpha
+        self.radius = radius
+
+    def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
+        _, h, w = tensor.shape
+        cy, cx = h // 2, w // 2
+
+        # 2D FFT
+        fft = torch.fft.fft2(tensor)
+        fft_shift = torch.fft.fftshift(fft)
+        
+        # High-pass filter mask
+        y, x = torch.meshgrid(torch.arange(h), torch.arange(w), indexing="ij")
+        mask = ((y - cy)**2 + (x - cx)**2) > self.radius**2
+        mask = mask.to(tensor.device).unsqueeze(0)  # [1, H, W]
+
+        # Apply mask
+        fft_shift_filtered = fft_shift * mask
+
+        # Inverse FFT
+        ifft_shift = torch.fft.ifftshift(fft_shift_filtered)
+        hf_residual = torch.fft.ifft2(ifft_shift).real
+
+        # Normalize HF residual
+        hf_max = hf_residual.abs().max()
+        if hf_max > 0:
+            hf_residual = hf_residual / hf_max
+            
+        # Blend into original image
+        blended = tensor + self.alpha * hf_residual
+        return torch.clamp(blended, 0.0, 1.0)
 
 
 class _JPEGCompression:
@@ -59,6 +100,7 @@ def get_train_transforms() -> T.Compose:
         T.RandomApply([_DownUpScale()], p=p * 0.5),
         T.RandomResizedCrop(IMAGE_SIZE, scale=(0.85, 1.0)),
         T.ToTensor(),
+        HighFrequencySpectralBlend(alpha=0.3),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         T.RandomErasing(p=p * 0.3, scale=(0.02, 0.15)),
     ])
@@ -72,6 +114,7 @@ def get_val_transforms() -> T.Compose:
         T.Resize(IMAGE_SIZE),
         T.CenterCrop(IMAGE_SIZE),
         T.ToTensor(),
+        HighFrequencySpectralBlend(alpha=0.3),
         T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 

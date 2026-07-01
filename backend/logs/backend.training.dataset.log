@@ -1,0 +1,2 @@
+2026-06-02 15:29:26 │ [32mINFO[0m │ backend.training.dataset │ DeepfakeDataset [train]: 100000 samples  (real=50000  fake=50000)
+2026-06-02 15:29:26 │ [32mINFO[0m │ backend.training.dataset │ DeepfakeDataset [val]: 0 samples  (real=0  fake=0)

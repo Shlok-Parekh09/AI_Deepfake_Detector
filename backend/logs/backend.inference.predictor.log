@@ -9,3 +9,5 @@
 2026-05-25 23:30:47 │ [32mINFO[0m │ backend.inference.predictor │ Predictor initialised in SIMULATION mode.
 2026-05-25 23:35:51 │ [33mWARNING[0m │ backend.inference.predictor │ ML libraries not found (No module named 'torch'). Running in deterministic fallback mode.
 2026-05-25 23:35:51 │ [32mINFO[0m │ backend.inference.predictor │ Predictor initialised in SIMULATION mode.
+2026-07-01 14:37:06 │ [33mWARNING[0m │ backend.inference.predictor │ ML libraries not found (No module named 'timm'). Running in deterministic fallback mode.
+2026-07-01 14:37:06 │ [32mINFO[0m │ backend.inference.predictor │ Predictor initialised in SIMULATION mode.
