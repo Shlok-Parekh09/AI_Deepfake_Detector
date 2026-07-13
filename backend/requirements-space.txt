@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+python-multipart
+requests>=2.31.0
+httpx>=0.27.0
+yt-dlp
+timm
+facenet-pytorch
+opencv-python-headless
+Pillow
+numpy
+librosa
+soundfile
+tqdm
