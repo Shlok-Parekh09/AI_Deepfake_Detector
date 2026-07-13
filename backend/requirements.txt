@@ -66,3 +66,9 @@ numexpr                  # Speeds up heavy math element-wise array calculations
 tensorboard              # Local training and metric visualization
 onnx                     # Cross-platform model export
 onnxruntime              # High-efficiency local CPU/GPU inference engine
+
+# --- Kaggle API Integration ---
+kagglehub                # Programmatic dataset and model access
+kaggle                   # CLI tool for notebook outputs
+transformers             # AI Text Summarization pipeline
+accelerate               # Efficient PyTorch model loading

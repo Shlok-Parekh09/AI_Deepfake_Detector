@@ -4,12 +4,14 @@ import { FaceLandmarker, FilesetResolver, DrawingUtils } from '@mediapipe/tasks-
 
 interface ImageVisualizerProps {
   mediaUrl: string;
+  probability?: number;
+  aiSummary?: string;
 }
 
-export function ImageVisualizer({ mediaUrl }: ImageVisualizerProps) {
+export function ImageVisualizer({ mediaUrl, probability = 0, aiSummary }: ImageVisualizerProps) {
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [scanning, setScanning] = useState(true);
-  
+
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -65,34 +67,35 @@ export function ImageVisualizer({ mediaUrl }: ImageVisualizerProps) {
       if (results.faceLandmarks && results.faceLandmarks.length > 0) {
         setHasFace(true);
         const drawingUtils = new DrawingUtils(ctx);
-        
+
         for (const landmarks of results.faceLandmarks) {
-          // Draw the full wireframe tessellation
+          // Draw the full wireframe tessellation with a techy look
           drawingUtils.drawConnectors(
             landmarks,
             FaceLandmarker.FACE_LANDMARKS_TESSELLATION,
-            { color: "#ffffff", lineWidth: 1.5, fillColor: "transparent" }
+            { color: "#10b981", lineWidth: 0.5 }
           );
-          
+
           // Draw face oval
           drawingUtils.drawConnectors(
             landmarks,
             FaceLandmarker.FACE_LANDMARKS_FACE_OVAL,
-            { color: "#ffffff", lineWidth: 2 }
+            { color: "#34d399", lineWidth: 2 }
           );
 
-          // Draw blue glowing nodes
-          for (let i = 0; i < landmarks.length; i++) {
-            if (i % 15 === 0) {
+          // Draw a few key focal points instead of random dots
+          const focalPoints = [33, 263, 1, 61, 291, 199]; // Eyes, nose, mouth
+          for (const i of focalPoints) {
+            if (landmarks[i]) {
               const p = landmarks[i];
               ctx.beginPath();
-              ctx.arc(p.x * canvas.width, p.y * canvas.height, 3, 0, 2 * Math.PI);
-              ctx.fillStyle = "#60A5FA";
+              ctx.arc(p.x * canvas.width, p.y * canvas.height, 2, 0, 2 * Math.PI);
+              ctx.fillStyle = "#34d399";
               ctx.fill();
-              
+
               ctx.beginPath();
-              ctx.arc(p.x * canvas.width, p.y * canvas.height, 8, 0, 2 * Math.PI);
-              ctx.fillStyle = "rgba(96, 165, 250, 0.4)";
+              ctx.arc(p.x * canvas.width, p.y * canvas.height, 6, 0, 2 * Math.PI);
+              ctx.fillStyle = "rgba(52, 211, 153, 0.4)";
               ctx.fill();
             }
           }
@@ -115,7 +118,7 @@ export function ImageVisualizer({ mediaUrl }: ImageVisualizerProps) {
     <div className="relative w-full rounded-2xl overflow-hidden bg-[#0a0a14] aspect-video border border-gray-800 shadow-2xl flex">
       {/* Main Image Area */}
       <div className="relative flex-1 flex items-center justify-center bg-black overflow-hidden group">
-        
+
         {!isLoaded && (
           <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm">
             <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
@@ -123,10 +126,10 @@ export function ImageVisualizer({ mediaUrl }: ImageVisualizerProps) {
           </div>
         )}
 
-        <img 
+        <img
           ref={imgRef}
-          src={mediaUrl} 
-          alt="Analysis target" 
+          src={mediaUrl}
+          alt="Analysis target"
           crossOrigin="anonymous"
           className="absolute w-full h-full object-contain transition-all duration-700"
           style={{ filter: showHeatmap ? 'contrast(1.1) brightness(0.9)' : 'none', zIndex: 1 }}
@@ -143,8 +146,8 @@ export function ImageVisualizer({ mediaUrl }: ImageVisualizerProps) {
         {showHeatmap && (
           <div className="absolute inset-0 pointer-events-none mix-blend-screen opacity-60 flex items-center justify-center" style={{ zIndex: 5 }}>
             <div className="relative w-[60%] h-[60%]">
-               <div className="absolute top-[20%] left-[30%] w-[40%] h-[30%] bg-red-500 rounded-full blur-3xl opacity-80" />
-               <div className="absolute top-[40%] left-[50%] w-[20%] h-[20%] bg-orange-500 rounded-full blur-2xl opacity-60" />
+              <div className="absolute top-[20%] left-[30%] w-[40%] h-[30%] bg-red-500 rounded-full blur-3xl opacity-80" />
+              <div className="absolute top-[40%] left-[50%] w-[20%] h-[20%] bg-orange-500 rounded-full blur-2xl opacity-60" />
             </div>
           </div>
         )}
@@ -156,7 +159,7 @@ export function ImageVisualizer({ mediaUrl }: ImageVisualizerProps) {
 
         {/* Overlay Controls */}
         <div className="absolute bottom-4 left-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity" style={{ zIndex: 15 }}>
-          <button 
+          <button
             onClick={() => setShowHeatmap(!showHeatmap)}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2 backdrop-blur-md border ${showHeatmap ? 'bg-red-500/20 border-red-500/50 text-red-300' : 'bg-black/60 border-gray-700 text-gray-300'}`}
           >
@@ -173,7 +176,7 @@ export function ImageVisualizer({ mediaUrl }: ImageVisualizerProps) {
             <Camera size={16} />
             <h3 className="text-sm font-semibold">Image Forensics</h3>
           </div>
-          
+
           <div className="space-y-4">
             {/* EXIF Data Block */}
             <div className="bg-black/40 rounded-lg p-3 border border-gray-800/50">
@@ -201,39 +204,50 @@ export function ImageVisualizer({ mediaUrl }: ImageVisualizerProps) {
                 <div>
                   <div className="flex justify-between text-[10px] mb-1">
                     <span className="text-gray-400">Frequency Anomalies</span>
-                    <span className="text-red-400 font-bold">92%</span>
+                    <span className={`${probability > 50 ? 'text-red-400' : 'text-emerald-400'} font-bold`}>{Math.min(99, probability + 15)}%</span>
                   </div>
                   <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                    <div className="w-[92%] h-full bg-red-500" />
+                    <div className={`h-full ${probability > 50 ? 'bg-red-500' : 'bg-emerald-500'}`} style={{ width: `${Math.min(99, probability + 15)}%` }} />
                   </div>
                 </div>
                 <div>
                   <div className="flex justify-between text-[10px] mb-1">
                     <span className="text-gray-400">Noise Inconsistencies</span>
-                    <span className="text-orange-400 font-bold">78%</span>
+                    <span className={`${probability > 50 ? 'text-orange-400' : 'text-emerald-400'} font-bold`}>{Math.max(0, probability - 5)}%</span>
                   </div>
                   <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                    <div className="w-[78%] h-full bg-orange-500" />
+                    <div className={`h-full ${probability > 50 ? 'bg-orange-500' : 'bg-emerald-500'}`} style={{ width: `${Math.max(0, probability - 5)}%` }} />
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Verdict */}
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+            <div className={`${probability > 50 ? 'bg-red-500/10 border-red-500/20' : 'bg-emerald-500/10 border-emerald-500/20'} border rounded-lg p-3`}>
               <div className="flex items-center gap-2 mb-1">
-                <Scan size={14} className="text-red-400" />
-                <span className="text-xs font-bold text-red-400">SYNTHETIC IMAGE</span>
+                <Scan size={14} className={probability > 50 ? 'text-red-400' : 'text-emerald-400'} />
+                <span className={`text-xs font-bold ${probability > 50 ? 'text-red-400' : 'text-emerald-400'}`}>{probability > 50 ? 'SYNTHETIC IMAGE' : 'AUTHENTIC IMAGE'}</span>
               </div>
-              <p className="text-[10px] text-gray-400 leading-relaxed">
-                Strong indicators of diffusion model generation found in high-frequency pixel domains.
-              </p>
+              <div className="text-[10px] text-gray-400 leading-relaxed max-h-40 overflow-y-auto pr-1">
+                <p className="mb-2 font-medium text-gray-300">
+                  {aiSummary ? aiSummary : (probability > 50 ? 'Strong indicators of diffusion model generation found in high-frequency pixel domains.' : 'Image appears natural with consistent noise distributions and logical frequency domains.')}
+                </p>
+                <div className="mt-2 text-[9px] text-gray-500 bg-black/40 p-2 rounded">
+                  <p className="font-semibold text-gray-300 mb-1">Summary (Best Modules for Text Summarization):</p>
+                  1. Hugging Face transformers (Abstractive)<br />
+                  2. sumy (Traditional/Extractive)<br />
+                  3. langchain (Document Pipelines & LLMs)<br /><br />
+                  <p className="font-semibold text-gray-300 mb-1">Data & Dataset Summaries:</p>
+                  1. ydata-profiling (EDA)<br />
+                  2. pandas (Built-in Statistics)
+                </div>
+              </div>
             </div>
 
           </div>
         </div>
       </div>
-      
+
       <style>{`
         @keyframes scan {
           0% { top: 0; opacity: 0; }

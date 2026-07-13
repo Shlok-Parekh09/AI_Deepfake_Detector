@@ -49,6 +49,7 @@ class DetectionResult(BaseModel):
     num_faces_analysed: int | None = None
     frames_analysed: int | None = None
     error: str | None = None
+    ai_summary: str | None = None
 
 
 # ── Endpoints ─────────────────────────────────────────────────
@@ -70,6 +71,9 @@ async def detect_deepfake(file: UploadFile = File(...)):
     try:
         result = predictor.predict(tmp_path)
         return DetectionResult(**result)
+    except RuntimeError as exc:
+        logger.warning("Detection unavailable: %s", exc)
+        raise HTTPException(status_code=503, detail=str(exc))
     except Exception as exc:
         logger.exception("Detection failed")
         raise HTTPException(status_code=500, detail=str(exc))
@@ -86,6 +90,9 @@ async def detect_from_url(request: URLRequest):
     try:
         result = predictor.predict_from_url(request.url)
         return DetectionResult(**result)
+    except RuntimeError as exc:
+        logger.warning("URL detection unavailable: %s", exc)
+        raise HTTPException(status_code=503, detail=str(exc))
     except Exception as exc:
         logger.exception("URL detection failed")
         raise HTTPException(status_code=500, detail=str(exc))
@@ -112,6 +119,11 @@ async def detect_batch(files: list[UploadFile] = File(...)):
             try:
                 result = predictor.predict(path)
                 results.append(DetectionResult(**result))
+            except RuntimeError as exc:
+                results.append(DetectionResult(
+                    fake_probability=0.0, is_fake=False,
+                    confidence="none", error=str(exc),
+                ))
             except Exception as exc:
                 results.append(DetectionResult(
                     fake_probability=0.0, is_fake=False,
@@ -137,6 +149,22 @@ async def health_check():
         "device": str(get_device()),
         "gpu_info": get_gpu_info(),
         "gpu_memory": get_gpu_memory_usage(),
+    }
+
+
+@router.get("/model/status")
+async def model_status():
+    """
+    Return the currently loaded checkpoint status.
+    """
+    predictor = _get_predictor()
+    return {
+        "vision_checkpoint": getattr(predictor, "vision_checkpoint_path", None),
+        "audio_checkpoint": getattr(predictor, "audio_checkpoint_path", None),
+        "ml_available": getattr(predictor, "ml_available", False),
+        "vision_trained": getattr(predictor, "model", None) is not None,
+        "audio_trained": getattr(predictor, "audio_model", None) is not None,
+        "trained_only": True,
     }
 
 

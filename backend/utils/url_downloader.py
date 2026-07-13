@@ -99,7 +99,9 @@ class URLDownloader:
             parsed = urlparse(url)
             if parsed.scheme not in ("http", "https"):
                 return False
-            resp = requests.head(url, timeout=10, allow_redirects=True)
+            if self._is_youtube(url):
+                return True
+            resp = requests.head(url, timeout=10, allow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'})
             return resp.status_code < 400
         except Exception:
             return False

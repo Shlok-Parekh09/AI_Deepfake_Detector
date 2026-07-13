@@ -1,11 +1,9 @@
 """
 Single-File Predictor for Deepfake Detection.
-Loads trained model weights and runs inference on a single image or video.
-Supports a fallback simulation mode if ML libraries are missing.
+Loads trained model weights and runs inference on a single image, video, or audio file.
+Inference is trained-checkpoint only: scans fail fast when required weights are missing.
 """
 
-import os
-import hashlib
 from pathlib import Path
 
 from backend.utils.file_handler import FileHandler
@@ -16,25 +14,25 @@ logger = get_logger(__name__)
 try:
     import numpy as np
     import torch
-    from backend.config import FAKE_THRESHOLD, CHECKPOINTS_DIR
+    from backend.config import FAKE_THRESHOLD
     from backend.inference.postprocessing import PostProcessor
-    from backend.models.vit_model import ViTDetector
+    from backend.models.audio_model import AudioCNN
+    from backend.models.model_factory import (
+        AUDIO_CHECKPOINT_NAMES,
+        VISION_CHECKPOINT_NAMES,
+        checkpoint_size,
+        find_checkpoint,
+        load_vision_model,
+    )
     from backend.preprocessing.face_detector import FaceDetector
     from backend.preprocessing.frame_extractor import FrameExtractor
     from backend.preprocessing.image_preprocessor import ImagePreprocessor
+    from backend.preprocessing.audio_features import load_log_mel
     from backend.utils.gpu_utils import get_device
     from backend.utils.url_downloader import URLDownloader
-    from backend.detectors.ensemble.fusion import EnsembleFusion
-    from backend.detectors.ensemble.calibration import TemperatureScaler
-    from backend.detectors.rppg.rppg_detector import rPPGDetector
-    from backend.detectors.lipsync.lipsync_detector import LipSyncConsistencyDetector
-    from backend.detectors.eye_reflection.eye_reflection_analyzer import EyeReflectionAnalyzer
-    from backend.detectors.diffusion.diffusion_artifact_detector import DiffusionArtifactDetector
-    from backend.detectors.head_pose.head_pose_detector import HeadPoseConsistencyDetector
-    from backend.detectors.provenance.provenance_checker import ProvenanceChecker
     ML_AVAILABLE = True
 except ImportError as e:
-    logger.warning(f"ML libraries not found ({e}). Running in deterministic fallback mode.")
+    logger.warning(f"ML libraries not found ({e}). Inference is unavailable until dependencies are installed.")
     ML_AVAILABLE = False
     from backend.config import FAKE_THRESHOLD
 
@@ -47,25 +45,48 @@ class Predictor:
     def __init__(self, checkpoint_path: str | None = None):
         self.file_handler = FileHandler()
         self.threshold = FAKE_THRESHOLD
+        self.vision_checkpoint_path = None
+        self.audio_checkpoint_path = None
+        self.model = None
+        self.audio_model = None
+        self.ml_available = ML_AVAILABLE
         
         if ML_AVAILABLE:
             self.device = get_device()
-            self.model = ViTDetector()
-            if checkpoint_path and os.path.isfile(checkpoint_path):
-                self.model.load_weights(checkpoint_path)
-            self.model.to(self.device)
-            self.model.eval()
-
-            self.ensemble_detector = EnsembleFusion(use_learned_fusion=True)
-            self.scaler = TemperatureScaler()
+            self.vision_checkpoint_path = checkpoint_path or find_checkpoint(
+                "DEEPFAKE_VISION_CHECKPOINT",
+                VISION_CHECKPOINT_NAMES,
+            )
+            self.audio_checkpoint_path = find_checkpoint(
+                "DEEPFAKE_AUDIO_CHECKPOINT",
+                AUDIO_CHECKPOINT_NAMES,
+            )
             
-            # Initialize new specialists
-            self.rppg = rPPGDetector()
-            self.lipsync = LipSyncConsistencyDetector()
-            self.eye_reflection = EyeReflectionAnalyzer()
-            self.diffusion = DiffusionArtifactDetector()
-            self.head_pose = HeadPoseConsistencyDetector()
-            self.provenance = ProvenanceChecker()
+            # Lazy load transformers pipeline for summarization
+            self._summarizer_pipeline = None
+
+            if self.vision_checkpoint_path:
+                self.model = load_vision_model(self.vision_checkpoint_path, self.device)
+                logger.info(
+                    "Loaded vision checkpoint %s (%s)",
+                    self.vision_checkpoint_path,
+                    checkpoint_size(self.vision_checkpoint_path),
+                )
+            else:
+                logger.warning("No vision checkpoint found; image/video scans are disabled.")
+
+            if self.audio_checkpoint_path:
+                self.audio_model = AudioCNN().to(self.device)
+                audio_state = torch.load(self.audio_checkpoint_path, map_location=self.device)
+                self.audio_model.load_state_dict(audio_state.get("model_state_dict", audio_state))
+                self.audio_model.eval()
+                logger.info(
+                    "Loaded audio checkpoint %s (%s)",
+                    self.audio_checkpoint_path,
+                    checkpoint_size(self.audio_checkpoint_path),
+                )
+            else:
+                logger.warning("No audio checkpoint found; audio scans are disabled.")
 
             self.face_detector = FaceDetector(device=str(self.device))
             self.preprocessor = ImagePreprocessor()
@@ -74,7 +95,35 @@ class Predictor:
             self.url_downloader = URLDownloader()
             logger.info("Predictor initialised on %s", self.device)
         else:
-            logger.info("Predictor initialised in SIMULATION mode.")
+            self.device = None
+            self._summarizer_pipeline = None
+            logger.info("Predictor initialised with inference disabled.")
+
+    def _get_ai_summary(self, is_fake: bool, prob: float, file_type: str) -> str:
+        """Generate a human-readable AI summary using Hugging Face transformers."""
+        if not ML_AVAILABLE:
+            return "AI summarizer is offline due to missing dependencies."
+            
+        if self._summarizer_pipeline is None:
+            try:
+                from transformers import pipeline
+                logger.info("Loading Flan-T5 model for AI Summaries...")
+                # Using a tiny model (Flan-T5-small) to generate forensic explanations
+                self._summarizer_pipeline = pipeline("text2text-generation", model="google/flan-t5-small", device=0 if torch.cuda.is_available() else -1)
+            except Exception as e:
+                logger.warning(f"Failed to load AI Summarizer: {e}")
+                return "Failed to initialize AI Summarizer."
+        
+        verdict = "synthetic deepfake" if is_fake else "authentic human"
+        confidence = "high" if prob > 0.85 or prob < 0.15 else "moderate"
+        prompt = f"Explain briefly: The AI has analyzed a {file_type} file and determined with {confidence} confidence ({round(prob*100)}%) that it is a {verdict}."
+        
+        try:
+            output = self._summarizer_pipeline(prompt, max_length=50, do_sample=True, temperature=0.7)
+            return output[0]["generated_text"].capitalize()
+        except Exception as e:
+            logger.warning(f"AI summarization failed: {e}")
+            return "AI summary generation failed."
 
     def predict(self, file_path: str) -> dict:
         """Auto-detect file type and run prediction."""
@@ -89,48 +138,25 @@ class Predictor:
                 "error": f"Unsupported file: {Path(file_path).suffix}",
             }
             
-        if not ML_AVAILABLE or file_type == "audio":
-            # If ML libraries are missing, or we don't have a trained audio model loaded yet
-            return self._simulate_prediction(file_path, file_type)
+        if not ML_AVAILABLE:
+            raise RuntimeError("ML dependencies are not installed. Trained inference is unavailable.")
+
+        if file_type == "audio":
+            if getattr(self, "audio_model", None) is None:
+                raise RuntimeError(
+                    "Audio checkpoint is missing. Train on Kaggle and place audio_best.pth in backend/checkpoints."
+                )
+            return self.predict_audio(file_path)
+
+        if getattr(self, "model", None) is None:
+            raise RuntimeError(
+                "Vision checkpoint is missing. Train on Kaggle and place vision_best.pth in backend/checkpoints."
+            )
 
         if file_type == "image":
             return self.predict_image(file_path)
         else:
             return self.predict_video(file_path)
-
-    def _simulate_prediction(self, file_path: str, file_type: str) -> dict:
-        """Deterministic fallback that uses file hash to generate realistic varied results."""
-        hasher = hashlib.md5()
-        try:
-            with open(file_path, "rb") as f:
-                hasher.update(f.read())
-            
-            # Create a deterministic pseudo-random float between 0 and 1
-            hash_int = int(hasher.hexdigest()[:8], 16)
-            prob = hash_int / 0xffffffff
-            
-            # Slightly bias towards extremes for more realistic confidence distribution
-            if prob < 0.3: prob = prob * 0.5
-            elif prob > 0.7: prob = 0.5 + (prob * 0.5)
-            
-            is_fake = prob >= self.threshold
-            
-            if prob >= 0.85 or prob <= 0.15: confidence = "high"
-            elif prob >= 0.65 or prob <= 0.35: confidence = "medium"
-            else: confidence = "low"
-            
-            return {
-                "fake_probability": round(prob, 4),
-                "is_fake": is_fake,
-                "confidence": confidence,
-                "file_type": file_type,
-                "num_faces_analysed": 1 if file_type == "image" else (0 if file_type == "audio" else 24),
-                "frames_analysed": 1 if file_type == "image" else (0 if file_type == "audio" else 150),
-                "reasons": ["Analysis simulated (ML fallback)"],
-                "simulated": True
-            }
-        except Exception as e:
-            return {"error": str(e), "fake_probability": 0.0, "is_fake": False, "confidence": "none", "reasons": []}
 
     def predict_image(self, image_path: str) -> dict:
         from PIL import Image
@@ -149,26 +175,14 @@ class Predictor:
                 probs.append(prob)
 
             avg_prob = self.postprocessor.aggregate_frame_predictions(probs)
-            
-            # Route outputs from all experts
-            expert_results = {
-                "spatial_cnn": {"score": avg_prob, "confidence": 0.85, "reasons": []},
-                "rppg": self.rppg.predict(image_path),
-                "eye_reflection": self.eye_reflection.predict(image_path),
-                "diffusion": self.diffusion.predict(image_path),
-                "head_pose": self.head_pose.predict(image_path),
-                "provenance": self.provenance.predict(image_path)
-            }
-            
-            ensemble_result = self.ensemble_detector.analyze(expert_results)
-            calibrated_prob = self.scaler.calibrate_probability(ensemble_result.get("score", 0.0))
-            
-            result = self.postprocessor.format_result(calibrated_prob)
+
+            result = self.postprocessor.format_result(avg_prob)
             result["file_type"] = "image"
             result["num_faces_analysed"] = len(faces)
-            result["reasons"] = ensemble_result.get("reasons", [])
-            result["raw_scores"] = ensemble_result.get("raw_scores", {})
+            result["reasons"] = ["Trained vision checkpoint analysis"]
+            result["raw_scores"] = {"vision_model": round(avg_prob, 4)}
             result["explainability_heatmap"] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+            result["ai_summary"] = self._get_ai_summary(result["is_fake"], avg_prob, "image")
             return result
 
     def predict_video(self, video_path: str) -> dict:
@@ -192,60 +206,40 @@ class Predictor:
                     all_probs.append(prob)
 
             avg_prob = self.postprocessor.aggregate_frame_predictions(all_probs)
-            
-            # Route outputs from all experts
-            expert_results = {
-                "spatial_cnn": {"score": avg_prob, "confidence": 0.85, "reasons": []},
-                "rppg": self.rppg.predict(video_path),
-                "lipsync": self.lipsync.predict(video_path),
-                "eye_reflection": self.eye_reflection.predict(video_path),
-                "diffusion": self.diffusion.predict(video_path),
-                "head_pose": self.head_pose.predict(video_path),
-                "provenance": self.provenance.predict(video_path)
-            }
-            
-            ensemble_result = self.ensemble_detector.analyze(expert_results)
-            calibrated_prob = self.scaler.calibrate_probability(ensemble_result.get("score", 0.0))
-            
-            result = self.postprocessor.format_result(calibrated_prob)
+
+            result = self.postprocessor.format_result(avg_prob)
             result["file_type"] = "video"
             result["num_faces_analysed"] = len(all_probs)
             result["frames_analysed"] = len(frames)
-            result["reasons"] = ensemble_result.get("reasons", [])
-            result["raw_scores"] = ensemble_result.get("raw_scores", {})
+            result["reasons"] = ["Trained vision checkpoint analysis"]
+            result["raw_scores"] = {"vision_model": round(avg_prob, 4)}
             result["explainability_heatmap"] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+            result["ai_summary"] = self._get_ai_summary(result["is_fake"], avg_prob, "video")
             return result
+
+    def predict_audio(self, audio_path: str) -> dict:
+        import torch
+        with torch.no_grad():
+            features = load_log_mel(audio_path).unsqueeze(0).to(self.device)
+            logits = self.audio_model(features)
+            prob = torch.softmax(logits, dim=1)[0, 1].item()
+
+        result = self.postprocessor.format_result(prob)
+        result["file_type"] = "audio"
+        result["num_faces_analysed"] = 0
+        result["frames_analysed"] = 0
+        result["reasons"] = [
+            "Audio checkpoint analysis",
+            "Log-mel spectral classifier scored the clip for synthetic voice artifacts.",
+        ]
+        result["raw_scores"] = {"audio_cnn": round(prob, 4)}
+        result["ai_summary"] = self._get_ai_summary(result["is_fake"], prob, "audio")
+        return result
 
     def predict_from_url(self, url: str) -> dict:
         if not ML_AVAILABLE:
-            # For consistent simulation, hash the URL directly instead of downloading dynamic HTML
-            import hashlib
-            hasher = hashlib.md5(url.encode("utf-8"))
-            hash_int = int(hasher.hexdigest()[:8], 16)
-            prob = hash_int / 0xffffffff
-            
-            if prob < 0.3: prob = prob * 0.5
-            elif prob > 0.7: prob = 0.5 + (prob * 0.5)
-            
-            is_fake = prob >= self.threshold
-            
-            if prob >= 0.85 or prob <= 0.15: confidence = "high"
-            elif prob >= 0.65 or prob <= 0.35: confidence = "medium"
-            else: confidence = "low"
-            
-            file_type = "video" if "youtu" in url.lower() or ".mp4" in url.lower() else "image"
-            
-            return {
-                "fake_probability": round(prob, 4),
-                "is_fake": is_fake,
-                "confidence": confidence,
-                "file_type": file_type,
-                "num_faces_analysed": 24 if file_type == "video" else 1,
-                "frames_analysed": 150 if file_type == "video" else 1,
-                "reasons": ["Analysis simulated (ML fallback)"],
-                "simulated": True
-            }
-                
+            raise RuntimeError("ML dependencies are not installed. Trained inference is unavailable.")
+
         local_path = self.url_downloader.download(url)
         try:
             return self.predict(local_path)

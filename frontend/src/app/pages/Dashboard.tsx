@@ -2,13 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Upload, X, Monitor, Moon, Sun, Paperclip, ChevronLeft, ShieldAlert, ShieldCheck } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
 // Visualizers
 import { ScanningView } from '../components/visualizers/ScanningView';
 import { VideoVisualizer } from '../components/visualizers/VideoVisualizer';
 import { AudioVisualizer } from '../components/visualizers/AudioVisualizer';
 import { ImageVisualizer } from '../components/visualizers/ImageVisualizer';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 interface ScanHistory {
   id: string;
@@ -35,6 +35,7 @@ export default function Dashboard() {
   const [currentScanType, setCurrentScanType] = useState<'video' | 'audio' | 'image'>('video');
   const [currentMediaUrl, setCurrentMediaUrl] = useState<string>('');
   const [currentResultProbability, setCurrentResultProbability] = useState(0);
+  const [currentAiSummary, setCurrentAiSummary] = useState<string>('');
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   const [showThemeMenu, setShowThemeMenu] = useState(false);
@@ -100,7 +101,7 @@ export default function Dashboard() {
 
     // Mock scanning progression just for visual feedback while waiting for backend
     let progress = 0;
-    const interval = setInterval(() => {
+    const interval = window.setInterval(() => {
       progress += Math.random() * 5 + 2;
       // Cap at 90% while waiting for the actual backend response
       if (progress > 90) progress = 90;
@@ -114,7 +115,7 @@ export default function Dashboard() {
     }, 400);
 
     try {
-      let resultData;
+      let resultData: any;
       if (selectedFile) {
         const formData = new FormData();
         formData.append('file', selectedFile);
@@ -138,7 +139,7 @@ export default function Dashboard() {
         }
       }
 
-      clearInterval(interval);
+      window.clearInterval(interval);
       setScanProgress(100);
       setScanStatusText('Finalizing report...');
 
@@ -146,6 +147,7 @@ export default function Dashboard() {
         // The backend returns a probability float (0.0 to 1.0)
         const prob = Math.round((resultData.fake_probability || 0) * 100);
         setCurrentResultProbability(prob);
+        setCurrentAiSummary(resultData.ai_summary || '');
         
         const newScan: ScanHistory = {
           id: Date.now().toString(),
@@ -161,7 +163,7 @@ export default function Dashboard() {
 
     } catch (error) {
       console.error("Backend scan failed:", error);
-      clearInterval(interval);
+      window.clearInterval(interval);
       setScanStatusText(error instanceof Error ? error.message : 'Scan failed. Ensure backend is running.');
       // Revert after error
       setTimeout(() => setScanState('idle'), 5000);
@@ -187,7 +189,6 @@ export default function Dashboard() {
     }
   };
 
-  const formatTime = (time: string) => time === 'Just now' ? 'Just now' : time;
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#08080e] text-gray-900 dark:text-white flex transition-colors duration-200">
@@ -510,7 +511,7 @@ export default function Dashboard() {
                     </div>
                   )}
                   {currentScanType === 'audio' && <AudioVisualizer mediaUrl={currentMediaUrl || '/placeholder.mp3'} />}
-                  {currentScanType === 'image' && <ImageVisualizer mediaUrl={currentMediaUrl || '/placeholder.jpg'} />}
+                  {currentScanType === 'image' && <ImageVisualizer mediaUrl={currentMediaUrl || '/placeholder.jpg'} probability={currentResultProbability} aiSummary={currentAiSummary} />}
                 </div>
               </div>
             </div>
