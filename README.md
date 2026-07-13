@@ -1,3 +1,12 @@
+---
+title: Deepfake Detector API
+emoji: 🛡️
+colorFrom: indigo
+colorTo: blue
+sdk: docker
+app_port: 7860
+---
+
 # 🛡️ Neuro: AI Deepfake Detector
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -62,6 +71,13 @@ AI_Deepfake_Detector/
 ---
 
 ## 🚀 Quick Start
+
+### Kaggle Training Without Local Dataset Downloads
+
+Raw training data should stay on Kaggle. Attach the four Kaggle datasets in a
+Kaggle notebook and run the scripts in [KAGGLE_TRAINING.md](KAGGLE_TRAINING.md).
+Only the resulting checkpoints (`vision_best.pth` and `audio_best.pth`) need to
+be copied into `backend/checkpoints/` for the API to use trained models.
 
 ### 1. Backend Setup
 
