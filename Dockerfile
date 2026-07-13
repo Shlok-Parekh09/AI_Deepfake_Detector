@@ -1,7 +1,5 @@
 FROM python:3.10-slim
 
-WORKDIR /app
-
 # Install system dependencies for OpenCV and media processing
 RUN apt-get update && apt-get install -y \
     libgl1 \
@@ -12,22 +10,26 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy only requirements first to leverage Docker cache
-COPY backend/requirements.txt .
+# Set up a new user named "user" with user ID 1000
+RUN useradd -m -u 1000 user
+USER user
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
 
-# Install CPU-only torch to save space and memory (since free tiers don't have GPUs)
+WORKDIR $HOME/app
+
+# Copy requirements first
+COPY --chown=user backend/requirements-space.txt .
+
+# Install dependencies (as user 1000, this will install to ~/.local/bin and ~/.local/lib)
 RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir -r requirements-space.txt
 
-# Install the rest of the dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy application
+COPY --chown=user . .
 
-# Copy the rest of the application
-COPY . .
+ENV PYTHONPATH=$HOME/app
 
-# Set Python path so 'import backend' works correctly
-ENV PYTHONPATH=/app
-
-# Hugging Face Spaces uses port 7860 by default
 EXPOSE 7860
 
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "7860"]
