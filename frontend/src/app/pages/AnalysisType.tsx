@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Video, Mic, Image as ImageIcon, ArrowRight } from 'lucide-react';
-import svgPaths from '../../imports/MacBookPro166/svg-vk1owfvmuu';
+import BrandLogo from '../components/BrandLogo';
 
 export default function AnalysisType() {
   const navigate = useNavigate();
@@ -62,11 +62,7 @@ export default function AnalysisType() {
       {/* Header */}
       <div className="relative z-10 flex items-center justify-between px-8 py-6 border-b border-gray-800">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8">
-            <svg className="w-full h-full" fill="none" preserveAspectRatio="none" viewBox="0 0 47 47">
-              <path d={svgPaths.p3be4e980} fill="#60A5FA" />
-            </svg>
-          </div>
+          <BrandLogo size={36} />
           <span className="text-xl font-bold">Neuro</span>
         </div>
         <button

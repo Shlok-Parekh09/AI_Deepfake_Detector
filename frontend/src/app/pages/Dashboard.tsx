@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Upload, X, Monitor, Moon, Sun, Paperclip, ChevronLeft, ShieldAlert, ShieldCheck } from 'lucide-react';
-import svgPaths from '../../imports/MacBookPro166/svg-vk1owfvmuu';
+import BrandLogo from '../components/BrandLogo';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -123,6 +123,9 @@ export default function Dashboard() {
           body: formData,
         });
         resultData = await res.json();
+        if (!res.ok) {
+          throw new Error(resultData.detail || 'Backend scan failed');
+        }
       } else {
         const res = await fetch(`${API_BASE_URL}/api/v1/detect/url`, {
           method: 'POST',
@@ -130,6 +133,9 @@ export default function Dashboard() {
           body: JSON.stringify({ url: urlInput }),
         });
         resultData = await res.json();
+        if (!res.ok) {
+          throw new Error(resultData.detail || 'Backend scan failed');
+        }
       }
 
       clearInterval(interval);
@@ -156,9 +162,9 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Backend scan failed:", error);
       clearInterval(interval);
-      setScanStatusText('Scan failed. Ensure backend is running.');
+      setScanStatusText(error instanceof Error ? error.message : 'Scan failed. Ensure backend is running.');
       // Revert after error
-      setTimeout(() => setScanState('idle'), 3000);
+      setTimeout(() => setScanState('idle'), 5000);
     }
   };
 
@@ -190,11 +196,7 @@ export default function Dashboard() {
         {/* Logo */}
         <div className="p-5 border-b border-gray-200 dark:border-gray-800/50">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5">
-              <svg className="w-full h-full" fill="none" preserveAspectRatio="none" viewBox="0 0 47 47">
-                <path d={svgPaths.p3be4e980} fill="#818CF8" />
-              </svg>
-            </div>
+            <BrandLogo size={24} />
             <span className="text-sm font-semibold text-gray-900 dark:text-white">Deepfake Analyser</span>
             <svg className="w-3.5 h-3.5 ml-auto text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -277,11 +279,7 @@ export default function Dashboard() {
             {/* Header */}
             <div className="text-center py-12 border-b border-gray-200 dark:border-gray-800/50 bg-white dark:bg-[#08080e] transition-colors duration-200">
               <div className="flex items-center justify-center gap-2.5 mb-3">
-                <div className="w-10 h-10">
-                  <svg className="w-full h-full" fill="none" preserveAspectRatio="none" viewBox="0 0 47 47">
-                    <path d={svgPaths.p3be4e980} fill="#818CF8" />
-                  </svg>
-                </div>
+                <BrandLogo size={48} />
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Neuro</h1>
               </div>
               <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto">

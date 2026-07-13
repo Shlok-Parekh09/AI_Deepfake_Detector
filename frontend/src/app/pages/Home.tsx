@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Menu, X, ArrowRight, Layers, AudioLines, Grid3x3, Globe, SlidersHorizontal, FileSearch, Eye, Ear, ChevronRight } from 'lucide-react';
+import BrandLogo from '../components/BrandLogo';
 
 /* ────────────────────────────────────────────────
    Animated neural-net dots used in the hero card
@@ -67,29 +68,7 @@ function SpectrumBars({ barCount = 48, accent = 'indigo' }: { barCount?: number;
    Neuro Logo Component (consistent across pages)
    ════════════════════════════════════════════════ */
 function NeuroLogo({ size = 28 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      {/* Outer ring */}
-      <circle cx="16" cy="16" r="14" stroke="url(#logoGrad)" strokeWidth="2" fill="none" />
-      {/* Inner brain-network nodes */}
-      <circle cx="11" cy="12" r="2" fill="#818CF8" />
-      <circle cx="21" cy="12" r="2" fill="#6366F1" />
-      <circle cx="16" cy="20" r="2" fill="#A78BFA" />
-      <circle cx="16" cy="10" r="1.5" fill="#C4B5FD" />
-      {/* Connections */}
-      <line x1="11" y1="12" x2="16" y2="10" stroke="#818CF8" strokeWidth="1" opacity="0.6" />
-      <line x1="21" y1="12" x2="16" y2="10" stroke="#6366F1" strokeWidth="1" opacity="0.6" />
-      <line x1="11" y1="12" x2="16" y2="20" stroke="#818CF8" strokeWidth="1" opacity="0.4" />
-      <line x1="21" y1="12" x2="16" y2="20" stroke="#6366F1" strokeWidth="1" opacity="0.4" />
-      <line x1="11" y1="12" x2="21" y2="12" stroke="#A78BFA" strokeWidth="0.8" opacity="0.3" />
-      <defs>
-        <linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32">
-          <stop offset="0%" stopColor="#818CF8" />
-          <stop offset="100%" stopColor="#6366F1" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
+  return <BrandLogo size={size} />;
 }
 
 /* ════════════════════════════════════════════════

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import svgPaths from '../../imports/MacBookPro166/svg-vk1owfvmuu';
+import BrandLogo from '../components/BrandLogo';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -32,11 +33,7 @@ export default function Login() {
       <div className="relative z-10 w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-12 h-12">
-            <svg className="w-full h-full" fill="none" preserveAspectRatio="none" viewBox="0 0 47 47">
-              <path d={svgPaths.p3be4e980} fill="#60A5FA" />
-            </svg>
-          </div>
+          <BrandLogo size={56} />
           <h1 className="text-white text-4xl font-bold" style={{ fontFamily: "'Eagle Lake', serif" }}>
             Neuro
           </h1>
