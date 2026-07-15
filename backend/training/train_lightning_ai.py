@@ -193,6 +193,39 @@ DATASET_PIPELINE = [
 # Kaggle dataset download + cleanup
 # ---------------------------------------------------------------------------
 
+def _resolve_kaggle_slug(slug: str) -> str:
+    """
+    Resolve a bare dataset name to a full owner/dataset-name slug.
+    
+    The Kaggle API requires the full slug (e.g. 'xhlulu/140k-real-and-fake-faces')
+    but we only store the dataset name. This function searches the Kaggle API
+    for the correct owner and returns the full slug.
+    """
+    # Already has owner
+    if "/" in slug:
+        return slug
+
+    # Search for the dataset
+    try:
+        result = subprocess.run(
+            ["kaggle", "datasets", "list", "-s", slug, "--csv", "--max-size", "1"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode == 0 and result.stdout:
+            lines = result.stdout.strip().split("\n")
+            if len(lines) > 1:
+                # First data line: ref,name,size,...
+                ref = lines[1].split(",")[0]
+                if "/" in ref:
+                    print(f"    [Slug] Resolved '{slug}' -> '{ref}'")
+                    return ref
+    except Exception as e:
+        print(f"    [Slug] Could not resolve owner for '{slug}': {e}")
+
+    # Fallback: return as-is (will likely 403 but we try)
+    return slug
+
+
 def download_kaggle_dataset(slug: str, target_dir: str, max_retries: int = 3) -> bool:
     """Download a single Kaggle dataset via the Kaggle CLI."""
     if os.path.isdir(target_dir) and os.listdir(target_dir):
@@ -201,9 +234,12 @@ def download_kaggle_dataset(slug: str, target_dir: str, max_retries: int = 3) ->
 
     os.makedirs(os.path.dirname(target_dir), exist_ok=True)
 
+    # Resolve full owner/dataset-name slug
+    full_slug = _resolve_kaggle_slug(slug)
+
     for attempt in range(1, max_retries + 1):
-        print(f"    [Download] {slug} (attempt {attempt}/{max_retries})...")
-        cmd = ["kaggle", "datasets", "download", "-d", slug,
+        print(f"    [Download] {full_slug} (attempt {attempt}/{max_retries})...")
+        cmd = ["kaggle", "datasets", "download", "-d", full_slug,
                "-p", target_dir, "--unzip"]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode == 0:
@@ -215,7 +251,7 @@ def download_kaggle_dataset(slug: str, target_dir: str, max_retries: int = 3) ->
             print(f"    Retrying in 10s...")
             time.sleep(10)
 
-    print(f"    [GIVE UP] {slug} failed after {max_retries} attempts")
+    print(f"    [GIVE UP] {full_slug} failed after {max_retries} attempts")
     return False
 
 
