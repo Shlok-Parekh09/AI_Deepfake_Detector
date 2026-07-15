@@ -32,9 +32,10 @@ def get_gpu_info() -> dict | None:
     """
     if torch.cuda.is_available():
         props = torch.cuda.get_device_properties(0)
+        total = getattr(props, "total_memory", getattr(props, "total_mem", 0))
         return {
             "name": props.name,
-            "total_memory_mb": round(props.total_mem / (1024 ** 2), 1),
+            "total_memory_mb": round(total / (1024 ** 2), 1),
             "compute_capability": f"{props.major}.{props.minor}",
             "multi_processor_count": props.multi_processor_count,
             "vendor": "nvidia",
@@ -58,12 +59,12 @@ def get_gpu_memory_usage() -> dict | None:
     Returns ``None`` when no accelerator is available.
     """
     if torch.cuda.is_available():
+        props = torch.cuda.get_device_properties(0)
+        total = getattr(props, "total_memory", getattr(props, "total_mem", 0))
         return {
             "allocated_mb": round(torch.cuda.memory_allocated(0) / (1024 ** 2), 2),
             "cached_mb": round(torch.cuda.memory_reserved(0) / (1024 ** 2), 2),
-            "total_mb": round(
-                torch.cuda.get_device_properties(0).total_mem / (1024 ** 2), 2
-            ),
+            "total_mb": round(total / (1024 ** 2), 2),
         }
     if hasattr(torch, "xpu") and torch.xpu.is_available():
         return {
