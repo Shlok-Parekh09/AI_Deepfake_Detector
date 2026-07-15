@@ -32,12 +32,14 @@ echo "[1/4] Installing dependencies..."
 pip install -q torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu121 2>/dev/null || \
     pip install -q torch torchvision torchaudio
 
-# Pin numpy<2 to avoid binary incompatibility with pandas/matplotlib on the
-# Lightning AI base image.
-pip install -q "numpy<2"
+# Pin a compatible set of versions to avoid numpy 1.x vs 2.x conflicts
+# on the Lightning AI base image (which ships pandas 2.1.4 + matplotlib 3.8.2
+# that require numpy<2, but also scipy/opencv that want numpy>=2).
+# We pin everything to numpy 2.x compatible versions and upgrade pandas.
+pip install -q "numpy>=2.0,<3" "pandas>=2.2,<3" "matplotlib>=3.9,<4" \
+    "scipy>=1.13,<2" "opencv-python-headless>=4.10,<5"
 
-pip install -q timm librosa soundfile tqdm opencv-python-headless \
-    Pillow kaggle huggingface_hub
+pip install -q timm librosa soundfile tqdm Pillow kaggle huggingface_hub
 
 echo "  [OK] Dependencies installed"
 
