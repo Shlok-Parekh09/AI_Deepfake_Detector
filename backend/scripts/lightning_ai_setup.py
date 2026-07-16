@@ -25,7 +25,7 @@ def main():
     print(f"[2/4] Configured DATA_ROOT -> {data_root}")
 
     # 3. Download a reliable, non-restricted dataset (no 403 Forbidden errors)
-    dataset_slug = "manjilkarki/deepfake-and-real-images"
+    dataset_slug = "xhlulu/140k-real-and-fake-faces"
     dataset_folder = data_root / dataset_slug.split("/")[-1]
     
     if not dataset_folder.exists() or not any(dataset_folder.iterdir()):
@@ -59,7 +59,7 @@ def main():
     output_dir = "/teamspace/studios/this_studio/checkpoints"
     
     try:
-        subprocess.run([sys.executable, str(train_script), "--output-dir", output_dir], env=env, check=True)
+        subprocess.run([sys.executable, str(train_script), "--output-dir", output_dir, "--resume"], env=env, check=True)
     except KeyboardInterrupt:
         print("\nTraining interrupted by user.")
     except Exception as e:
