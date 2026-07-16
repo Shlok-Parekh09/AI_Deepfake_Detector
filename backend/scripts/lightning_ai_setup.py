@@ -56,8 +56,10 @@ def main():
         print(f"  [ERROR] Could not find {train_script}. Make sure you are in the AI_Deepfake_Detector root directory.")
         sys.exit(1)
 
+    output_dir = "/teamspace/studios/this_studio/checkpoints"
+    
     try:
-        subprocess.run([sys.executable, str(train_script)], env=env, check=True)
+        subprocess.run([sys.executable, str(train_script), "--output-dir", output_dir], env=env, check=True)
     except KeyboardInterrupt:
         print("\nTraining interrupted by user.")
     except Exception as e:
