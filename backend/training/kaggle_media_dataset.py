@@ -206,19 +206,27 @@ def parse_source_arg(raw: str, media_exts: frozenset[str]) -> KaggleSource:
 
 
 def _resolve_kaggle_path(source: KaggleSource) -> Path | None:
-    """Find the actual mount point for a source, checking alternative Kaggle paths."""
-    root = Path(source.path)
-    if root.exists():
-        return root
+    """Resolve the source path based on the environment."""
+    data_root = os.environ.get("DATA_ROOT", "/kaggle/input")
+    
+    # If the user provides a direct path, respect it (useful for Lightning AI custom downloads)
+    if "DATA_ROOT" in os.environ:
+        # E.g., DATA_ROOT=/teamspace/studios/this_studio/datasets
+        # Extract the dataset slug from the Kaggle path (e.g., /kaggle/input/deepfake-and-real-images -> deepfake-and-real-images)
+        dataset_slug = source.path.strip("/").split("/")[-1]
+        base_path = Path(data_root) / dataset_slug
+    else:
+        # Default Kaggle path
+        base_path = Path(source.path)
 
-    if not source.path.startswith("/kaggle/input/"):
+    if base_path.exists():
+        return base_path
+        
+    # Check for alternate directory structures under the data_root
+    if not os.path.exists(data_root):
         return None
 
     slug = source.path.split("/")[-1]
-    base = "/kaggle/input"
-    if not os.path.exists(base):
-        return None
-
     # Check direct children and datasets/username/slug pattern
     for d1 in os.listdir(base):
         p1 = os.path.join(base, d1)
