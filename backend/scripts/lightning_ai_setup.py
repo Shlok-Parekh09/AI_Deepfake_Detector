@@ -46,9 +46,10 @@ def main():
     # 4. Start the training!
     print("[4/4] Launching PyTorch Training...")
     
-    # We will pass the DATA_ROOT to the training script
+    # We will pass the DATA_ROOT and PYTHONPATH to the training script
     env = os.environ.copy()
     env["DATA_ROOT"] = str(data_root)
+    env["PYTHONPATH"] = str(Path.cwd())
     
     train_script = Path("backend/training/train_vision_kaggle.py")
     if not train_script.exists():

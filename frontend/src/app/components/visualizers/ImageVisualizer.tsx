@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Camera, Layers, Scan } from 'lucide-react';
 import { FaceLandmarker, FilesetResolver, DrawingUtils } from '@mediapipe/tasks-vision';
 
@@ -72,14 +72,16 @@ export function ImageVisualizer({ mediaUrl, probability = 0, aiSummary }: ImageV
           // Draw the full wireframe tessellation with a techy look
           drawingUtils.drawConnectors(
             landmarks,
-            FaceLandmarker.FACE_LANDMARKS_TESSELLATION,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (FaceLandmarker as any).FACE_LANDMARKS_TESSELLATION,
             { color: "#10b981", lineWidth: 0.5 }
           );
 
           // Draw face oval
           drawingUtils.drawConnectors(
             landmarks,
-            FaceLandmarker.FACE_LANDMARKS_FACE_OVAL,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (FaceLandmarker as any).FACE_LANDMARKS_FACE_OVAL,
             { color: "#34d399", lineWidth: 2 }
           );
 

@@ -1,2 +1,26 @@
-node_modules
+# Dependencies
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+
+# Environment & Secrets
+.secrets
+*.env.local
 frontend/.env
+
+# Build artifacts
+dist/
+backend_code.zip
+kaggle_dataset/
+kaggle_kernel/
+backend/checkpoints/*.pth
+backend/logs/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+*.swp
