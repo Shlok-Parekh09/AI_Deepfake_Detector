@@ -228,8 +228,8 @@ def _resolve_kaggle_path(source: KaggleSource) -> Path | None:
 
     slug = source.path.split("/")[-1]
     # Check direct children and datasets/username/slug pattern
-    for d1 in os.listdir(base):
-        p1 = os.path.join(base, d1)
+    for d1 in os.listdir(data_root):
+        p1 = os.path.join(data_root, d1)
         if not os.path.isdir(p1):
             continue
         if d1 == slug:
