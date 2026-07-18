@@ -57,6 +57,18 @@ class Predictor:
                 "DEEPFAKE_VISION_CHECKPOINT",
                 VISION_CHECKPOINT_NAMES,
             )
+            
+            if not self.vision_checkpoint_path:
+                try:
+                    from huggingface_hub import hf_hub_download
+                    logger.info("Attempting to download vision model from Hugging Face Hub...")
+                    self.vision_checkpoint_path = hf_hub_download(
+                        repo_id="Shlok0829/deepfake-detector",
+                        filename="vision_best.pth"
+                    )
+                except Exception as e:
+                    logger.warning(f"Could not download model from HF Hub: {e}")
+
             self.audio_checkpoint_path = find_checkpoint(
                 "DEEPFAKE_AUDIO_CHECKPOINT",
                 AUDIO_CHECKPOINT_NAMES,
