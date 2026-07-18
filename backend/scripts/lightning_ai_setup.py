@@ -44,8 +44,8 @@ def main():
                 ])
                 print(f"  [OK] {dataset_slug} downloaded successfully.")
             except subprocess.CalledProcessError:
-                print(f"  [ERROR] Failed to download {dataset_slug}. Ensure KAGGLE_USERNAME and KAGGLE_KEY are set.")
-                sys.exit(1)
+                print(f"  [WARNING] Failed to download {dataset_slug}. It might be private, deleted, or you might have a typo. Skipping...")
+                continue
         else:
             print(f"[*] Dataset already exists: {dataset_slug}, skipping download.")
 

@@ -11,3 +11,5 @@
 2026-05-25 23:35:51 │ [32mINFO[0m │ backend.inference.predictor │ Predictor initialised in SIMULATION mode.
 2026-07-01 14:37:06 │ [33mWARNING[0m │ backend.inference.predictor │ ML libraries not found (No module named 'timm'). Running in deterministic fallback mode.
 2026-07-01 14:37:06 │ [32mINFO[0m │ backend.inference.predictor │ Predictor initialised in SIMULATION mode.
+2026-07-18 10:15:01 │ [33mWARNING[0m │ backend.inference.predictor │ ML libraries not found (No module named 'facenet_pytorch'). Inference is unavailable until dependencies are installed.
+2026-07-18 10:15:01 │ [32mINFO[0m │ backend.inference.predictor │ Predictor initialised with inference disabled.
