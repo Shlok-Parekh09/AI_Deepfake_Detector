@@ -28,6 +28,7 @@ def main():
     # You can add as many Kaggle dataset slugs to this list as you want!
     # Ensure they are comma-separated and surrounded by quotes.
     DATASETS = [
+        "abdallamohamed312/in-the-wild-dataset",
         "manjilkarki/deepfake-and-real-images",
         "xhlulu/140k-real-and-fake-faces"
     ]
