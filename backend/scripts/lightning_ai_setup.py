@@ -24,24 +24,30 @@ def main():
     os.environ["DATA_ROOT"] = str(data_root)
     print(f"[2/4] Configured DATA_ROOT -> {data_root}")
 
-    # 3. Download a reliable, non-restricted dataset (no 403 Forbidden errors)
-    dataset_slug = "xhlulu/140k-real-and-fake-faces"
-    dataset_folder = data_root / dataset_slug.split("/")[-1]
-    
-    if not dataset_folder.exists() or not any(dataset_folder.iterdir()):
-        print(f"[3/4] Downloading reliable dataset: {dataset_slug} (approx 1.6 GB)...")
-        try:
-            # We use the kaggle CLI directly
-            subprocess.check_call([
-                "kaggle", "datasets", "download", "-d", dataset_slug,
-                "-p", str(dataset_folder), "--unzip"
-            ])
-            print("  [OK] Dataset downloaded successfully.")
-        except subprocess.CalledProcessError:
-            print(f"  [ERROR] Failed to download {dataset_slug}. Ensure your KAGGLE_USERNAME and KAGGLE_KEY are set.")
-            sys.exit(1)
-    else:
-        print(f"[3/4] Dataset already exists at {dataset_folder}, skipping download.")
+    # 3. Download reliable datasets
+    # You can add as many Kaggle dataset slugs to this list as you want!
+    # Ensure they are comma-separated and surrounded by quotes.
+    DATASETS = [
+        "manjilkarki/deepfake-and-real-images",
+        "xhlulu/140k-real-and-fake-faces"
+    ]
+
+    for dataset_slug in DATASETS:
+        dataset_folder = data_root / dataset_slug.split("/")[-1]
+        
+        if not dataset_folder.exists() or not any(dataset_folder.iterdir()):
+            print(f"[*] Downloading dataset: {dataset_slug}...")
+            try:
+                subprocess.check_call([
+                    "kaggle", "datasets", "download", "-d", dataset_slug,
+                    "-p", str(dataset_folder), "--unzip"
+                ])
+                print(f"  [OK] {dataset_slug} downloaded successfully.")
+            except subprocess.CalledProcessError:
+                print(f"  [ERROR] Failed to download {dataset_slug}. Ensure KAGGLE_USERNAME and KAGGLE_KEY are set.")
+                sys.exit(1)
+        else:
+            print(f"[*] Dataset already exists: {dataset_slug}, skipping download.")
 
     # 4. Start the training!
     print("[4/4] Launching PyTorch Training...")
