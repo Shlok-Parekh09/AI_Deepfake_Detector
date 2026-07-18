@@ -66,7 +66,7 @@ def main():
     output_dir = "/teamspace/studios/this_studio/checkpoints"
     
     try:
-        subprocess.run([sys.executable, str(train_script), "--output-dir", output_dir, "--resume"], env=env, check=True)
+        subprocess.run([sys.executable, str(train_script), "--output-dir", output_dir, "--resume", "--epochs", "8"], env=env, check=True)
     except KeyboardInterrupt:
         print("\nTraining interrupted by user.")
     except Exception as e:
