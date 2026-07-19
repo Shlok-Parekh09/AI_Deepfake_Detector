@@ -255,3 +255,7 @@ Monitor the output for the direct link to the live training job.
 
 ---
 *End of Document. Designed for precision, engineered for scale.*
+
+
+## Architecture Flowchart
+![SynPhi Architecture](assets/architecture-flowchart.png)

@@ -1,0 +1,12 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="synphiGrad" x1="25%" y1="5%" x2="45%" y2="95%">
+      <stop offset="18%" stop-color="#FCFFFF" />
+      <stop offset="34%" stop-color="#D6FFE6" />
+      <stop offset="56%" stop-color="#8FD8F7" />
+      <stop offset="100%" stop-color="#5BD7FD" />
+    </linearGradient>
+  </defs>
+  <polygon points="25,10 5,60 40,90" fill="url(#synphiGrad)" stroke="black" stroke-width="4" stroke-linejoin="round" />
+  <polygon points="25,10 40,90 95,50" fill="url(#synphiGrad)" stroke="black" stroke-width="4" stroke-linejoin="round" />
+</svg>
