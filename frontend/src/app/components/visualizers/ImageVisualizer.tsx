@@ -234,15 +234,6 @@ export function ImageVisualizer({ mediaUrl, probability = 0, aiSummary }: ImageV
                 <p className="mb-2 font-medium text-gray-300">
                   {aiSummary ? aiSummary : (probability > 50 ? 'Strong indicators of diffusion model generation found in high-frequency pixel domains.' : 'Image appears natural with consistent noise distributions and logical frequency domains.')}
                 </p>
-                <div className="mt-2 text-[9px] text-gray-500 bg-black/40 p-2 rounded">
-                  <p className="font-semibold text-gray-300 mb-1">Summary (Best Modules for Text Summarization):</p>
-                  1. Hugging Face transformers (Abstractive)<br />
-                  2. sumy (Traditional/Extractive)<br />
-                  3. langchain (Document Pipelines & LLMs)<br /><br />
-                  <p className="font-semibold text-gray-300 mb-1">Data & Dataset Summaries:</p>
-                  1. ydata-profiling (EDA)<br />
-                  2. pandas (Built-in Statistics)
-                </div>
               </div>
             </div>
 

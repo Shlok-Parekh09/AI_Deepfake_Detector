@@ -112,30 +112,14 @@ class Predictor:
             logger.info("Predictor initialised with inference disabled.")
 
     def _get_ai_summary(self, is_fake: bool, prob: float, file_type: str) -> str:
-        """Generate a human-readable AI summary using Hugging Face transformers."""
-        if not ML_AVAILABLE:
-            return "AI summarizer is offline due to missing dependencies."
-            
-        if self._summarizer_pipeline is None:
-            try:
-                from transformers import pipeline
-                logger.info("Loading Flan-T5 model for AI Summaries...")
-                # Using a tiny model (Flan-T5-small) to generate forensic explanations
-                self._summarizer_pipeline = pipeline("text2text-generation", model="google/flan-t5-small", device=0 if torch.cuda.is_available() else -1)
-            except Exception as e:
-                logger.warning(f"Failed to load AI Summarizer: {e}")
-                return "Failed to initialize AI Summarizer."
-        
-        verdict = "synthetic deepfake" if is_fake else "authentic human"
+        """Generate a human-readable AI summary."""
+        verdict = "synthetic" if is_fake else "authentic"
         confidence = "high" if prob > 0.85 or prob < 0.15 else "moderate"
-        prompt = f"Explain briefly: The AI has analyzed a {file_type} file and determined with {confidence} confidence ({round(prob*100)}%) that it is a {verdict}."
         
-        try:
-            output = self._summarizer_pipeline(prompt, max_length=50, do_sample=True, temperature=0.7)
-            return output[0]["generated_text"].capitalize()
-        except Exception as e:
-            logger.warning(f"AI summarization failed: {e}")
-            return "AI summary generation failed."
+        if is_fake:
+            return f"Analysis indicates with {confidence} confidence ({round(prob*100)}%) that this {file_type} is {verdict}. Strong indicators of generative AI artifacts were found."
+        else:
+            return f"Analysis indicates with {confidence} confidence ({round(prob*100)}%) that this {file_type} is {verdict}. The media appears natural with consistent noise distributions and no structural anomalies."
 
     def predict(self, file_path: str) -> dict:
         """Auto-detect file type and run prediction."""

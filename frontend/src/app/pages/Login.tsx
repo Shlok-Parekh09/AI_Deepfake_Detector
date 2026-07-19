@@ -9,17 +9,17 @@ export default function Login() {
 
   const handleGoogleLogin = () => {
     // Mock login - in production, implement OAuth
-    navigate('/home');
+    navigate('/dashboard');
   };
 
   const handleFacebookLogin = () => {
     // Mock login - in production, implement OAuth
-    navigate('/home');
+    navigate('/dashboard');
   };
 
   const handleEmailLogin = () => {
     // Mock login - in production, implement email authentication
-    navigate('/home');
+    navigate('/dashboard');
   };
 
   return (
