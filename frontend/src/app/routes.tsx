@@ -1,6 +1,7 @@
 import { createBrowserRouter, useRouteError, useNavigate } from "react-router";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
+import Login from "./pages/Login";
 
 function ErrorBoundary() {
   const error: any = useRouteError();
@@ -35,6 +36,11 @@ export const router = createBrowserRouter([
   {
     path: "/dashboard",
     Component: Dashboard,
+    errorElement: <ErrorBoundary />,
+  },
+  {
+    path: "/login",
+    Component: Login,
     errorElement: <ErrorBoundary />,
   },
 ]);
