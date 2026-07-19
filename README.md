@@ -1,3 +1,5 @@
+If you like this then please star the repo
+
 # 🛡️ Enterprise AI Deepfake Detector: The Comprehensive Guide
 
 This document serves as the complete, authoritative guide to the Enterprise AI Deepfake Detector. It covers the theoretical foundations of generative media, the mechanics of manipulation, the science of detection, and the exhaustive technical architecture of this multimodal software platform.
