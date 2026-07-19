@@ -6,8 +6,8 @@ type BrandLogoProps = {
 export default function BrandLogo({ size = 32, className = "" }: BrandLogoProps) {
   return (
     <img
-      src="/neuro-logo.png"
-      alt="Neuro logo"
+      src="/synphi-logo.svg"
+      alt="SynPhi logo"
       width={size}
       height={size}
       className={`shrink-0 object-contain ${className}`}

@@ -35,7 +35,7 @@ export default function Login() {
         <div className="flex items-center justify-center gap-3 mb-8">
           <BrandLogo size={56} />
           <h1 className="text-white text-4xl font-bold" style={{ fontFamily: "'Eagle Lake', serif" }}>
-            Neuro
+            SynPhi
           </h1>
         </div>
 
@@ -58,7 +58,7 @@ export default function Login() {
 
           {/* Subtitle */}
           <p className="text-center text-sm md:text-base text-slate-400 mb-8">
-            Use your email or another service to continue with Neuro
+            Use your email or another service to continue with SynPhi
           </p>
 
           {/* Login Buttons */}
@@ -140,7 +140,7 @@ export default function Login() {
 
           {/* Terms and Conditions */}
           <p className="text-center text-xs md:text-sm text-slate-500 mt-6 leading-relaxed">
-            By continuing, you agree to Neuro's{' '}
+            By continuing, you agree to SynPhi's{' '}
             <a href="#" className="text-blue-400 hover:text-blue-300 underline">
               Terms and Conditions
             </a>

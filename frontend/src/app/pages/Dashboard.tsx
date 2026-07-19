@@ -281,10 +281,10 @@ export default function Dashboard() {
             <div className="text-center py-12 border-b border-gray-200 dark:border-gray-800/50 bg-white dark:bg-[#08080e] transition-colors duration-200">
               <div className="flex items-center justify-center gap-2.5 mb-3">
                 <BrandLogo size={48} />
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Neuro</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">SynPhi</h1>
               </div>
               <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto">
-                Scan for suspicious deepfakes using Neuro's forensic engine. We support Video, Audio, and Image formats.
+                Scan for suspicious deepfakes using SynPhi's forensic engine. We support Video, Audio, and Image formats.
               </p>
             </div>
 

@@ -93,7 +93,7 @@ export default function Upload() {
       <div className="relative z-10 flex items-center justify-between px-8 py-6 border-b border-gray-800">
         <div className="flex items-center gap-3">
           <BrandLogo size={36} />
-          <span className="text-xl font-bold">Neuro</span>
+          <span className="text-xl font-bold">SynPhi</span>
         </div>
         <button
           onClick={() => navigate('/analysis-type')}

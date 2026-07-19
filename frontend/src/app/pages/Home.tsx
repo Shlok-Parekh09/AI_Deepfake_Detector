@@ -65,9 +65,9 @@ function SpectrumBars({ barCount = 48, accent = 'indigo' }: { barCount?: number;
 }
 
 /* ════════════════════════════════════════════════
-   Neuro Logo Component (consistent across pages)
+   SynPhi Logo Component (consistent across pages)
    ════════════════════════════════════════════════ */
-function NeuroLogo({ size = 28 }: { size?: number }) {
+function SynPhiLogo({ size = 28 }: { size?: number }) {
   return <BrandLogo size={size} />;
 }
 
@@ -87,8 +87,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2.5">
-              <NeuroLogo size={28} />
-              <span className="text-[15px] font-semibold tracking-tight text-white">Neuro</span>
+              <SynPhiLogo size={28} />
+              <span className="text-[15px] font-semibold tracking-tight text-white">SynPhi</span>
             </div>
 
             <div className="hidden lg:flex items-center gap-7">
@@ -100,10 +100,10 @@ export default function Home() {
             </div>
 
             <div className="hidden lg:flex items-center gap-4">
-              <button className="text-[13px] text-gray-400 hover:text-white transition-colors">Sign in</button>
+              <button onClick={() => navigate('/login')} className="text-[13px] text-gray-400 hover:text-white transition-colors">Sign in</button>
               <button
                 onClick={() => navigate('/dashboard')}
-                className="text-[13px] text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-1.5 rounded-lg transition-all"
+                className="text-[13px] text-white bg-cyan-600 hover:bg-cyan-700 px-4 py-1.5 rounded-lg transition-all"
               >
                 Launch App
               </button>
@@ -122,7 +122,7 @@ export default function Home() {
               <a href="#verdicts" className="block py-2 text-sm text-gray-400 hover:text-white">Sample Verdicts</a>
               <a href="#detection" className="block py-2 text-sm text-gray-400 hover:text-white">Detection</a>
               <a href="#features" className="block py-2 text-sm text-gray-400 hover:text-white">Features</a>
-              <button onClick={() => navigate('/dashboard')} className="w-full mt-3 bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium">Launch App</button>
+              <button onClick={() => navigate('/dashboard')} className="w-full mt-3 bg-cyan-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium">Launch App</button>
             </div>
           </div>
         )}
@@ -132,23 +132,23 @@ export default function Home() {
       {/* HERO                                            */}
       {/* ═══════════════════════════════════════════════ */}
       <section className="pt-32 pb-28 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        <div className="absolute top-10 left-1/3 w-[600px] h-[600px] bg-indigo-600/[0.04] rounded-full blur-[140px]" />
-        <div className="absolute bottom-0 right-1/4 w-[450px] h-[450px] bg-violet-600/[0.04] rounded-full blur-[120px]" />
+        <div className="absolute top-10 left-1/3 w-[600px] h-[600px] bg-cyan-600/[0.04] rounded-full blur-[140px]" />
+        <div className="absolute bottom-0 right-1/4 w-[450px] h-[450px] bg-blue-600/[0.04] rounded-full blur-[120px]" />
 
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <div className="inline-flex items-center gap-2 bg-indigo-500/[0.08] border border-indigo-500/20 rounded-full px-4 py-1.5 mb-8">
-                <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse" />
-                <span className="text-[11px] text-indigo-300 uppercase tracking-[0.15em] font-medium">Neuro AI Engine · V4.0</span>
+              <div className="inline-flex items-center gap-2 bg-cyan-500/[0.08] border border-cyan-500/20 rounded-full px-4 py-1.5 mb-8">
+                <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse" />
+                <span className="text-[11px] text-cyan-300 uppercase tracking-[0.15em] font-medium">SynPhi AI Engine · V4.0</span>
               </div>
 
               <h1 className="text-[3.2rem] sm:text-[4rem] leading-[1.06] font-extrabold mb-7 tracking-tight">
-                Unmask What<br />AI Creates<span className="text-indigo-400">.</span>
+                Unmask What<br />AI Creates<span className="text-cyan-400">.</span>
               </h1>
 
               <p className="text-[15px] text-gray-400 leading-[1.75] mb-10 max-w-[420px]">
-                Neuro's forensic engine dissects audio, video, and images frame-by-frame to
+                SynPhi's forensic engine dissects audio, video, and images frame-by-frame to
                 surface the artifacts that separate <span className="text-white font-medium">authentic</span> media
                 from <span className="text-white font-medium">synthetic</span> forgeries — with 97% accuracy across
                 every major generator.
@@ -157,12 +157,12 @@ export default function Home() {
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => navigate('/dashboard')}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-7 py-3 rounded-lg transition-all text-sm font-medium hover:shadow-lg hover:shadow-indigo-600/20 flex items-center gap-2"
+                  className="bg-cyan-600 hover:bg-cyan-700 text-white px-7 py-3 rounded-lg transition-all text-sm font-medium hover:shadow-lg hover:shadow-cyan-600/20 flex items-center gap-2"
                 >
                   Start scanning
                   <ArrowRight size={15} />
                 </button>
-                <button className="bg-white/[0.04] hover:bg-white/[0.08] text-gray-300 border border-white/10 hover:border-white/20 px-7 py-3 rounded-lg transition-all text-sm font-medium">
+                <button onClick={() => window.open('https://github.com/Shlok-Parekh09/AI_Deepfake_Detector', '_blank')} className="bg-white/[0.04] hover:bg-white/[0.08] text-gray-300 border border-white/10 hover:border-white/20 px-7 py-3 rounded-lg transition-all text-sm font-medium">
                   View documentation
                 </button>
               </div>
@@ -173,8 +173,8 @@ export default function Home() {
               <div className="bg-[#0e0e18] border border-white/[0.06] rounded-2xl p-6 shadow-2xl shadow-black/50">
                 <div className="flex items-center justify-between mb-5">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 bg-indigo-500/10 rounded-lg flex items-center justify-center">
-                      <AudioLines size={16} className="text-indigo-400" />
+                    <div className="w-8 h-8 bg-cyan-500/10 rounded-lg flex items-center justify-center">
+                      <AudioLines size={16} className="text-cyan-400" />
                     </div>
                     <span className="text-sm text-gray-300 font-medium">interview_clip.wav</span>
                   </div>
@@ -208,7 +208,7 @@ export default function Home() {
                 <div className="text-right">
                   <button
                     onClick={() => navigate('/dashboard')}
-                    className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors font-medium flex items-center gap-1.5 ml-auto"
+                    className="text-xs text-cyan-400 hover:text-cyan-300 transition-colors font-medium flex items-center gap-1.5 ml-auto"
                   >
                     Analyze your own file <ChevronRight size={12} />
                   </button>
@@ -228,7 +228,7 @@ export default function Home() {
             <div>
               <p className="text-[11px] text-gray-400 uppercase tracking-[0.2em] font-medium mb-5">Under the Hood · Core Capabilities</p>
               <h2 className="text-[2.8rem] sm:text-[3.4rem] leading-[1.08] font-bold tracking-tight">
-                How <span className="text-indigo-600">Neuro</span><br />Analyzes Media.
+                How <span className="text-cyan-600">SynPhi</span><br />Analyzes Media.
               </h2>
             </div>
             <div className="flex items-end">
@@ -361,7 +361,7 @@ export default function Home() {
             <div>
               <p className="text-[11px] text-gray-400 uppercase tracking-[0.2em] font-medium mb-5">Getting Started</p>
               <h2 className="text-[2.8rem] sm:text-[3.4rem] leading-[1.08] font-bold tracking-tight">
-                Three steps.<br /><span className="text-indigo-600">Instant clarity.</span>
+                Three steps.<br /><span className="text-cyan-600">Instant clarity.</span>
               </h2>
             </div>
             <div className="flex items-end">
@@ -374,7 +374,7 @@ export default function Home() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-              <p className="text-[11px] text-indigo-600 uppercase tracking-[0.15em] font-semibold mb-4">Step 01</p>
+              <p className="text-[11px] text-cyan-600 uppercase tracking-[0.15em] font-semibold mb-4">Step 01</p>
               <h3 className="text-sm font-semibold text-gray-900 mb-3 leading-snug">Open the dashboard and sign up</h3>
               <p className="text-[12px] text-gray-400 leading-relaxed">Free tier gives you 25 scans / month across audio, video, and image.</p>
             </div>
@@ -390,12 +390,12 @@ export default function Home() {
             </div>
             <div className="bg-[#0e0e18] rounded-xl p-6 text-white">
               <div className="flex gap-2 mb-4">
-                <span className="text-[10px] bg-indigo-600 rounded px-2 py-0.5 font-semibold">REST</span>
+                <span className="text-[10px] bg-cyan-600 rounded px-2 py-0.5 font-semibold">REST</span>
                 <span className="text-[10px] bg-white/10 rounded px-2 py-0.5 font-medium text-gray-400">JSON</span>
               </div>
               <h3 className="text-sm font-semibold mb-3">Skip the UI entirely.</h3>
               <p className="text-[12px] text-gray-500 leading-relaxed mb-5">One POST request, structured JSON response. Same six analysis layers, zero UI friction.</p>
-              <button className="bg-white/10 hover:bg-white/15 text-white text-[12px] px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5 font-medium">
+              <button onClick={() => window.open('https://github.com/Shlok-Parekh09/AI_Deepfake_Detector', '_blank')} className="bg-white/10 hover:bg-white/15 text-white text-[12px] px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5 font-medium">
                 Read API docs <ArrowRight size={12} />
               </button>
             </div>
@@ -412,7 +412,7 @@ export default function Home() {
             <div>
               <p className="text-[11px] text-gray-400 uppercase tracking-[0.2em] font-medium mb-5">Who It's For</p>
               <h2 className="text-[2.5rem] sm:text-[3rem] leading-[1.1] font-bold tracking-tight">
-                Synthetic media is<br />evolving faster than<br /><span className="text-indigo-600">human perception.</span>
+                Synthetic media is<br />evolving faster than<br /><span className="text-cyan-600">human perception.</span>
               </h2>
             </div>
             <div className="flex items-center">
@@ -426,11 +426,11 @@ export default function Home() {
 
           <div className="grid lg:grid-cols-2 gap-5 mb-16">
             <div className="bg-white border border-gray-200 rounded-xl p-8">
-              <p className="text-[11px] text-indigo-600 uppercase tracking-[0.15em] font-semibold mb-4">Personal</p>
+              <p className="text-[11px] text-cyan-600 uppercase tracking-[0.15em] font-semibold mb-4">Personal</p>
               <h3 className="text-xl font-bold text-gray-900 mb-4">Guard Against Voice-Clone Fraud</h3>
               <p className="text-[13px] text-gray-500 leading-relaxed mb-6">
                 Scammers clone a loved one's voice from a 10-second clip and call demanding money.
-                Neuro lets anyone analyze a suspicious voice message or video before they act on it —
+                SynPhi lets anyone analyze a suspicious voice message or video before they act on it —
                 flagging probabilities so you can investigate with confidence.
               </p>
               <button onClick={() => navigate('/dashboard')} className="bg-[#0e0e18] hover:bg-[#181828] text-white text-[13px] px-5 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 font-medium">
@@ -442,12 +442,12 @@ export default function Home() {
               <h3 className="text-xl font-bold text-gray-900 mb-4">Protect Critical Operations</h3>
               <p className="text-[13px] text-gray-500 leading-relaxed mb-6">
                 Deepfake impersonation has cost businesses over $200M in wire-transfer fraud alone.
-                Integrate Neuro into your communication stack to intercept synthetic media
+                Integrate SynPhi into your communication stack to intercept synthetic media
                 before it reaches decision-makers.
               </p>
               <div className="space-y-3">
                 <div><p className="text-[13px] text-gray-900 font-semibold">Transparent Pricing</p><p className="text-[12px] text-gray-400">Per-scan billing — no hidden platform fees.</p></div>
-                <div><p className="text-[13px] text-indigo-600 font-semibold">Integration Support</p><p className="text-[12px] text-gray-400">Our engineers help you wire the API into Slack, email, or your SIEM.</p></div>
+                <div><p className="text-[13px] text-cyan-600 font-semibold">Integration Support</p><p className="text-[12px] text-gray-400">Our engineers help you wire the API into Slack, email, or your SIEM.</p></div>
                 <div><p className="text-[13px] text-amber-600 font-semibold">Pre-Delivery Scanning</p><p className="text-[12px] text-gray-400">Auto-scan calls, recordings, and video messages before staff see them.</p></div>
               </div>
             </div>
@@ -455,16 +455,16 @@ export default function Home() {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200 rounded-xl overflow-hidden">
             <div className="bg-white p-8 text-center">
-              <p className="text-[2.8rem] font-bold tracking-tight text-gray-900">2,400<span className="text-indigo-600">+</span></p>
-              <p className="text-[12px] text-indigo-600 font-medium mt-1">Active Users</p>
+              <p className="text-[2.8rem] font-bold tracking-tight text-gray-900">2,400<span className="text-cyan-600">+</span></p>
+              <p className="text-[12px] text-cyan-600 font-medium mt-1">Active Users</p>
             </div>
             <div className="bg-white p-8 text-center">
-              <p className="text-[2.8rem] font-bold tracking-tight text-gray-900">38K<span className="text-indigo-600">+</span></p>
+              <p className="text-[2.8rem] font-bold tracking-tight text-gray-900">38K<span className="text-cyan-600">+</span></p>
               <p className="text-[12px] text-amber-600 font-medium mt-1">Scans Completed</p>
             </div>
             <div className="bg-white p-8 text-center">
               <p className="text-[2.8rem] font-bold tracking-tight text-gray-900">6</p>
-              <p className="text-[12px] text-indigo-600 font-medium mt-1">Analysis Layers</p>
+              <p className="text-[12px] text-cyan-600 font-medium mt-1">Analysis Layers</p>
             </div>
             <div className="bg-white p-8 text-center">
               <p className="text-[2.8rem] font-bold tracking-tight text-gray-900">12</p>
@@ -483,12 +483,12 @@ export default function Home() {
             <div>
               <p className="text-[11px] text-gray-600 uppercase tracking-[0.2em] font-medium mb-5">Cross-Generator Coverage</p>
               <h2 className="text-[2.8rem] sm:text-[3.4rem] leading-[1.08] font-bold tracking-tight">
-                One engine.<br /><span className="text-indigo-400">Every major model.</span>
+                One engine.<br /><span className="text-cyan-400">Every major model.</span>
               </h2>
             </div>
             <div className="flex items-end">
               <p className="text-[15px] text-gray-500 leading-relaxed max-w-lg">
-                Neuro doesn't just flag "AI or not." It identifies <em>which</em> generator
+                SynPhi doesn't just flag "AI or not." It identifies <em>which</em> generator
                 produced the content — from Stable Diffusion and MidJourney to ElevenLabs and
                 Tortoise TTS — by matching against known spectral and pixel fingerprints.
               </p>
@@ -506,7 +506,7 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-5">
             {/* Audio detection */}
             <div className="bg-[#0e0e18] border border-white/[0.06] rounded-2xl p-8">
-              <p className="text-[11px] text-indigo-400 uppercase tracking-[0.15em] font-semibold mb-3">Voice Forensics</p>
+              <p className="text-[11px] text-cyan-400 uppercase tracking-[0.15em] font-semibold mb-3">Voice Forensics</p>
               <h3 className="text-xl font-bold mb-6">Hear what the ear can't.</h3>
               <div className="space-y-5 mb-8">
                 <div>
@@ -564,7 +564,7 @@ export default function Home() {
             <div>
               <p className="text-[11px] text-gray-400 uppercase tracking-[0.2em] font-medium mb-5">Built for Real-World Threats</p>
               <h2 className="text-[2.8rem] sm:text-[3.4rem] leading-[1.08] font-bold tracking-tight">
-                Forensic-grade<br /><span className="text-indigo-600">detection engine.</span>
+                Forensic-grade<br /><span className="text-cyan-600">detection engine.</span>
               </h2>
             </div>
             <div className="flex items-end">
@@ -586,7 +586,7 @@ export default function Home() {
               { icon: <Grid3x3 size={22} strokeWidth={1.5} />, title: 'Court-Admissible Reports', desc: 'Exportable PDF with full evidence chain, per-layer scores, and reproducible methodology.' },
             ].map((f, i) => (
               <div key={i} className="bg-gray-50 border border-gray-200 rounded-xl p-7 hover:shadow-md hover:border-gray-300 transition-all group">
-                <div className="mb-5 text-gray-900 group-hover:text-indigo-600 transition-colors">{f.icon}</div>
+                <div className="mb-5 text-gray-900 group-hover:text-cyan-600 transition-colors">{f.icon}</div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-2">{f.title}</h3>
                 <p className="text-[13px] text-gray-400 leading-relaxed">{f.desc}</p>
               </div>
@@ -599,20 +599,20 @@ export default function Home() {
       {/* CTA                                             */}
       {/* ═══════════════════════════════════════════════ */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-[#08080e] text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/[0.04] via-transparent to-violet-600/[0.04]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/[0.04] via-transparent to-blue-600/[0.04]" />
         <div className="max-w-3xl mx-auto text-center relative z-10">
           <h2 className="text-[2.8rem] sm:text-[3.4rem] leading-[1.08] font-bold tracking-tight mb-6">
-            Ready to separate<br /><span className="text-indigo-400">fact from fabrication?</span>
+            Ready to separate<br /><span className="text-cyan-400">fact from fabrication?</span>
           </h2>
           <p className="text-[15px] text-gray-500 leading-relaxed mb-10 max-w-lg mx-auto">
             Upload a file and get your forensic verdict in seconds. Free tier includes
             25 scans per month with full six-layer analysis.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
-            <button onClick={() => navigate('/dashboard')} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-lg transition-all text-sm font-medium hover:shadow-lg hover:shadow-indigo-600/20 flex items-center gap-2">
+            <button onClick={() => navigate('/dashboard')} className="bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3.5 rounded-lg transition-all text-sm font-medium hover:shadow-lg hover:shadow-cyan-600/20 flex items-center gap-2">
               Open Scanner <ArrowRight size={16} />
             </button>
-            <button className="bg-white/[0.04] hover:bg-white/[0.08] text-gray-300 border border-white/10 hover:border-white/20 px-8 py-3.5 rounded-lg transition-all text-sm font-medium">
+            <button onClick={() => window.open('https://github.com/Shlok-Parekh09/AI_Deepfake_Detector', '_blank')} className="bg-white/[0.04] hover:bg-white/[0.08] text-gray-300 border border-white/10 hover:border-white/20 px-8 py-3.5 rounded-lg transition-all text-sm font-medium">
               Read the docs
             </button>
           </div>
@@ -627,8 +627,8 @@ export default function Home() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-10 mb-12">
             <div className="lg:col-span-2">
               <div className="flex items-center gap-2.5 mb-4">
-                <NeuroLogo size={26} />
-                <span className="text-[15px] font-semibold text-white">Neuro</span>
+                <SynPhiLogo size={26} />
+                <span className="text-[15px] font-semibold text-white">SynPhi</span>
               </div>
               <p className="text-[13px] text-gray-500 leading-relaxed max-w-xs">
                 AI-powered forensic detection for audio, video, and images.
@@ -664,7 +664,7 @@ export default function Home() {
           </div>
           <div className="border-t border-white/[0.04] pt-8">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <p className="text-[12px] text-gray-600">© 2026 Neuro. All rights reserved.</p>
+              <p className="text-[12px] text-gray-600">© 2026 SynPhi. All rights reserved.</p>
               <div className="flex items-center gap-2 text-[12px] text-gray-600">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
                 All systems operational
