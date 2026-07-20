@@ -1,13 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FaceLandmarker, FilesetResolver, DrawingUtils } from '@mediapipe/tasks-vision';
 
 interface VideoVisualizerProps {
   mediaUrl: string;
   onPlayStateChange?: (playing: boolean) => void;
+  externalVideoRef?: React.MutableRefObject<HTMLVideoElement | null>;
 }
 
-export function VideoVisualizer({ mediaUrl, onPlayStateChange }: VideoVisualizerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+export function VideoVisualizer({ mediaUrl, onPlayStateChange, externalVideoRef }: VideoVisualizerProps) {
+  const internalVideoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = externalVideoRef || internalVideoRef;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [faceLandmarker, setFaceLandmarker] = useState<FaceLandmarker | null>(null);
@@ -101,7 +103,7 @@ export function VideoVisualizer({ mediaUrl, onPlayStateChange }: VideoVisualizer
             // Draw tessellation (the fine wireframe mesh across the whole face)
             drawingUtils.drawConnectors(
               landmarks,
-              FaceLandmarker.FACE_LANDMARKS_TESSELLATION,
+              FaceLandmarker.FACE_LANDMARKS_TESSELATION,
               { color: "rgba(255, 255, 255, 0.2)", lineWidth: 0.5, fillColor: "transparent" }
             );
             

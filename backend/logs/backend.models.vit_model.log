@@ -1,1 +1,0 @@
-2026-06-02 15:29:26 │ [32mINFO[0m │ backend.models.vit_model │ ViTDetector initialised: backbone=vit_base_patch16_224  feature_dim=768  num_classes=2

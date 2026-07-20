@@ -72,3 +72,4 @@ kagglehub                # Programmatic dataset and model access
 kaggle                   # CLI tool for notebook outputs
 transformers             # AI Text Summarization pipeline
 accelerate               # Efficient PyTorch model loading
+yt-dlp                   # YouTube video downloading

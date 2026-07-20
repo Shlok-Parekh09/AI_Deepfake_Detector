@@ -101,10 +101,15 @@ def upload_dataset():
 
 def build_training_notebook_cells():
     """Return the notebook cell source strings for the training run."""
-    _hf_token = os.environ.get("HF_TOKEN", "")
     setup_cell = 'import os, shutil, sys, subprocess\n'
     setup_cell += 'print(">>> Setup cell started", flush=True)\n'
-    setup_cell += 'os.environ["HF_TOKEN"] = "' + _hf_token + '"\n'
+    setup_cell += 'try:\n'
+    setup_cell += '    from kaggle_secrets import UserSecretsClient\n'
+    setup_cell += '    user_secrets = UserSecretsClient()\n'
+    setup_cell += '    os.environ["HF_TOKEN"] = user_secrets.get_secret("HF_TOKEN")\n'
+    setup_cell += '    print(">>> Securely loaded HF_TOKEN from Kaggle Secrets")\n'
+    setup_cell += 'except Exception as e:\n'
+    setup_cell += '    print(">>> Could not load HF_TOKEN from Kaggle Secrets:", e)\n'
     setup_cell += """\
 
 working = '/kaggle/working'
@@ -140,6 +145,29 @@ else:
             f"Make sure dataset 'shlokparekh08/{dataset_name}' is attached."
         )
     print(f"\\nUsing zip: {zip_path}")
+
+    # 4. Extract Checkpoints if available
+    print("\\nSearching for existing checkpoints...")
+    ckpt_dirs = [
+        "/kaggle/input/deepfake-checkpoints",
+        "/kaggle/input/datasets/shlokparekh08/deepfake-checkpoints"
+    ]
+    actual_ckpt_dir = next((d for d in ckpt_dirs if os.path.exists(d)), None)
+    
+    if actual_ckpt_dir:
+        import glob
+        pth_files = glob.glob(f"{actual_ckpt_dir}/**/*.pth", recursive=True)
+        if pth_files:
+            print(f"\\nFound {len(pth_files)} checkpoint(s) in {actual_ckpt_dir}.")
+            ckpt_dir = os.path.join(working, 'checkpoints')
+            os.makedirs(ckpt_dir, exist_ok=True)
+            for p in pth_files:
+                subprocess.run(["cp", p, ckpt_dir])
+            print("Checkpoints copied:", os.listdir(ckpt_dir))
+        else:
+            print("\\nNo .pth files found in the attached checkpoints dataset.")
+    else:
+        print("\\nNo checkpoints dataset attached, will train from scratch.")
 
     result = subprocess.run(
         ["unzip", "-o", zip_path, "-d", working],
@@ -196,9 +224,9 @@ result = subprocess.run(
         "--arch", "cnn",
         "--backbone", "efficientnet_b4",
         "--pretrained",
-        "--epochs", "4",
+        "--epochs", "2",
         "--batch-size", "32",
-        "--workers", "0",
+        "--workers", "4",
         "--lr", "1e-4",
         "--val-fraction", "0.05",
         "--amp",
@@ -225,7 +253,7 @@ result = subprocess.run(
         sys.executable, "-u", "-m", "backend.training.train_audio_kaggle",
         "--epochs", "8",
         "--batch-size", "64",
-        "--workers", "0",
+        "--workers", "4",
         "--lr", "5e-5",
         "--max-samples-per-source", "300000",
         "--amp",
@@ -245,14 +273,14 @@ print("\\n" + "=" * 60)
 print("TRAINING COMPLETE - Checkpoints:")
 print("=" * 60)
 
-pth_files = sorted(glob.glob('/kaggle/working/**/*.pth', recursive=True))
+pth_files = sorted(glob.glob('/kaggle/working/**/*best.pth', recursive=True))
 for f in pth_files:
     size_mb = os.path.getsize(f) / 1e6
     print(f"  {f}  ({size_mb:.1f} MB)")
 
 # --- Auto-upload to Hugging Face ---
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
-HF_SPACE = "shlokparekh08/deepfake-detector"
+HF_SPACE = "Shlok0829/deepfake"
 
 if HF_TOKEN and pth_files:
     print("\\n" + "=" * 60)
@@ -286,7 +314,7 @@ elif not HF_TOKEN:
 else:
     print("\\nNo .pth files found to upload.")
 """
-    return [setup_cell, install_cell, vision_cell, audio_cell, copy_checkpoints_cell]
+    return [setup_cell, install_cell, audio_cell, copy_checkpoints_cell]
 
 
 def create_and_push_kernel():
@@ -344,7 +372,6 @@ def create_and_push_kernel():
     api = KaggleApi()
     api.authenticate()
 
-    # Retry loop - if 409 it means a run is still active (stop it on kaggle.com first)
     for attempt in range(1, 4):
         try:
             api.kernels_push(kernel_dir)

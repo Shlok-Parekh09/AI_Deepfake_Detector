@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Upload as UploadIcon, ArrowLeft } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo';

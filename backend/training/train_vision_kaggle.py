@@ -114,7 +114,7 @@ def train(args: argparse.Namespace) -> str:
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    scaler = torch.amp.GradScaler("cuda", enabled=args.amp and device.type == "cuda")
+    scaler = torch.cuda.amp.GradScaler(enabled=args.amp and device.type == "cuda")
 
     os.makedirs(args.output_dir, exist_ok=True)
     best_path = os.path.join(args.output_dir, "vision_best.pth")
@@ -190,7 +190,7 @@ def run_epoch(model, loader, criterion, optimizer, scaler, device, train: bool,
         inputs = inputs.to(device, non_blocking=True)
         labels = labels.to(device, non_blocking=True)
 
-        with torch.amp.autocast("cuda", enabled=scaler.is_enabled()):
+        with torch.cuda.amp.autocast(enabled=scaler.is_enabled()):
             outputs = model(inputs)
             loss = criterion(outputs, labels)
 

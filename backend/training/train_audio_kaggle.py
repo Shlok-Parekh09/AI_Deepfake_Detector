@@ -96,7 +96,7 @@ def train(args: argparse.Namespace) -> str:
     
     scaler = None
     if args.amp and device.type == "cuda":
-        scaler = torch.amp.GradScaler("cuda")
+        scaler = torch.cuda.amp.GradScaler()
 
     os.makedirs(args.output_dir, exist_ok=True)
     best_path = os.path.join(args.output_dir, "audio_best.pth")
@@ -173,7 +173,7 @@ def run_epoch(model, loader, criterion, optimizer, scaler, device, train: bool,
         labels = labels.to(device, non_blocking=True)
 
         if scaler is not None:
-            with torch.amp.autocast("cuda"):
+            with torch.cuda.amp.autocast():
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
         else:

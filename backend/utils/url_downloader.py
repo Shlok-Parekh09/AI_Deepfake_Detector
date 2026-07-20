@@ -78,19 +78,28 @@ class URLDownloader:
         """Download from YouTube using ``yt-dlp`` (must be installed)."""
         try:
             import subprocess
+            import sys
 
             cmd = [
-                "yt-dlp",
+                sys.executable, "-m", "yt_dlp",
                 "-f", "best[ext=mp4]",
+                "--no-warnings",
+                "--geo-bypass",
+                "--extractor-args", "youtube:player_client=android",
                 "-o", output_path,
                 url,
             ]
             logger.info("Running yt-dlp for %s", url)
-            subprocess.run(cmd, check=True, capture_output=True, text=True)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30)
+            if result.returncode != 0:
+                logger.error(f"yt-dlp failed: {result.stderr}")
+                raise RuntimeError(f"yt-dlp failed to download: {result.stderr}")
             return output_path
-        except FileNotFoundError:
+        except subprocess.TimeoutExpired:
+            raise RuntimeError("YouTube extraction timed out (likely due to IP block by YouTube on data center).")
+        except Exception as e:
             raise RuntimeError(
-                "yt-dlp is not installed. Install with: pip install yt-dlp"
+                f"Failed to download YouTube video: {e}"
             )
 
     def validate_url(self, url: str) -> bool:

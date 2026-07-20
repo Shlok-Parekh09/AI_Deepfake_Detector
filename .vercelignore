@@ -1,0 +1,11 @@
+backend/
+checkpoints/
+kaggle_checkpoints_upload/
+kaggle_dataset/
+kaggle_kernel/
+node_modules/
+.venv/
+.secrets
+*.zip
+*.pth
+.env*

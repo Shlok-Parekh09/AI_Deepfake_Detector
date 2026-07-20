@@ -372,7 +372,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
               <p className="text-[11px] text-cyan-600 uppercase tracking-[0.15em] font-semibold mb-4">Step 01</p>
               <h3 className="text-sm font-semibold text-gray-900 mb-3 leading-snug">Open the dashboard and sign up</h3>
@@ -388,91 +388,11 @@ export default function Home() {
               <h3 className="text-sm font-semibold text-gray-900 mb-3 leading-snug">Read the full forensic verdict</h3>
               <p className="text-[12px] text-gray-400 leading-relaxed">Probability, per-layer breakdown, generator match, and exportable PDF report.</p>
             </div>
-            <div className="bg-[#0e0e18] rounded-xl p-6 text-white">
-              <div className="flex gap-2 mb-4">
-                <span className="text-[10px] bg-cyan-600 rounded px-2 py-0.5 font-semibold">REST</span>
-                <span className="text-[10px] bg-white/10 rounded px-2 py-0.5 font-medium text-gray-400">JSON</span>
-              </div>
-              <h3 className="text-sm font-semibold mb-3">Skip the UI entirely.</h3>
-              <p className="text-[12px] text-gray-500 leading-relaxed mb-5">One POST request, structured JSON response. Same six analysis layers, zero UI friction.</p>
-              <button onClick={() => window.open('https://github.com/Shlok-Parekh09/AI_Deepfake_Detector', '_blank')} className="bg-white/10 hover:bg-white/15 text-white text-[12px] px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5 font-medium">
-                Read API docs <ArrowRight size={12} />
-              </button>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════════ */}
-      {/* INDIVIDUALS & BUSINESSES                        */}
-      {/* ═══════════════════════════════════════════════ */}
-      <section id="about" className="py-24 px-4 sm:px-6 lg:px-8 bg-gray-50 text-gray-900">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 mb-16">
-            <div>
-              <p className="text-[11px] text-gray-400 uppercase tracking-[0.2em] font-medium mb-5">Who It's For</p>
-              <h2 className="text-[2.5rem] sm:text-[3rem] leading-[1.1] font-bold tracking-tight">
-                Synthetic media is<br />evolving faster than<br /><span className="text-cyan-600">human perception.</span>
-              </h2>
-            </div>
-            <div className="flex items-center">
-              <p className="text-[15px] text-gray-500 leading-relaxed max-w-lg">
-                Whether you're shielding a family from voice-clone scams or protecting
-                a finance team from a fabricated CEO directive, the threat vector is the same.
-                Only the stakes change.
-              </p>
-            </div>
-          </div>
 
-          <div className="grid lg:grid-cols-2 gap-5 mb-16">
-            <div className="bg-white border border-gray-200 rounded-xl p-8">
-              <p className="text-[11px] text-cyan-600 uppercase tracking-[0.15em] font-semibold mb-4">Personal</p>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Guard Against Voice-Clone Fraud</h3>
-              <p className="text-[13px] text-gray-500 leading-relaxed mb-6">
-                Scammers clone a loved one's voice from a 10-second clip and call demanding money.
-                SynPhi lets anyone analyze a suspicious voice message or video before they act on it —
-                flagging probabilities so you can investigate with confidence.
-              </p>
-              <button onClick={() => navigate('/dashboard')} className="bg-[#0e0e18] hover:bg-[#181828] text-white text-[13px] px-5 py-2.5 rounded-lg transition-colors flex items-center gap-1.5 font-medium">
-                Try it free <ArrowRight size={14} />
-              </button>
-            </div>
-            <div className="bg-white border border-gray-200 rounded-xl p-8">
-              <p className="text-[11px] text-amber-600 uppercase tracking-[0.15em] font-semibold mb-4">Enterprise</p>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Protect Critical Operations</h3>
-              <p className="text-[13px] text-gray-500 leading-relaxed mb-6">
-                Deepfake impersonation has cost businesses over $200M in wire-transfer fraud alone.
-                Integrate SynPhi into your communication stack to intercept synthetic media
-                before it reaches decision-makers.
-              </p>
-              <div className="space-y-3">
-                <div><p className="text-[13px] text-gray-900 font-semibold">Transparent Pricing</p><p className="text-[12px] text-gray-400">Per-scan billing — no hidden platform fees.</p></div>
-                <div><p className="text-[13px] text-cyan-600 font-semibold">Integration Support</p><p className="text-[12px] text-gray-400">Our engineers help you wire the API into Slack, email, or your SIEM.</p></div>
-                <div><p className="text-[13px] text-amber-600 font-semibold">Pre-Delivery Scanning</p><p className="text-[12px] text-gray-400">Auto-scan calls, recordings, and video messages before staff see them.</p></div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200 rounded-xl overflow-hidden">
-            <div className="bg-white p-8 text-center">
-              <p className="text-[2.8rem] font-bold tracking-tight text-gray-900">2,400<span className="text-cyan-600">+</span></p>
-              <p className="text-[12px] text-cyan-600 font-medium mt-1">Active Users</p>
-            </div>
-            <div className="bg-white p-8 text-center">
-              <p className="text-[2.8rem] font-bold tracking-tight text-gray-900">38K<span className="text-cyan-600">+</span></p>
-              <p className="text-[12px] text-amber-600 font-medium mt-1">Scans Completed</p>
-            </div>
-            <div className="bg-white p-8 text-center">
-              <p className="text-[2.8rem] font-bold tracking-tight text-gray-900">6</p>
-              <p className="text-[12px] text-cyan-600 font-medium mt-1">Analysis Layers</p>
-            </div>
-            <div className="bg-white p-8 text-center">
-              <p className="text-[2.8rem] font-bold tracking-tight text-gray-900">12</p>
-              <p className="text-[12px] text-gray-400 font-medium mt-1">Team Members</p>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ═══════════════════════════════════════════════ */}
       {/* ONE DETECTOR — Dark                             */}

@@ -8,7 +8,7 @@ import { VideoVisualizer } from '../components/visualizers/VideoVisualizer';
 import { AudioVisualizer } from '../components/visualizers/AudioVisualizer';
 import { ImageVisualizer } from '../components/visualizers/ImageVisualizer';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:8000');
 
 interface ScanHistory {
   id: string;
@@ -42,6 +42,8 @@ export default function Dashboard() {
   const [currentTheme, setCurrentTheme] = useState<Theme>('dark');
   const themeMenuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoElementRef = useRef<HTMLVideoElement>(null);
+  const [currentRawScores, setCurrentRawScores] = useState<any>({});
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -148,6 +150,7 @@ export default function Dashboard() {
         const prob = Math.round((resultData.fake_probability || 0) * 100);
         setCurrentResultProbability(prob);
         setCurrentAiSummary(resultData.ai_summary || '');
+        setCurrentRawScores(resultData.raw_scores || {});
         
         const newScan: ScanHistory = {
           id: Date.now().toString(),
@@ -450,15 +453,15 @@ export default function Dashboard() {
                       <p className="text-[10px] text-gray-500 font-mono mb-2">ANOMALY BREAKDOWN</p>
                       <div className="space-y-3">
                         <div className="flex justify-between text-xs">
-                          <span className="text-gray-400">Spatial Artifacts</span>
-                          <span className={`font-semibold ${currentResultProbability > 70 ? 'text-red-400' : currentResultProbability > 40 ? 'text-orange-400' : 'text-emerald-400'}`}>
-                            {currentResultProbability > 70 ? 'High' : currentResultProbability > 40 ? 'Moderate' : 'None'}
+                          <span className="text-gray-400">Vision Analysis</span>
+                          <span className={`font-semibold ${currentRawScores?.vision_model > 0.7 ? 'text-red-400' : currentRawScores?.vision_model > 0.4 ? 'text-orange-400' : 'text-emerald-400'}`}>
+                            {currentRawScores?.vision_model !== undefined ? `${(currentRawScores.vision_model * 100).toFixed(1)}% Fake` : 'Processing...'}
                           </span>
                         </div>
                         <div className="flex justify-between text-xs">
-                          <span className="text-gray-400">Temporal Consistency</span>
-                          <span className={`font-semibold ${currentResultProbability > 70 ? 'text-orange-400' : currentResultProbability > 40 ? 'text-yellow-400' : 'text-emerald-400'}`}>
-                            {currentResultProbability > 70 ? 'Poor' : currentResultProbability > 40 ? 'Inconsistent' : 'Natural'}
+                          <span className="text-gray-400">Audio Analysis</span>
+                          <span className={`font-semibold ${currentRawScores?.audio_cnn > 0.7 ? 'text-red-400' : currentRawScores?.audio_cnn > 0.4 ? 'text-orange-400' : 'text-emerald-400'}`}>
+                            {currentRawScores?.audio_cnn !== undefined ? `${(currentRawScores.audio_cnn * 100).toFixed(1)}% Fake` : 'N/A'}
                           </span>
                         </div>
                         <div className="flex justify-between text-xs">
@@ -502,11 +505,13 @@ export default function Dashboard() {
                       <VideoVisualizer 
                         mediaUrl={currentMediaUrl || '/placeholder.mp4'} 
                         onPlayStateChange={setIsVideoPlaying} 
+                        externalVideoRef={videoElementRef}
                       />
                       <AudioVisualizer 
                         mediaUrl={currentMediaUrl || '/placeholder.mp4'} 
                         isExternalPlaying={isVideoPlaying}
                         hideAudioElement={true}
+                        externalMediaRef={videoElementRef}
                       />
                     </div>
                   )}

@@ -1,67 +1,95 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Volume2, Activity } from 'lucide-react';
 
 interface AudioVisualizerProps {
   mediaUrl: string;
   isExternalPlaying?: boolean;
   hideAudioElement?: boolean;
+  externalMediaRef?: React.RefObject<HTMLMediaElement> | React.MutableRefObject<HTMLMediaElement | null>;
 }
 
-export function AudioVisualizer({ mediaUrl, isExternalPlaying, hideAudioElement }: AudioVisualizerProps) {
+export function AudioVisualizer({ mediaUrl, isExternalPlaying, hideAudioElement, externalMediaRef }: AudioVisualizerProps) {
   const [bars, setBars] = useState<number[]>(Array(64).fill(0));
-  const [internalIsPlaying, setInternalIsPlaying] = useState(true);
+  const [internalIsPlaying, setInternalIsPlaying] = useState(false);
   
-  // Use external playing state if provided, otherwise fallback to internal
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+
   const isPlaying = isExternalPlaying !== undefined ? isExternalPlaying : internalIsPlaying;
 
-  // Simulate audio frequency data (Fourier Analysis)
   useEffect(() => {
+    if (!isPlaying) {
+      setBars(Array(64).fill(0).map(() => 0.05 + Math.random() * 0.05));
+      return;
+    }
+
+    const mediaElement = externalMediaRef?.current || audioRef.current;
+    if (!mediaElement) return;
+
+    if (!audioContextRef.current) {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const ctx = new AudioContextClass();
+      audioContextRef.current = ctx;
+
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256; 
+      analyser.smoothingTimeConstant = 0.8;
+      analyserRef.current = analyser;
+
+      try {
+        const source = ctx.createMediaElementSource(mediaElement);
+        source.connect(analyser);
+        analyser.connect(ctx.destination);
+      } catch (e) {
+        console.warn("MediaElementSource already created for this element.", e);
+      }
+    } else if (audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume();
+    }
+
     let animationFrame: number;
-    let time = 0;
+    const analyser = analyserRef.current;
 
     const animate = () => {
-      time += 0.1;
-      // Generate realistic-looking frequency bars using sine waves and noise
+      if (!analyser) return;
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(dataArray);
+
       const newBars = Array.from({ length: 64 }).map((_, i) => {
-        // Base frequency bumps (simulating speech formants)
-        const bump1 = Math.exp(-Math.pow(i - 10, 2) / 20) * 0.8;
-        const bump2 = Math.exp(-Math.pow(i - 30, 2) / 30) * 0.6;
-        const bump3 = Math.exp(-Math.pow(i - 50, 2) / 10) * 0.3;
-        
-        // Add animated noise
-        const noise = (Math.sin(i * 0.5 + time) * Math.cos(i * 0.3 - time * 1.5) * 0.5 + 0.5) * 0.4;
-        
-        // Combine and clamp
-        let val = bump1 + bump2 + bump3 + noise;
-        val = Math.min(1, Math.max(0.05, val));
-        
-        return val;
+        const val = dataArray[i * 2] / 255;
+        return Math.max(0.05, val);
       });
       
       setBars(newBars);
       animationFrame = requestAnimationFrame(animate);
     };
 
-    if (isPlaying) {
-      animationFrame = requestAnimationFrame(animate);
-    } else {
-      // Settle down to low noise when paused
-      setBars(Array(64).fill(0).map(() => 0.05 + Math.random() * 0.05));
-    }
+    animationFrame = requestAnimationFrame(animate);
 
     return () => {
       if (animationFrame) cancelAnimationFrame(animationFrame);
     };
-  }, [isPlaying]);
+  }, [isPlaying, externalMediaRef]);
+
+  useEffect(() => {
+    return () => {
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close().catch(() => {});
+      }
+    };
+  }, []);
 
   return (
     <div className="relative w-full rounded-2xl overflow-hidden bg-[#0a0a14] aspect-video border border-gray-800 shadow-2xl flex flex-col">
       {/* Conditionally render audio element */}
       {!hideAudioElement && (
         <audio 
+          ref={audioRef}
           src={mediaUrl} 
           autoPlay 
           loop 
+          crossOrigin="anonymous"
           onPlay={() => setInternalIsPlaying(true)}
           onPause={() => setInternalIsPlaying(false)}
         />

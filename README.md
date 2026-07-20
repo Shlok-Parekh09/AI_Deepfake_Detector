@@ -125,7 +125,7 @@ The ResNet-34 scans the spectrogram for the blocky artifacts left by neural voco
 
 ## 6. Multimodal Fusion Architecture
 
-A video contains both visual and acoustic information. Evaluating them in isolation discards valuable context.
+A video contains both visual and acoustic information. Evaluating them in isolation discards valuable context. Our system implements a comprehensive multimodal fusion engine to analyze both domains simultaneously.
 
 ### 6.1 Late Fusion Strategy
 The system implements a **Late Fusion Ensemble**. 
@@ -135,6 +135,11 @@ The system implements a **Late Fusion Ensemble**.
 
 ### 6.2 Handling Missing Modalities
 The system is deeply robust. If an image is uploaded, the audio pipeline safely bypasses. If a mute video is uploaded, the Fusion Engine dynamically re-weights the vision score to 1.0, ensuring the system never crashes due to missing data streams.
+
+### 6.3 Real-Time Web Audio API Fourier Visualization
+To provide interpretability into the audio detection process, the frontend UI features a live **Fourier Spectrogram**. 
+Rather than displaying a simulated animation, the React dashboard connects directly to the media source (`<video>` or `<audio>` tag) using the browser's native `window.AudioContext` and an `AnalyserNode`. 
+As the media plays, a `requestAnimationFrame` loop rapidly reads `getByteFrequencyData()`, mapping the true frequency bins of the playing audio into a live 64-band spectrogram. This allows forensic analysts to visually identify high-frequency dropouts or phase anomalies in real-time as they watch the video.
 
 ---
 

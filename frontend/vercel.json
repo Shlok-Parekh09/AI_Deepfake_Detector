@@ -4,6 +4,10 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "https://shlok0829-deepfake.hf.space/api/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

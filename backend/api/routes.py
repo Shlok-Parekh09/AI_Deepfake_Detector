@@ -184,12 +184,21 @@ async def proxy_media(url: str):
     host = urlparse(url).hostname or ""
     if "youtube.com" in host or "youtu.be" in host:
         try:
-            cmd = [sys.executable, "-m", "yt_dlp", "-f", "best[ext=mp4]/best", "-g", url]
-            result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+            cmd = [
+                sys.executable, "-m", "yt_dlp", 
+                "-f", "best[ext=mp4]/best", 
+                "--no-warnings",
+                "--geo-bypass",
+                "--extractor-args", "youtube:player_client=android",
+                "-g", url
+            ]
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=25)
             # The last line of stdout is typically the URL (ignoring warnings)
-            direct_url = result.stdout.strip().split("\\n")[-1]
+            direct_url = result.stdout.strip().split("\n")[-1]
             if direct_url.startswith("http"):
                 url = direct_url
+        except subprocess.TimeoutExpired:
+            raise HTTPException(status_code=400, detail="YouTube extraction timed out (likely due to IP block on Hugging Face).")
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Failed to extract YouTube stream: {e}")
 

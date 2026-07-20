@@ -183,9 +183,32 @@ class Predictor:
 
     def predict_video(self, video_path: str) -> dict:
         import torch
+        import subprocess
+        import tempfile
+        import os
+
+        audio_score = None
+        audio_result = None
+        if getattr(self, "audio_model", None) is not None:
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_audio:
+                tmp_audio_path = tmp_audio.name
+            try:
+                cmd = ["ffmpeg", "-i", video_path, "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1", "-y", tmp_audio_path]
+                subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+                audio_result = self.predict_audio(tmp_audio_path)
+                audio_score = audio_result["raw_scores"].get("audio_cnn")
+            except Exception as e:
+                logger.warning(f"Audio extraction from video failed or no audio track: {e}")
+            finally:
+                if os.path.exists(tmp_audio_path):
+                    os.unlink(tmp_audio_path)
+
         with torch.no_grad():
             frames = self.frame_extractor.extract(video_path)
             if not frames:
+                if audio_score is not None:
+                    audio_result["file_type"] = "video"
+                    return audio_result
                 result = self.postprocessor.format_result(0.0)
                 result["file_type"] = "video"
                 result["num_faces_analysed"] = 0
@@ -201,16 +224,26 @@ class Predictor:
                     prob = torch.softmax(logits, dim=1)[0, 1].item()
                     all_probs.append(prob)
 
-            avg_prob = self.postprocessor.aggregate_frame_predictions(all_probs)
+            vision_prob = self.postprocessor.aggregate_frame_predictions(all_probs)
 
-            result = self.postprocessor.format_result(avg_prob)
+            final_prob = vision_prob
+            reasons = ["Trained vision checkpoint analysis"]
+            raw_scores = {"vision_model": round(vision_prob, 4)}
+
+            if audio_score is not None:
+                final_prob = (vision_prob + audio_score) / 2.0
+                reasons.append("Audio checkpoint analysis")
+                reasons.append("Combined spatial artifact and voice forensic scores")
+                raw_scores["audio_cnn"] = round(audio_score, 4)
+
+            result = self.postprocessor.format_result(final_prob)
             result["file_type"] = "video"
             result["num_faces_analysed"] = len(all_probs)
             result["frames_analysed"] = len(frames)
-            result["reasons"] = ["Trained vision checkpoint analysis"]
-            result["raw_scores"] = {"vision_model": round(avg_prob, 4)}
+            result["reasons"] = reasons
+            result["raw_scores"] = raw_scores
             result["explainability_heatmap"] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
-            result["ai_summary"] = self._get_ai_summary(result["is_fake"], avg_prob, "video")
+            result["ai_summary"] = self._get_ai_summary(result["is_fake"], final_prob, "video")
             return result
 
     def predict_audio(self, audio_path: str) -> dict:
