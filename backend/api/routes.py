@@ -59,26 +59,29 @@ async def detect_deepfake(file: UploadFile = File(...)):
     """
     Upload an image or video file for deepfake detection.
     """
-    predictor = _get_predictor()
-
-    # Save uploaded file to a temp location
-    suffix = os.path.splitext(file.filename or "upload")[1]
-    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        content = await file.read()
-        tmp.write(content)
-        tmp_path = tmp.name
-
     try:
-        result = predictor.predict(tmp_path)
-        return DetectionResult(**result)
-    except RuntimeError as exc:
-        logger.warning("Detection unavailable: %s", exc)
-        raise HTTPException(status_code=503, detail=str(exc))
+        predictor = _get_predictor()
+
+        # Save uploaded file to a temp location
+        suffix = os.path.splitext(file.filename or "upload")[1]
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            content = await file.read()
+            tmp.write(content)
+            tmp_path = tmp.name
+
+        try:
+            result = predictor.predict(tmp_path)
+            return DetectionResult(**result)
+        except RuntimeError as exc:
+            logger.warning("Detection unavailable: %s", exc)
+            raise HTTPException(status_code=503, detail=str(exc))
+        finally:
+            os.unlink(tmp_path)
     except Exception as exc:
+        import traceback
+        error_msg = f"{type(exc).__name__}: {str(exc)}\n{traceback.format_exc()}"
         logger.exception("Detection failed")
-        raise HTTPException(status_code=500, detail=str(exc))
-    finally:
-        os.unlink(tmp_path)
+        raise HTTPException(status_code=500, detail=error_msg)
 
 
 @router.post("/detect/url", response_model=DetectionResult)
