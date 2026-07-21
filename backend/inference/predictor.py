@@ -63,16 +63,40 @@ class Predictor:
                     from huggingface_hub import hf_hub_download
                     logger.info("Attempting to download vision model from Hugging Face Hub...")
                     self.vision_checkpoint_path = hf_hub_download(
-                        repo_id="Shlok0829/deepfake-detector",
-                        filename="vision_best.pth"
+                        repo_id="Shlok0829/deepfake-models",
+                        filename="backend/checkpoints/vision_best.pth",
+                        repo_type="model"
                     )
+                    logger.info(f"Downloaded vision model to {self.vision_checkpoint_path}")
+                except ImportError:
+                    logger.warning("huggingface_hub not installed. Cannot download vision model automatically.")
                 except Exception as e:
                     logger.warning(f"Could not download model from HF Hub: {e}")
+
+            if self.vision_checkpoint_path and not os.path.exists(self.vision_checkpoint_path):
+                logger.warning(f"Vision model checkpoint not found at {self.vision_checkpoint_path}")
 
             self.audio_checkpoint_path = find_checkpoint(
                 "DEEPFAKE_AUDIO_CHECKPOINT",
                 AUDIO_CHECKPOINT_NAMES,
             )
+
+            # 2) Audio Model
+            if not self.audio_checkpoint_path:
+                if "KAGGLE_KERNEL_RUN_TYPE" not in os.environ:
+                    try:
+                        from huggingface_hub import hf_hub_download
+                        logger.info("Attempting to download audio model from Hugging Face Hub...")
+                        self.audio_checkpoint_path = hf_hub_download(
+                            repo_id="Shlok0829/deepfake-models",
+                            filename="backend/checkpoints/audio_best.pth",
+                            repo_type="model"
+                        )
+                        logger.info(f"Downloaded audio model to {self.audio_checkpoint_path}")
+                    except ImportError:
+                        logger.warning("huggingface_hub not installed. Cannot download audio model automatically.")
+                    except Exception as e:
+                        logger.warning(f"Could not download audio model from HF Hub: {e}")
             
             # Lazy load transformers pipeline for summarization
             self._summarizer_pipeline = None

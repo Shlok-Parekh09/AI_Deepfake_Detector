@@ -91,43 +91,50 @@ def push_to_huggingface(checkpoint_paths: list[Path]) -> None:
             "Get a token from https://huggingface.co/settings/tokens"
         )
 
-    repo_id = HF_SPACE
-    repo_type = "space"
-
-    for ckpt in checkpoint_paths:
-        print(f"  Uploading {ckpt.name} to HF Space...")
-        hf.upload_file(
-            path_or_fileobj=str(ckpt),
-            path_in_repo=f"backend/checkpoints/{ckpt.name}",
-            repo_id=repo_id,
-            repo_type=repo_type,
-            token=hf_token,
-            commit_message=f"Add trained checkpoint: {ckpt.name}",
-        )
-        print(f"  ✅ Uploaded {ckpt.name}")
-
-    # Also push updated backend source code
+    # We need to upload checkpoints to the Model repository to avoid the 1GB Space LFS limit
+    HF_MODEL_REPO = "Shlok0829/deepfake-models"
+    ckpts = checkpoint_paths
     backend_dir = Path(__file__).resolve().parents[2] / "backend"
+    
+    # Upload checkpoints
+    for pth_file in ckpts:
+        print(f"  Uploading {pth_file.name} to {HF_MODEL_REPO}...")
+        try:
+            hf.upload_file(
+                path_or_fileobj=str(pth_file),
+                path_in_repo=f"backend/checkpoints/{pth_file.name}",
+                repo_id=HF_MODEL_REPO,
+                repo_type="model",
+                token=hf_token,
+                commit_message=f"Add trained checkpoint: {pth_file.name}"
+            )
+            print(f"  -> Uploaded {pth_file.name}")
+        except Exception as e:
+            print(f"  -> FAILED to upload {pth_file.name}: {e}")
+            
+    print("\nUploading code files to Hugging Face Space...")
     for file_path in backend_dir.rglob("*"):
         if not file_path.is_file():
             continue
         rel = file_path.relative_to(Path(__file__).resolve().parents[2])
         # Skip large/generated dirs and checkpoints (already uploaded)
-        if any(part in rel.parts for part in ("__pycache__", ".git", "checkpoints", "logs")):
+        if any(part in rel.parts for part in ["__pycache__", "checkpoints", "kaggle_kernel", "hf_logs.txt", ".git"]):
             continue
-        if file_path.suffix in (".pyc", ".ipynb"):
+        if file_path.name.endswith(".pth"):
             continue
+            
+        print(f"  Uploading {rel}...")
         try:
             hf.upload_file(
                 path_or_fileobj=str(file_path),
                 path_in_repo=str(rel).replace("\\", "/"),
-                repo_id=repo_id,
-                repo_type=repo_type,
+                repo_id=HF_SPACE,
+                repo_type="space",
                 token=hf_token,
-                commit_message="Update backend source from local",
+                commit_message=f"Upload {rel} with huggingface_hub"
             )
         except Exception as e:
-            print(f"  ⚠️  Skipped {rel}: {e}")
+            print(f"  -> FAILED to upload {rel}: {e}")
 
     print(f"\n🚀 Space updated! View at: https://huggingface.co/spaces/{HF_SPACE}")
 

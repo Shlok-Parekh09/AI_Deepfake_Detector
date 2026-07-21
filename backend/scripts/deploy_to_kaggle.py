@@ -250,11 +250,11 @@ for f in pth_files:
 
 # --- Auto-upload to Hugging Face ---
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
-HF_SPACE = "Shlok0829/deepfake"
+HF_MODEL_REPO = "Shlok0829/deepfake-models"
 
 if HF_TOKEN and pth_files:
     print("\\n" + "=" * 60)
-    print("UPLOADING TO HUGGING FACE SPACE...")
+    print(f"UPLOADING TO HUGGING FACE MODEL REPO {HF_MODEL_REPO}...")
     print("=" * 60)
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "huggingface_hub"], capture_output=True)
     from huggingface_hub import HfApi
@@ -267,8 +267,8 @@ if HF_TOKEN and pth_files:
             hf.upload_file(
                 path_or_fileobj=ckpt,
                 path_in_repo=f"backend/checkpoints/{fname}",
-                repo_id=HF_SPACE,
-                repo_type="space",
+                repo_id=HF_MODEL_REPO,
+                repo_type="model",
                 token=HF_TOKEN,
                 commit_message=f"Add trained checkpoint: {fname}",
             )
