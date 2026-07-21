@@ -29,28 +29,13 @@ except Exception:
 # All dataset sources to attach to the training kernel
 ALL_DATASET_SOURCES = [
     "shlokparekh08/deepfake-backend-code",
-    # Image datasets
-    "sanikatiwarekar/deep-fake-detection-dfd-entire-original-dataset",
-    "manjilkarki/deepfake-and-real-images",
-    "tunguz/1-million-fake-faces-7",
-    "xhlulu/140k-real-and-fake-faces",
-    "saurabhbagchi/deepfake-image-detection",
-    "tunguz/1-million-fake-faces",
-    "dullaz/1m-ai-generated-faces-128x128",
-    "tunguz/1-million-fake-faces-2",
-    "tunguz/1-million-fake-faces-6",
-    "ucimachinelearning/deep-fake-detection-cropped-dataset",
-    "mdraisulislamhridoy/comprehensive-deepfake-detection-dataset",
-    # Real image dataset
-    "yakhyokhuja/ms1m-arcface-dataset",
-    # Video datasets
-    "kanzeus/realai-video-dataset",
-    "sharjeelmazhar/human-activity-recognition-video-dataset",
-    "mistag/short-videos",
-    "odins0n/ucf-crime-dataset",
     # Audio datasets
     "adarshsingh0903/audio-deepfake-detection-dataset",
     "jayjoshi37/deepfake-audio-dataset-fake-vs-real-speech",
+    "mathurinache/the-lj-speech-dataset",
+    "abdallamohamed312/in-the-wild-dataset",
+    "hbchaitanyabharadwaj/audio-dataset-with-10-indian-languages",
+    "pankajsomkuwar/asvspoof-2021-df",
 ]
 
 
@@ -114,6 +99,22 @@ def build_training_notebook_cells():
 
 working = '/kaggle/working'
 dataset_name = 'deepfake-backend-code'
+
+# --- Download Google Drive dataset ---
+print("\\nDownloading Google Drive dataset...")
+subprocess.run([sys.executable, "-m", "pip", "install", "-q", "gdown"])
+import gdown
+gdrive_zip = os.path.join(working, 'gdrive_dataset.zip')
+gdown.download(id='1HMK0QwkNWG5fTXNCtDrNkP8DEr4rq9to', output=gdrive_zip, quiet=False)
+if os.path.exists(gdrive_zip):
+    print("Unzipping Google Drive dataset...")
+    gdrive_dir = os.path.join(working, 'gdrive_dataset')
+    os.makedirs(gdrive_dir, exist_ok=True)
+    subprocess.run(["unzip", "-q", "-o", gdrive_zip, "-d", gdrive_dir])
+    os.remove(gdrive_zip)
+    print("Google Drive dataset ready!")
+else:
+    print("Failed to download Google Drive dataset.")
 
 # 1. Exact paths where Kaggle mounts datasets
 possible_dirs = [
@@ -209,36 +210,6 @@ if result.returncode != 0:
     print("PIP ERRORS:", result.stderr[-2000:])
 """
 
-    vision_cell = """\
-import subprocess, sys, os, time
-os.chdir('/kaggle/working')
-start = time.time()
-print("=" * 60)
-print("VISION TRAINING: EfficientNet-B4 (DFDC competition winner)")
-print("Config: pretrained ImageNet | AMP fp16 | batch=32 | workers=4")
-print("       50k samples/source (~550k total) | 4 epochs")
-print("=" * 60)
-result = subprocess.run(
-    [
-        sys.executable, "-u", "-m", "backend.training.train_vision_kaggle",
-        "--arch", "cnn",
-        "--backbone", "efficientnet_b4",
-        "--pretrained",
-        "--epochs", "2",
-        "--batch-size", "32",
-        "--workers", "4",
-        "--lr", "1e-4",
-        "--val-fraction", "0.05",
-        "--amp",
-        "--resume",
-        "--output-dir", "/kaggle/working/checkpoints",
-    ],
-    capture_output=False
-)
-elapsed = time.time() - start
-print(f"\\nVision training finished in {elapsed/60:.1f} min | exit code {result.returncode}")
-"""
-
     audio_cell = """\
 import subprocess, sys, os, time
 os.chdir('/kaggle/working')
@@ -246,16 +217,15 @@ start = time.time()
 print("=" * 60)
 print("AUDIO TRAINING: ResNet-34 on log-mel spectrograms")
 print("Config: pretrained ImageNet (adapted 1ch) | AMP fp16 | batch=64")
-print("       300k samples max | 8 epochs")
+print("       all samples | 12 epochs")
 print("=" * 60)
 result = subprocess.run(
     [
         sys.executable, "-u", "-m", "backend.training.train_audio_kaggle",
-        "--epochs", "8",
+        "--epochs", "12",
         "--batch-size", "64",
         "--workers", "4",
         "--lr", "5e-5",
-        "--max-samples-per-source", "300000",
         "--amp",
         "--resume",
         "--output-dir", "/kaggle/working/checkpoints",

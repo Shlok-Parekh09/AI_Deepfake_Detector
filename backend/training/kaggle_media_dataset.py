@@ -179,6 +179,41 @@ DEFAULT_AUDIO_SOURCES = (
         folder_labels={"fake": 1, "real": 0},
         media_exts=frozenset(AUDIO_EXTS),
     ),
+    # The LJ Speech Dataset (Real speech)
+    KaggleSource(
+        "the-lj-speech-dataset",
+        "/kaggle/input/the-lj-speech-dataset",
+        default_label=0,
+        media_exts=frozenset(AUDIO_EXTS),
+    ),
+    # In The Wild (audio Deepfake) (Fake speech)
+    KaggleSource(
+        "in-the-wild-dataset",
+        "/kaggle/input/in-the-wild-dataset",
+        default_label=1,
+        media_exts=frozenset(AUDIO_EXTS),
+    ),
+    # Audio Dataset with 10 Indian Languages (Real speech)
+    KaggleSource(
+        "audio-dataset-with-10-indian-languages",
+        "/kaggle/input/audio-dataset-with-10-indian-languages",
+        default_label=0,
+        media_exts=frozenset(AUDIO_EXTS),
+    ),
+    # ASVspoof 2021 DF (Requires specific labeling if both real/fake exist, but standard is mostly fake or evaluated based on metadata. Let's rely on folder structures or assume fake if it's the eval set without labels. Wait, ASVspoof 2021 DF evaluation set is mixed. We can use folder labels if structured, else it might need metadata parsing. For now, assuming it has real/fake folders. Wait, the Kaggle dataset might just have all audio. Let's assume folder labels "bonafide"->0, "spoof"->1)
+    KaggleSource(
+        "asvspoof-2021-df",
+        "/kaggle/input/asvspoof-2021-df",
+        folder_labels={"bonafide": 0, "spoof": 1, "real": 0, "fake": 1},
+        media_exts=frozenset(AUDIO_EXTS),
+    ),
+    # GDrive dataset downloaded in notebook
+    KaggleSource(
+        "gdrive_dataset",
+        "/kaggle/working/gdrive_dataset",
+        folder_labels={"bonafide": 0, "spoof": 1, "real": 0, "fake": 1},
+        media_exts=frozenset(AUDIO_EXTS),
+    ),
 )
 
 
