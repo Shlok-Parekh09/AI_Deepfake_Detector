@@ -90,7 +90,10 @@ class Predictor:
             if self.audio_checkpoint_path:
                 self.audio_model = AudioCNN().to(self.device)
                 audio_state = torch.load(self.audio_checkpoint_path, map_location=self.device)
-                self.audio_model.load_state_dict(audio_state.get("model_state_dict", audio_state))
+                state_dict = audio_state.get("model_state_dict", audio_state)
+                # Strip 'module.' prefix if model was trained with DataParallel
+                state_dict = {k.replace("module.", "") if k.startswith("module.") else k: v for k, v in state_dict.items()}
+                self.audio_model.load_state_dict(state_dict)
                 self.audio_model.eval()
                 logger.info(
                     "Loaded audio checkpoint %s (%s)",
