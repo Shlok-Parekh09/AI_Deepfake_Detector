@@ -4,6 +4,7 @@ Loads trained model weights and runs inference on a single image, video, or audi
 Inference is trained-checkpoint only: scans fail fast when required weights are missing.
 """
 
+import os
 from pathlib import Path
 
 from backend.utils.file_handler import FileHandler
