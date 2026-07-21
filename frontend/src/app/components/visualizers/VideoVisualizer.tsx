@@ -163,7 +163,7 @@ export function VideoVisualizer({ mediaUrl, onPlayStateChange, externalVideoRef 
         muted={false}
         loop
         playsInline
-        crossOrigin="anonymous"
+        crossOrigin={mediaUrl.startsWith('blob:') ? undefined : "anonymous"}
         onPlay={() => onPlayStateChange?.(true)}
         onPause={() => onPlayStateChange?.(false)}
       />

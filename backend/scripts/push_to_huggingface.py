@@ -108,14 +108,18 @@ def push_to_huggingface(checkpoint_paths: list[Path]) -> None:
 
     # Also push updated backend source code
     backend_dir = Path(__file__).resolve().parents[2] / "backend"
-    for py_file in backend_dir.rglob("*.py"):
-        rel = py_file.relative_to(Path(__file__).resolve().parents[2])
-        # Skip large/generated dirs
-        if any(part in rel.parts for part in ("__pycache__", ".git")):
+    for file_path in backend_dir.rglob("*"):
+        if not file_path.is_file():
+            continue
+        rel = file_path.relative_to(Path(__file__).resolve().parents[2])
+        # Skip large/generated dirs and checkpoints (already uploaded)
+        if any(part in rel.parts for part in ("__pycache__", ".git", "checkpoints", "logs")):
+            continue
+        if file_path.suffix in (".pyc", ".ipynb"):
             continue
         try:
             hf.upload_file(
-                path_or_fileobj=str(py_file),
+                path_or_fileobj=str(file_path),
                 path_in_repo=str(rel).replace("\\", "/"),
                 repo_id=repo_id,
                 repo_type=repo_type,

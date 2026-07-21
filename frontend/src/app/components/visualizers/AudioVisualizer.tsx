@@ -89,7 +89,7 @@ export function AudioVisualizer({ mediaUrl, isExternalPlaying, hideAudioElement,
           src={mediaUrl} 
           autoPlay 
           loop 
-          crossOrigin="anonymous"
+          crossOrigin={mediaUrl.startsWith('blob:') ? undefined : "anonymous"}
           onPlay={() => setInternalIsPlaying(true)}
           onPause={() => setInternalIsPlaying(false)}
         />
