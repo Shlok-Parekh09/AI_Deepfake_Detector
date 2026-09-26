@@ -4,7 +4,9 @@ Downloads media files from URLs for analysis.
 """
 
 import os
+import socket
 import tempfile
+import ipaddress
 from urllib.parse import urlparse
 
 import requests
@@ -108,6 +110,8 @@ class URLDownloader:
             parsed = urlparse(url)
             if parsed.scheme not in ("http", "https"):
                 return False
+            if not self._is_safe_public_url(url):
+                return False
             if self._is_youtube(url):
                 return True
             resp = requests.head(url, timeout=10, allow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'})
@@ -133,3 +137,34 @@ class URLDownloader:
     def _is_youtube(url: str) -> bool:
         host = urlparse(url).hostname or ""
         return any(h in host for h in ("youtube.com", "youtu.be"))
+
+    @staticmethod
+    def _is_public_ip(ip_str: str) -> bool:
+        ip = ipaddress.ip_address(ip_str)
+        return not (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_reserved
+            or ip.is_unspecified
+        )
+
+    def _is_safe_public_url(self, url: str) -> bool:
+        parsed = urlparse(url)
+        host = parsed.hostname
+        if not host:
+            return False
+        if host.lower() in {"localhost"}:
+            return False
+
+        try:
+            addr_info = socket.getaddrinfo(host, parsed.port or (443 if parsed.scheme == "https" else 80))
+        except socket.gaierror:
+            return False
+
+        ips = {entry[4][0] for entry in addr_info if entry and entry[4]}
+        if not ips:
+            return False
+
+        return all(self._is_public_ip(ip) for ip in ips)
