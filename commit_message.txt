@@ -1,6 +1,0 @@
-feat: handle auth/unauthorized-domain error for Firebase OAuth
-
-- Added specific error catch for Firebase OAuth failure (`auth/unauthorized-domain`) to display an actionable error message for developers/users.
-- This helps identify that the Vercel domain must be explicitly added to the Authorized Domains list in the Firebase console.
-
-Co-authored-by: Shlok-Parekh09 <shlokparekh08@gmail.com>
