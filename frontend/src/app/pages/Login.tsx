@@ -6,10 +6,12 @@ import BrandLogo from '../components/BrandLogo';
 
 export default function Login() {
   const navigate = useNavigate();
-  const { signInWithGoogle, signInWithEmail } = useAuth();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
   
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -17,23 +19,30 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     try {
       await signInWithGoogle();
-      // Note: Supabase handles the redirect automatically to /dashboard
-    } catch (error) {
+      navigate('/dashboard');
+    } catch (error: any) {
       console.error("Failed to sign in", error);
+      setError(error.message || 'Failed to sign in with Google');
     }
   };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!email || !password) return;
     try {
       setLoading(true);
       setError('');
       setMessage('');
-      await signInWithEmail(email);
-      setMessage('Check your email for the login link!');
+      if (isSignUp) {
+        await signUpWithEmail(email, password);
+        setMessage('Successfully signed up!');
+      } else {
+        await signInWithEmail(email, password);
+        setMessage('Successfully signed in!');
+      }
+      navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Failed to send login link');
+      setError(err.message || 'Failed to authenticate');
     } finally {
       setLoading(false);
     }
@@ -87,6 +96,14 @@ export default function Login() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email address"
                     required
+                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl py-3.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all mb-4"
+                  />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
                     className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl py-3.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all"
                   />
                 </div>
@@ -97,16 +114,29 @@ export default function Login() {
                   disabled={loading}
                   className="w-full bg-gradient-to-r from-cyan-500 to-indigo-500 hover:from-cyan-400 hover:to-indigo-400 text-white rounded-xl py-3.5 px-4 font-semibold transition-all duration-200 shadow-lg shadow-cyan-500/25 disabled:opacity-50"
                 >
-                  {loading ? 'Sending link...' : 'Send Magic Link'}
+                  {loading ? 'Authenticating...' : (isSignUp ? 'Sign Up' : 'Sign In')}
                 </button>
               </form>
+              <div className="flex justify-between items-center px-1 text-sm mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSignUp(!isSignUp);
+                    setError('');
+                    setMessage('');
+                  }}
+                  className="text-cyan-400 hover:text-cyan-300 transition-colors"
+                >
+                  {isSignUp ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}
+                </button>
+              </div>
               <button
                 onClick={() => {
                   setShowEmailForm(false);
                   setError('');
                   setMessage('');
                 }}
-                className="w-full bg-transparent hover:bg-white/[0.04] border border-transparent hover:border-white/[0.06] rounded-xl py-3.5 px-4 text-gray-400 hover:text-white font-semibold transition-all duration-200"
+                className="w-full bg-transparent hover:bg-white/[0.04] border border-transparent hover:border-white/[0.06] rounded-xl py-3.5 px-4 text-gray-400 hover:text-white font-semibold transition-all duration-200 mt-2"
               >
                 Back to options
               </button>

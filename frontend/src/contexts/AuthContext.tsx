@@ -1,74 +1,81 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User } from "@supabase/supabase-js";
-import { supabase } from "../lib/supabase";
+import {
+  User,
+  onAuthStateChanged,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut
+} from "firebase/auth";
+import { auth } from "../lib/firebase";
 
 interface AuthContextType {
-  user: User | null;
+  user: any;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
-  signInWithEmail: (email: string) => Promise<void>;
+  signInWithEmail: (email: string, password?: string) => Promise<void>;
+  signUpWithEmail: (email: string, password?: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+    // Listen for auth changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        // Map Firebase user uid to id to maintain compatibility with existing Supabase implementation
+        setUser({
+          ...currentUser,
+          id: currentUser.uid,
+        });
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`
-        }
-      });
-      
-      if (error) throw error;
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
     } catch (error) {
       console.error("Error signing in with Google", error);
       throw error;
     }
   };
 
-  const signInWithEmail = async (email: string) => {
+  const signInWithEmail = async (email: string, password?: string) => {
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`
-        }
-      });
-      if (error) throw error;
+      if (!password) throw new Error("Password is required for email login");
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
       console.error("Error signing in with email", error);
       throw error;
     }
   };
 
+  const signUpWithEmail = async (email: string, password?: string) => {
+    try {
+      if (!password) throw new Error("Password is required for email signup");
+      await createUserWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      console.error("Error signing up with email", error);
+      throw error;
+    }
+  };
+
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await firebaseSignOut(auth);
     } catch (error) {
       console.error("Error signing out", error);
       throw error;
@@ -76,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signUpWithEmail, signOut }}>
       {!loading && children}
     </AuthContext.Provider>
   );
