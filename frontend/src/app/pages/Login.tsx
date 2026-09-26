@@ -22,7 +22,11 @@ export default function Login() {
       navigate('/dashboard');
     } catch (error: any) {
       console.error("Failed to sign in", error);
-      setError(error.message || 'Failed to sign in with Google');
+      if (error.code === 'auth/unauthorized-domain') {
+        setError('This domain is not authorized for OAuth operations for your Firebase project. Please add it in the Firebase console.');
+      } else {
+        setError(error.message || 'Failed to sign in with Google');
+      }
     }
   };
 
