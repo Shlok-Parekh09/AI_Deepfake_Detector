@@ -182,7 +182,11 @@ async def proxy_media(url: str):
     from urllib.parse import urlparse
     from fastapi.responses import StreamingResponse
     from fastapi import HTTPException
+    from backend.utils.url_downloader import URLDownloader
     
+    if not URLDownloader._is_safe_public_url(url):
+        raise HTTPException(status_code=400, detail="Invalid or unsafe URL.")
+
     # Extract direct MP4 URL for YouTube links
     host = urlparse(url).hostname or ""
     if "youtube.com" in host or "youtu.be" in host:

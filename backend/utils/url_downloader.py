@@ -150,7 +150,8 @@ class URLDownloader:
             or ip.is_unspecified
         )
 
-    def _is_safe_public_url(self, url: str) -> bool:
+    @staticmethod
+    def _is_safe_public_url(url: str) -> bool:
         parsed = urlparse(url)
         host = parsed.hostname
         if not host:
@@ -167,4 +168,4 @@ class URLDownloader:
         if not ips:
             return False
 
-        return all(self._is_public_ip(ip) for ip in ips)
+        return all(URLDownloader._is_public_ip(ip) for ip in ips)
