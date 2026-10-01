@@ -141,16 +141,10 @@ class URLDownloader:
     @staticmethod
     def _is_public_ip(ip_str: str) -> bool:
         ip = ipaddress.ip_address(ip_str)
-        return not (
-            ip.is_private
-            or ip.is_loopback
-            or ip.is_link_local
-            or ip.is_multicast
-            or ip.is_reserved
-            or ip.is_unspecified
-        )
+        return not (ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved or ip.is_unspecified)
 
-    def _is_safe_public_url(self, url: str) -> bool:
+    @staticmethod
+    def _is_safe_public_url(url: str) -> bool:
         parsed = urlparse(url)
         host = parsed.hostname
         if not host:
@@ -167,4 +161,4 @@ class URLDownloader:
         if not ips:
             return False
 
-        return all(self._is_public_ip(ip) for ip in ips)
+        return all(URLDownloader._is_public_ip(ip) for ip in ips)

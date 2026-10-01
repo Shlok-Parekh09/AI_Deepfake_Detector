@@ -182,14 +182,18 @@ async def proxy_media(url: str):
     from urllib.parse import urlparse
     from fastapi.responses import StreamingResponse
     from fastapi import HTTPException
-    
+    from backend.utils.url_downloader import URLDownloader
+
+    if not URLDownloader._is_safe_public_url(url):
+        raise HTTPException(status_code=400, detail="Invalid or unsafe URL.")
+
     # Extract direct MP4 URL for YouTube links
     host = urlparse(url).hostname or ""
     if "youtube.com" in host or "youtu.be" in host:
         try:
             cmd = [
-                sys.executable, "-m", "yt_dlp", 
-                "-f", "best[ext=mp4]/best", 
+                sys.executable, "-m", "yt_dlp",
+                "-f", "best[ext=mp4]/best",
                 "--no-warnings",
                 "--geo-bypass",
                 "--extractor-args", "youtube:player_client=android",
@@ -210,12 +214,12 @@ async def proxy_media(url: str):
     }
     client = httpx.AsyncClient(follow_redirects=True, headers=headers)
     req = client.build_request("GET", url)
-    
+
     try:
         response = await client.send(req, stream=True)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to connect: {str(e)}")
-        
+
     if response.status_code != 200:
         await response.aclose()
         raise HTTPException(status_code=400, detail=f"Failed to fetch media: {response.status_code}")
