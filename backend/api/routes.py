@@ -78,10 +78,9 @@ async def detect_deepfake(file: UploadFile = File(...)):
         finally:
             os.unlink(tmp_path)
     except Exception as exc:
-        import traceback
-        error_msg = f"{type(exc).__name__}: {str(exc)}\n{traceback.format_exc()}"
+        # Sentinel: Removed stack trace and specific error message to prevent information leakage
         logger.exception("Detection failed")
-        raise HTTPException(status_code=500, detail=error_msg)
+        raise HTTPException(status_code=500, detail="An internal error occurred during detection.")
 
 
 @router.post("/detect/url", response_model=DetectionResult)
@@ -97,8 +96,9 @@ async def detect_from_url(request: URLRequest):
         logger.warning("URL detection unavailable: %s", exc)
         raise HTTPException(status_code=503, detail=str(exc))
     except Exception as exc:
+        # Sentinel: Removed specific error message to prevent information leakage
         logger.exception("URL detection failed")
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail="An internal error occurred during URL detection.")
 
 
 @router.post("/detect/batch", response_model=list[DetectionResult])
@@ -128,9 +128,11 @@ async def detect_batch(files: list[UploadFile] = File(...)):
                     confidence="none", error=str(exc),
                 ))
             except Exception as exc:
+                # Sentinel: Log exception and hide specific error message to prevent information leakage
+                logger.exception("Batch detection failed for file %s", path)
                 results.append(DetectionResult(
                     fake_probability=0.0, is_fake=False,
-                    confidence="none", error=str(exc),
+                    confidence="none", error="An internal error occurred during detection.",
                 ))
     finally:
         for p in tmp_paths:
@@ -207,7 +209,9 @@ async def proxy_media(url: str):
         except subprocess.TimeoutExpired:
             raise HTTPException(status_code=400, detail="YouTube extraction timed out (likely due to IP block on Hugging Face).")
         except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Failed to extract YouTube stream: {e}")
+            # Sentinel: Hide exception details to prevent information leakage
+            logger.exception("YouTube extraction failed")
+            raise HTTPException(status_code=400, detail="Failed to extract YouTube stream.")
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -218,11 +222,13 @@ async def proxy_media(url: str):
     try:
         response = await client.send(req, stream=True)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to connect: {str(e)}")
+        # Sentinel: Hide exception details to prevent information leakage
+        logger.exception("Proxy media connection failed")
+        raise HTTPException(status_code=400, detail="Failed to connect to the provided URL.")
 
     if response.status_code != 200:
         await response.aclose()
-        raise HTTPException(status_code=400, detail=f"Failed to fetch media: {response.status_code}")
+        raise HTTPException(status_code=400, detail="Failed to fetch media from the provided URL.")
 
     async def stream_generator():
         try:
