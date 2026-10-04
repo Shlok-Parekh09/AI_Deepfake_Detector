@@ -34,3 +34,4 @@ kaggle_output_tmp/
 checkpoints/
 kaggle_checkpoints_upload/
 backend_code.zip
+venv/

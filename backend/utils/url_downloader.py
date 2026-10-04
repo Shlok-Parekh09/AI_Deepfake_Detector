@@ -56,7 +56,40 @@ class URLDownloader:
     def download_direct(self, url: str, output_path: str) -> str:
         """Stream-download a direct file URL with a progress bar."""
         logger.info("Downloading %s → %s", url, output_path)
-        response = requests.get(url, stream=True, timeout=60)
+
+        session = requests.Session()
+        # Resolve redirects manually to ensure every hop is validated
+        current_url = url
+        max_redirects = 10
+        redirects = 0
+        while redirects < max_redirects:
+            # CodeQL: Ensure explicit validation immediately before fetching to satisfy data flow analyzer
+            parsed = urlparse(current_url)
+            if parsed.scheme not in ("http", "https"):
+                raise ValueError(f"Invalid scheme in URL: {current_url}")
+            if not URLDownloader._is_safe_public_url(current_url):
+                 raise ValueError(f"Unsafe URL: {current_url}")
+
+            # codeql[py/full-ssrf] Validated by _is_safe_public_url above
+            response = session.get(current_url, stream=True, timeout=60, allow_redirects=False)
+            if response.is_redirect:
+                # Close the body to avoid leaking connections in the pool
+                response.close()
+                redirects += 1
+                location = response.headers.get("Location")
+                if not location:
+                    raise RuntimeError("Redirect missing Location header.")
+                from urllib.parse import urljoin
+                next_url = urljoin(current_url, location)
+                if not URLDownloader._is_safe_public_url(next_url):
+                    raise ValueError(f"Unsafe redirect URL: {next_url}")
+                current_url = next_url
+            else:
+                break
+
+        if redirects >= max_redirects:
+            raise RuntimeError("Too many redirects.")
+
         response.raise_for_status()
 
         total = int(response.headers.get("content-length", 0))
@@ -136,7 +169,8 @@ class URLDownloader:
     @staticmethod
     def _is_youtube(url: str) -> bool:
         host = urlparse(url).hostname or ""
-        return any(h in host for h in ("youtube.com", "youtu.be"))
+        host = host.lower()
+        return host in ("youtube.com", "youtu.be", "www.youtube.com", "m.youtube.com")
 
     @staticmethod
     def _is_public_ip(ip_str: str) -> bool:
