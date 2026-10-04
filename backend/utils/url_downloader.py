@@ -63,6 +63,13 @@ class URLDownloader:
         max_redirects = 10
         redirects = 0
         while redirects < max_redirects:
+            # CodeQL: Ensure explicit validation immediately before fetching to satisfy data flow analyzer
+            parsed = urlparse(current_url)
+            if parsed.scheme not in ("http", "https"):
+                raise ValueError(f"Invalid scheme in URL: {current_url}")
+            if not URLDownloader._is_safe_public_url(current_url):
+                 raise ValueError(f"Unsafe URL: {current_url}")
+
             response = session.get(current_url, stream=True, timeout=60, allow_redirects=False)
             if response.is_redirect:
                 # Close the body to avoid leaking connections in the pool
