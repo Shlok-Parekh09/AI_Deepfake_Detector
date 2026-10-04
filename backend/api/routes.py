@@ -205,18 +205,31 @@ async def proxy_media(url: str):
             # The last line of stdout is typically the URL (ignoring warnings)
             direct_url = result.stdout.strip().split("\n")[-1]
             if direct_url.startswith("http"):
+                if not URLDownloader._is_safe_public_url(direct_url):
+                    raise HTTPException(status_code=400, detail="Unsafe URL extracted from YouTube.")
                 url = direct_url
         except subprocess.TimeoutExpired:
             raise HTTPException(status_code=400, detail="YouTube extraction timed out (likely due to IP block on Hugging Face).")
+        except HTTPException:
+            raise
         except Exception as e:
             # Sentinel: Hide exception details to prevent information leakage
             logger.exception("YouTube extraction failed")
             raise HTTPException(status_code=400, detail="Failed to extract YouTube stream.")
 
+    async def check_redirect(response):
+        if response.is_redirect:
+            next_url = response.headers.get("Location")
+            if next_url:
+                from urllib.parse import urljoin
+                next_url_str = urljoin(str(response.request.url), next_url)
+                if not URLDownloader._is_safe_public_url(next_url_str):
+                    raise httpx.RequestError("Unsafe redirect URL.", request=response.request)
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
-    client = httpx.AsyncClient(follow_redirects=True, headers=headers)
+    client = httpx.AsyncClient(follow_redirects=True, headers=headers, event_hooks={'response': [check_redirect]})
     req = client.build_request("GET", url)
 
     try:
