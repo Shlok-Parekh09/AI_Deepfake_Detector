@@ -48,12 +48,13 @@ def download_models(kernel_slug: str):
     
     # We use the standard Kaggle CLI here since notebook outputs are best handled by it
     # kagglehub is primarily for official Datasets and Kaggle Models
-    command = f"kaggle kernels output {kernel_slug} -p {checkpoints_dir}"
+    command = ["kaggle", "kernels", "output", kernel_slug, "-p", str(checkpoints_dir)]
     
-    print(f"Running command: {command}")
-    exit_code = os.system(command)
+    print(f"Running command: {' '.join(command)}")
+    import subprocess
+    result = subprocess.run(command, check=False)
     
-    if exit_code == 0:
+    if result.returncode == 0:
         print("\n✅ Successfully downloaded trained models to backend/checkpoints/!")
         print("Your local website API will now automatically use these models.")
     else:
