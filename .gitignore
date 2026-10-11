@@ -35,3 +35,7 @@ checkpoints/
 kaggle_checkpoints_upload/
 backend_code.zip
 venv/
+
+# Vercel env
+frontend/.env.vercel
+*.env.vercel
