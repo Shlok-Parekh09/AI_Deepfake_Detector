@@ -11,3 +11,7 @@
 **Vulnerability:** Command injection vulnerability due to unsanitized user input passed directly to `os.system()` within `backend/scripts/sync_kaggle.py`.
 **Learning:** Found that string formatting user input into shell commands is a high-risk pattern that allows execution of arbitrary commands.
 **Prevention:** Avoid `os.system` and `subprocess.run` with `shell=True`. Instead, always pass command arguments as a list to `subprocess.run()` to ensure arguments are properly escaped and treated as data rather than executable code.
+## 2024-05-26 - [Hardcoded Secret Leakage]
+**Vulnerability:** A hardcoded `VERCEL_OIDC_TOKEN` was checked into version control via `frontend/.env.vercel`.
+**Learning:** Automatically generated Vercel environment files containing secrets can easily be committed if `.gitignore` rules are not explicitly configured to ignore them.
+**Prevention:** Added `*.env.vercel` to `.gitignore` to prevent tracking of Vercel env configs with sensitive tokens.
