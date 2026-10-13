@@ -151,6 +151,12 @@ class URLDownloader:
             current_url = url
             redirects = 0
             while redirects < 10:
+                parsed_current = urlparse(current_url)
+                if parsed_current.scheme not in ("http", "https"):
+                    return False
+                if not URLDownloader._is_safe_public_url(current_url):
+                    return False
+
                 # codeql[py/full-ssrf] Validated by _is_safe_public_url above or in previous iteration
                 resp = requests.head(current_url, timeout=10, allow_redirects=False, headers={'User-Agent': 'Mozilla/5.0'})
                 if resp.is_redirect:
@@ -178,6 +184,12 @@ class URLDownloader:
             current_url = url
             redirects = 0
             while redirects < 10:
+                parsed_current = urlparse(current_url)
+                if parsed_current.scheme not in ("http", "https"):
+                    return None
+                if not URLDownloader._is_safe_public_url(current_url):
+                    return None
+
                 # codeql[py/full-ssrf] Validated by _is_safe_public_url above or in previous iteration
                 resp = requests.head(current_url, timeout=10, allow_redirects=False)
                 if resp.is_redirect:
