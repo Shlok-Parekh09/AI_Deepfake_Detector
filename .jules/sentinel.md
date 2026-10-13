@@ -15,3 +15,7 @@
 **Vulnerability:** A hardcoded `VERCEL_OIDC_TOKEN` was checked into version control via `frontend/.env.vercel`.
 **Learning:** Automatically generated Vercel environment files containing secrets can easily be committed if `.gitignore` rules are not explicitly configured to ignore them.
 **Prevention:** Added `*.env.vercel` to `.gitignore` to prevent tracking of Vercel env configs with sensitive tokens.
+## 2024-05-18 - SSRF via unsafe redirect following in requests
+**Vulnerability:** The application was vulnerable to SSRF because `requests.head()` was used with `allow_redirects=True`. While the initial URL was validated against internal/private IP checks, an attacker could provide a safe public URL that redirects to a private IP, which `requests` would blindly follow.
+**Learning:** Even if an initial URL is safe, redirects must be treated as untrusted input. The `allow_redirects=True` option in HTTP clients can bypass initial URL validation mechanisms and lead to SSRF.
+**Prevention:** Always use `allow_redirects=False` in HTTP clients and manually handle redirects in a loop. Validate the URL of each `Location` header redirect against the same SSRF safety checks before following it.
