@@ -147,8 +147,24 @@ class URLDownloader:
                 return False
             if self._is_youtube(url):
                 return True
-            resp = requests.head(url, timeout=10, allow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'})
-            return resp.status_code < 400
+
+            current_url = url
+            redirects = 0
+            while redirects < 10:
+                resp = requests.head(current_url, timeout=10, allow_redirects=False, headers={'User-Agent': 'Mozilla/5.0'})
+                if resp.is_redirect:
+                    redirects += 1
+                    location = resp.headers.get("Location")
+                    if not location:
+                        return False
+                    from urllib.parse import urljoin
+                    next_url = urljoin(current_url, location)
+                    if not URLDownloader._is_safe_public_url(next_url):
+                        return False
+                    current_url = next_url
+                else:
+                    return resp.status_code < 400
+            return False
         except Exception:
             return False
 
@@ -158,9 +174,24 @@ class URLDownloader:
         or ``None`` if the server does not report it.
         """
         try:
-            resp = requests.head(url, timeout=10, allow_redirects=True)
-            length = resp.headers.get("content-length")
-            return int(length) if length else None
+            current_url = url
+            redirects = 0
+            while redirects < 10:
+                resp = requests.head(current_url, timeout=10, allow_redirects=False)
+                if resp.is_redirect:
+                    redirects += 1
+                    location = resp.headers.get("Location")
+                    if not location:
+                        return None
+                    from urllib.parse import urljoin
+                    next_url = urljoin(current_url, location)
+                    if not URLDownloader._is_safe_public_url(next_url):
+                        return None
+                    current_url = next_url
+                else:
+                    length = resp.headers.get("content-length")
+                    return int(length) if length else None
+            return None
         except Exception:
             return None
 
