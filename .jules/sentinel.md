@@ -19,3 +19,8 @@
 **Vulnerability:** The application was vulnerable to SSRF because `requests.head()` was used with `allow_redirects=True`. While the initial URL was validated against internal/private IP checks, an attacker could provide a safe public URL that redirects to a private IP, which `requests` would blindly follow.
 **Learning:** Even if an initial URL is safe, redirects must be treated as untrusted input. The `allow_redirects=True` option in HTTP clients can bypass initial URL validation mechanisms and lead to SSRF.
 **Prevention:** Always use `allow_redirects=False` in HTTP clients and manually handle redirects in a loop. Validate the URL of each `Location` header redirect against the same SSRF safety checks before following it.
+
+## 2024-10-14 - [Hardcoded Kaggle Secrets]
+**Vulnerability:** Hardcoded KAGGLE_USERNAME and KAGGLE_KEY were found directly committed in `backend/scripts/download_models.py`.
+**Learning:** Developer scripts used for local testing or manual downloads often mistakenly include hardcoded personal access tokens or API keys, bypassing centralized secret management.
+**Prevention:** Never hardcode secrets in source files. Always use environment variables or a secure secret manager, and ensure validation exists to notify users if required secrets are missing.
