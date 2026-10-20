@@ -17,19 +17,19 @@ export default function Upload() {
     video: {
       title: 'Upload Video',
       accept: 'video/*',
-      desc: 'MP4, WebM or Ogg (Max 100MB)',
+      desc: 'MP4, WebM or Ogg (Max 1 GB)',
       icon: <UploadIcon className="w-12 h-12 text-cyan-400 mb-4" />
     },
     audio: {
       title: 'Upload Audio',
       accept: 'audio/*',
-      desc: 'MP3, WAV or OGG (Max 50MB)',
+      desc: 'MP3, WAV or OGG (Max 1 GB)',
       icon: <UploadIcon className="w-12 h-12 text-cyan-400 mb-4" />
     },
     image: {
       title: 'Upload Image',
       accept: 'image/*',
-      desc: 'JPG, PNG or WebP (Max 20MB)',
+      desc: 'JPG, PNG or WebP (Max 1 GB)',
       icon: <UploadIcon className="w-12 h-12 text-cyan-400 mb-4" />
     }
   };
@@ -75,6 +75,7 @@ export default function Upload() {
   };
 
   const handleFileSelection = (file: File) => {
+    if (file.size > 1024 ** 3) { window.alert('Maximum file size is 1 GB.'); return; }
     setSelectedFile(file);
     setTimeout(() => {
       navigate('/dashboard', { state: { file, type } });

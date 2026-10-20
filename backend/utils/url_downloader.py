@@ -25,7 +25,7 @@ class URLDownloader:
     require ``yt-dlp`` to be installed separately.
     """
 
-    def __init__(self, download_dir: str | None = None, max_file_size_mb: int = 500):
+    def __init__(self, download_dir: str | None = None, max_file_size_mb: int = 1024):
         self.max_file_size_mb = max_file_size_mb
         if download_dir is None:
             self._tmp = tempfile.TemporaryDirectory(prefix="deepfake_dl_")
@@ -45,13 +45,18 @@ class URLDownloader:
             raise ValueError(f"Invalid or unreachable URL: {url}")
 
         if output_path is None:
-            parsed = urlparse(url)
-            filename = os.path.basename(parsed.path) or "download"
-            output_path = os.path.join(self.download_dir, filename)
+            suffix = os.path.splitext(urlparse(url).path)[1][:16]
+            descriptor, output_path = tempfile.mkstemp(dir=self.download_dir, suffix=suffix)
+            os.close(descriptor)
 
         if self._is_youtube(url):
             return self.download_youtube(url, output_path)
-        return self.download_direct(url, output_path)
+        try:
+            return self.download_direct(url, output_path)
+        except Exception:
+            if os.path.isfile(output_path):
+                os.unlink(output_path)
+            raise
 
     def download_direct(self, url: str, output_path: str) -> str:
         """Stream-download a direct file URL with a progress bar."""
@@ -102,7 +107,11 @@ class URLDownloader:
         with open(output_path, "wb") as f, tqdm(
             total=total, unit="B", unit_scale=True, desc="Downloading"
         ) as bar:
+            received = 0
             for chunk in response.iter_content(chunk_size=8192):
+                received += len(chunk)
+                if received > self.max_file_size_mb * 1024 * 1024:
+                    raise ValueError('File exceeds the 1 GB maximum.')
                 f.write(chunk)
                 bar.update(len(chunk))
 
@@ -110,69 +119,39 @@ class URLDownloader:
         return output_path
 
     def download_youtube(self, url: str, output_path: str) -> str:
-        """Download from YouTube using ``yt-dlp`` (must be installed)."""
+        """Download from YouTube using ``pytubefix`` to bypass bot blocks."""
         try:
-            import subprocess
-            import sys
+            from pytubefix import YouTube
+            from pytubefix.cli import on_progress
 
-            cmd = [
-                sys.executable, "-m", "yt_dlp",
-                "-f", "best[ext=mp4]",
-                "--no-warnings",
-                "--geo-bypass",
-                "--extractor-args", "youtube:player_client=android",
-                "-o", output_path,
-                url,
-            ]
-            logger.info("Running yt-dlp for %s", url)
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30)
-            if result.returncode != 0:
-                logger.error(f"yt-dlp failed: {result.stderr}")
-                raise RuntimeError(f"yt-dlp failed to download: {result.stderr}")
+            logger.info("Running pytubefix for %s", url)
+            yt = YouTube(url, use_po_token=True)
+            stream = yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first()
+            if not stream:
+                # fallback to any mp4
+                stream = yt.streams.filter(file_extension='mp4').first()
+
+            if not stream:
+                raise RuntimeError("No suitable MP4 stream found for this YouTube video.")
+
+            stream.download(output_path=os.path.dirname(output_path), filename=os.path.basename(output_path))
+            logger.info("pytubefix download complete: %s", output_path)
             return output_path
-        except subprocess.TimeoutExpired:
-            raise RuntimeError("YouTube extraction timed out (likely due to IP block by YouTube on data center).")
         except Exception as e:
-            raise RuntimeError(
-                f"Failed to download YouTube video: {e}"
-            )
+            logger.error(f"pytubefix failed: {e}")
+            raise RuntimeError(f"YouTube download failed (possibly blocked or age-restricted): {e}")
 
     def validate_url(self, url: str) -> bool:
-        """Return ``True`` if *url* looks valid and is reachable (HEAD request)."""
+        """Validate public HTTP(S) destinations; GET validates reachability and redirects.
+
+        A HEAD preflight rejects legitimate hosts that support GET but not HEAD.
+        Every download redirect is still checked before its GET request.
+        """
         try:
             parsed = urlparse(url)
-            if parsed.scheme not in ("http", "https"):
-                return False
-            if not self._is_safe_public_url(url):
-                return False
-            if self._is_youtube(url):
-                return True
-
-            current_url = url
-            redirects = 0
-            while redirects < 10:
-                parsed_current = urlparse(current_url)
-                if parsed_current.scheme not in ("http", "https"):
-                    return False
-                if not URLDownloader._is_safe_public_url(current_url):
-                    return False
-
-                # codeql[py/full-ssrf] Validated by _is_safe_public_url above or in previous iteration
-                resp = requests.head(current_url, timeout=10, allow_redirects=False, headers={'User-Agent': 'Mozilla/5.0'})
-                if resp.is_redirect:
-                    redirects += 1
-                    location = resp.headers.get("Location")
-                    if not location:
-                        return False
-                    from urllib.parse import urljoin
-                    next_url = urljoin(current_url, location)
-                    if not URLDownloader._is_safe_public_url(next_url):
-                        return False
-                    current_url = next_url
-                else:
-                    return resp.status_code < 400
-            return False
-        except Exception:
+            return (parsed.scheme in ('http', 'https') and not parsed.username
+                    and not parsed.password and self._is_safe_public_url(url))
+        except (ValueError, OSError):
             return False
 
     def get_file_size(self, url: str) -> int | None:
@@ -181,31 +160,9 @@ class URLDownloader:
         or ``None`` if the server does not report it.
         """
         try:
-            current_url = url
-            redirects = 0
-            while redirects < 10:
-                parsed_current = urlparse(current_url)
-                if parsed_current.scheme not in ("http", "https"):
-                    return None
-                if not URLDownloader._is_safe_public_url(current_url):
-                    return None
-
-                # codeql[py/full-ssrf] Validated by _is_safe_public_url above or in previous iteration
-                resp = requests.head(current_url, timeout=10, allow_redirects=False)
-                if resp.is_redirect:
-                    redirects += 1
-                    location = resp.headers.get("Location")
-                    if not location:
-                        return None
-                    from urllib.parse import urljoin
-                    next_url = urljoin(current_url, location)
-                    if not URLDownloader._is_safe_public_url(next_url):
-                        return None
-                    current_url = next_url
-                else:
-                    length = resp.headers.get("content-length")
-                    return int(length) if length else None
-            return None
+            resp = requests.head(url, timeout=10, allow_redirects=True)
+            length = resp.headers.get("content-length")
+            return int(length) if length else None
         except Exception:
             return None
 

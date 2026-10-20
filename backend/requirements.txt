@@ -40,6 +40,9 @@ facenet-pytorch          # MTCNN face detection and extraction pipeline
 # --- Image & Video Processing ---
 opencv-python-headless   # Server-optimized OpenCV (runs flawlessly in Docker/Linux environments)
 Pillow
+pillow-heif>=0.18
+rawpy>=0.24
+imageio-ffmpeg==0.6.0
 numpy
 
 # --- Advanced Audio & Signal Processing ---
@@ -52,6 +55,7 @@ scipy                    # Signal processing filters to clean noise before spect
 pandas
 scikit-learn
 matplotlib
+reportlab>=4.2,<5
 seaborn
 
 # --- Explainable AI (XAI) & Model Interpretability ---
@@ -73,3 +77,6 @@ kaggle                   # CLI tool for notebook outputs
 transformers             # AI Text Summarization pipeline
 accelerate               # Efficient PyTorch model loading
 yt-dlp                   # YouTube video downloading
+
+matplotlib
+pytubefix

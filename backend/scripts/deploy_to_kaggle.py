@@ -36,9 +36,10 @@ ALL_DATASET_SOURCES = [
     "abdallamohamed312/in-the-wild-dataset",
     "hbchaitanyabharadwaj/audio-dataset-with-10-indian-languages",
     "pankajsomkuwar/asvspoof-2021-df",
+    "birdy654/deep-voice-deepfake-voice-recognition",
+    "kdnishanth/deepfake-audio-dataset",
+    "abderlhman/codecfake-audio-deepfake", # The 1 million fake audio dataset
 ]
-
-
 def zip_backend():
     print("Zipping backend folder...")
     with zipfile.ZipFile("backend_code.zip", "w", zipfile.ZIP_DEFLATED) as zipf:
@@ -46,10 +47,12 @@ def zip_backend():
             # Skip caches and checkpoints to keep the zip small
             dirs[:] = [d for d in dirs if d not in {"__pycache__", ".git", "checkpoints", "logs"}]
             for file in files:
-                if file.endswith(".pyc") or file == ".DS_Store":
+                # Package source only; model artifacts must stay in private storage.
+                if Path(file).suffix.lower() not in {'.py', '.txt', '.json', '.md', '.yaml', '.yml'}:
                     continue
                 file_path = os.path.join(root, file)
-                zipf.write(file_path, os.path.relpath(file_path, "."))
+                arcname = os.path.relpath(file_path, ".").replace("\\\\", "/")
+                zipf.write(file_path, arcname)
     print("Created backend_code.zip")
 
 
@@ -98,7 +101,6 @@ def build_training_notebook_cells():
     setup_cell += """\
 
 working = '/kaggle/working'
-dataset_name = 'deepfake-backend-code'
 
 # --- Download Google Drive dataset ---
 print("\\nDownloading Google Drive dataset...")
@@ -116,60 +118,68 @@ if os.path.exists(gdrive_zip):
 else:
     print("Failed to download Google Drive dataset.")
 
-# 1. Exact paths where Kaggle mounts datasets
-possible_dirs = [
-    f'/kaggle/input/{dataset_name}/backend',
-    f'/kaggle/input/datasets/shlokparekh08/{dataset_name}/backend'
-]
-possible_zips = [
-    f'/kaggle/input/{dataset_name}/backend_code.zip',
-    f'/kaggle/input/datasets/shlokparekh08/{dataset_name}/backend_code.zip'
-]
+# --- Download Zenodo dataset ---
+print("\\nDownloading Zenodo dataset...")
+zenodo_tar = os.path.join(working, 'CommonLanguage.tar.gz')
+subprocess.run(["wget", "-q", "https://zenodo.org/api/records/5036977/files/CommonLanguage.tar.gz/content", "-O", zenodo_tar])
+if os.path.exists(zenodo_tar):
+    print("Extracting Zenodo dataset...")
+    zenodo_dir = os.path.join(working, 'zenodo_dataset')
+    os.makedirs(zenodo_dir, exist_ok=True)
+    subprocess.run(["tar", "-xf", zenodo_tar, "-C", zenodo_dir])
+    os.remove(zenodo_tar)
+    print("Zenodo dataset ready!")
+else:
+    print("Failed to download Zenodo dataset.")
 
-# 2. Check if Kaggle automatically unzipped it for us
-source_backend = next((d for d in possible_dirs if os.path.exists(d)), None)
+# --- Extract Checkpoints if available ---
+import glob as _glob
+print("\\nSearching for existing checkpoints...")
+pth_files = _glob.glob("/kaggle/input/**/*.pth", recursive=True)
+if pth_files:
+    print(f"Found {len(pth_files)} checkpoint(s).")
+    ckpt_dir = os.path.join(working, 'checkpoints')
+    os.makedirs(ckpt_dir, exist_ok=True)
+    for p in pth_files:
+        subprocess.run(["cp", p, ckpt_dir])
+    print("Checkpoints copied:", os.listdir(ckpt_dir))
+else:
+    print("No .pth checkpoints found, will train from scratch.")
 
-if source_backend:
+# --- Find backend_code.zip using a broad recursive search ---
+print("\\n/kaggle/input contents:")
+for root, dirs, files in os.walk('/kaggle/input'):
+    depth = root.replace('/kaggle/input', '').count(os.sep)
+    if depth > 2:
+        continue
+    indent = '  ' * depth
+    print(f"{indent}{os.path.basename(root)}/")
+    for f in files:
+        print(f"{indent}  {f}")
+
+# Recursively search for backend_code.zip
+zip_candidates = []
+dir_candidates = []
+for root, dirs, files in os.walk('/kaggle/input'):
+    if 'backend_code.zip' in files:
+        zip_candidates.append(os.path.join(root, 'backend_code.zip'))
+    if 'backend' in dirs:
+        dir_candidates.append(os.path.join(root, 'backend'))
+
+print("\\nZip candidates found:", zip_candidates)
+print("Dir candidates found:", dir_candidates)
+
+source_backend = dir_candidates[0] if dir_candidates else None
+zip_path = zip_candidates[0] if zip_candidates else None
+
+if source_backend and os.path.isdir(source_backend):
     print(f"Found auto-extracted backend at: {source_backend}")
     dest_backend = os.path.join(working, 'backend')
     if os.path.exists(dest_backend):
         shutil.rmtree(dest_backend)
     shutil.copytree(source_backend, dest_backend)
-else:
-    # 3. Otherwise find the zip and extract it manually
-    zip_path = next((z for z in possible_zips if os.path.exists(z)), None)
-    
-    if not zip_path:
-        raise FileNotFoundError(
-            "Backend code (either extracted 'backend' dir or 'backend_code.zip') "
-            "not found anywhere in expected Kaggle mount paths.\\n"
-            f"Make sure dataset 'shlokparekh08/{dataset_name}' is attached."
-        )
+elif zip_path:
     print(f"\\nUsing zip: {zip_path}")
-
-    # 4. Extract Checkpoints if available
-    print("\\nSearching for existing checkpoints...")
-    ckpt_dirs = [
-        "/kaggle/input/deepfake-checkpoints",
-        "/kaggle/input/datasets/shlokparekh08/deepfake-checkpoints"
-    ]
-    actual_ckpt_dir = next((d for d in ckpt_dirs if os.path.exists(d)), None)
-    
-    if actual_ckpt_dir:
-        import glob
-        pth_files = glob.glob(f"{actual_ckpt_dir}/**/*.pth", recursive=True)
-        if pth_files:
-            print(f"\\nFound {len(pth_files)} checkpoint(s) in {actual_ckpt_dir}.")
-            ckpt_dir = os.path.join(working, 'checkpoints')
-            os.makedirs(ckpt_dir, exist_ok=True)
-            for p in pth_files:
-                subprocess.run(["cp", p, ckpt_dir])
-            print("Checkpoints copied:", os.listdir(ckpt_dir))
-        else:
-            print("\\nNo .pth files found in the attached checkpoints dataset.")
-    else:
-        print("\\nNo checkpoints dataset attached, will train from scratch.")
-
     result = subprocess.run(
         ["unzip", "-o", zip_path, "-d", working],
         capture_output=True, text=True
@@ -177,6 +187,11 @@ else:
     if result.returncode != 0:
         print("UNZIP STDOUT:", result.stdout[-2000:])
         raise RuntimeError(f"unzip failed (exit {result.returncode}):\\n{result.stderr}")
+else:
+    raise FileNotFoundError(
+        "backend_code.zip not found anywhere under /kaggle/input.\\n"
+        "Please ensure the dataset shlokparekh08/deepfake-backend-code is attached to this notebook."
+    )
 
 # Add working dir to Python path so imports work
 if working not in sys.path:
@@ -185,8 +200,8 @@ if working not in sys.path:
 backend_dir = os.path.join(working, 'backend')
 if not os.path.isdir(backend_dir):
     raise FileNotFoundError(
-        f"Expected '{backend_dir}' after unzipping.\\n"
-        f"Zip contents: {result.stdout[:1000]}"
+        f"Expected '{backend_dir}' after extracting backend code.\\n"
+        "Check that backend_code.zip contains a top-level 'backend/' folder."
     )
 
 print("Backend code ready:", os.listdir(backend_dir))
@@ -243,46 +258,48 @@ print("\\n" + "=" * 60)
 print("TRAINING COMPLETE - Checkpoints:")
 print("=" * 60)
 
-pth_files = sorted(glob.glob('/kaggle/working/**/*best.pth', recursive=True))
-for f in pth_files:
+all_pth = sorted(glob.glob('/kaggle/working/**/*.pth', recursive=True))
+for f in all_pth:
     size_mb = os.path.getsize(f) / 1e6
     print(f"  {f}  ({size_mb:.1f} MB)")
 
-# --- Auto-upload to Hugging Face ---
+# --- Auto-upload ONLY audio_best.pth to Hugging Face ---
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 HF_MODEL_REPO = "Shlok0829/deepfake-models"
 
-if HF_TOKEN and pth_files:
+# Find audio_best.pth specifically
+audio_best_files = [f for f in all_pth if os.path.basename(f) == 'audio_best.pth']
+
+if HF_TOKEN and audio_best_files:
+    audio_best = audio_best_files[0]
     print("\\n" + "=" * 60)
-    print(f"UPLOADING TO HUGGING FACE MODEL REPO {HF_MODEL_REPO}...")
+    print(f"UPLOADING audio_best.pth TO HUGGING FACE MODEL REPO {HF_MODEL_REPO}...")
     print("=" * 60)
     subprocess.run([sys.executable, "-m", "pip", "install", "-q", "huggingface_hub"], capture_output=True)
     from huggingface_hub import HfApi
     hf = HfApi()
-    for ckpt in pth_files:
-        fname = os.path.basename(ckpt)
-        print(f"  Uploading {fname} ({os.path.getsize(ckpt)/1e6:.1f} MB)...")
-        sys.stdout.flush()
-        try:
-            hf.upload_file(
-                path_or_fileobj=ckpt,
-                path_in_repo=f"backend/checkpoints/{fname}",
-                repo_id=HF_MODEL_REPO,
-                repo_type="model",
-                token=HF_TOKEN,
-                commit_message=f"Add trained checkpoint: {fname}",
-            )
-            print(f"  -> Uploaded {fname}")
-        except Exception as e:
-            print(f"  -> FAILED to upload {fname}: {e}")
-        sys.stdout.flush()
-    print("\\nAll checkpoints uploaded to HuggingFace!")
+    size_mb = os.path.getsize(audio_best) / 1e6
+    print(f"  Uploading audio_best.pth ({size_mb:.1f} MB)...")
+    sys.stdout.flush()
+    try:
+        hf.upload_file(
+            path_or_fileobj=audio_best,
+            path_in_repo="backend/checkpoints/audio_best.pth",
+            repo_id=HF_MODEL_REPO,
+            repo_type="model",
+            token=HF_TOKEN,
+            commit_message="Update audio_best.pth with new training run (CodecFake 1M + all audio datasets, 12 epochs)",
+        )
+        print(f"  -> Successfully uploaded and overwrote audio_best.pth on HuggingFace!")
+    except Exception as e:
+        print(f"  -> FAILED to upload audio_best.pth: {e}")
+    sys.stdout.flush()
+    print("\\nDone! Only audio_best.pth was uploaded to HuggingFace.")
 elif not HF_TOKEN:
     print("\\nHF_TOKEN not set -- skipping HuggingFace upload.")
-    print("Download the .pth files from the Output tab above.")
-    print("Then run: python backend/scripts/push_to_huggingface.py")
+    print("Download audio_best.pth from the Output tab above.")
 else:
-    print("\\nNo .pth files found to upload.")
+    print("\\naudio_best.pth not found to upload.")
 """
     return [setup_cell, install_cell, audio_cell, copy_checkpoints_cell]
 
@@ -300,11 +317,11 @@ def create_and_push_kernel():
         "kernel_type": "notebook",
         "is_private": "true",
         "enable_gpu": "true",
-        "accelerator": "gpu_t4x2",
+        "machine_shape": "NvidiaTeslaT4",
         "enable_internet": "true",
         "dataset_sources": ALL_DATASET_SOURCES,
         "competition_sources": [],
-        "kernel_sources": [],
+        "kernel_sources": ["shlokparekh08/deepfake-detector-training"],
         "model_sources": [],
     }
     with open(os.path.join(kernel_dir, "kernel-metadata.json"), "w") as f:
@@ -324,7 +341,7 @@ def create_and_push_kernel():
         new_markdown_cell(
             "# Deepfake Detector - Full Training\n\n"
             "Trains vision + audio detection models across **all 12 datasets** "
-            "(~100 GB of real/fake media). GPU P100 enabled."
+            "(~100 GB of real/fake media). T4 GPUs enabled."
         )
     ]
     for src in build_training_notebook_cells():

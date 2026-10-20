@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 import { Menu, X, ArrowRight, Layers, AudioLines, Grid3x3, Globe, SlidersHorizontal, FileSearch, Eye, Ear, ChevronRight } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo';
+import { useAuth } from '../../contexts/AuthContext';
+import { AccountControl } from '../components/AccountControl';
 
 /* ────────────────────────────────────────────────
    Animated neural-net dots used in the hero card
@@ -76,10 +78,15 @@ function SynPhiLogo({ size = 28 }: { size?: number }) {
    ════════════════════════════════════════════════ */
 export default function Home() {
   const navigate = useNavigate();
+  const {user,localBypass}=useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#08080e] text-white" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div onClickCapture={event=>{
+      if(!localBypass && !user && event.target instanceof Element && event.target.closest('button')){
+        event.preventDefault();event.stopPropagation();navigate('/login');
+      }
+    }} className="min-h-screen bg-[#08080e] text-white" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* ═══════════════════════════════════════════════ */}
       {/* NAVIGATION                                     */}
       {/* ═══════════════════════════════════════════════ */}
@@ -100,7 +107,7 @@ export default function Home() {
             </div>
 
             <div className="hidden lg:flex items-center gap-4">
-              <button onClick={() => navigate('/login')} className="text-[13px] text-gray-400 hover:text-white transition-colors">Sign in</button>
+              <AccountControl key={user?.uid || 'anonymous'} compact />
               <button
                 onClick={() => navigate('/dashboard')}
                 className="text-[13px] text-white bg-cyan-600 hover:bg-cyan-700 px-4 py-1.5 rounded-lg transition-all"
@@ -264,7 +271,7 @@ export default function Home() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-gray-200 rounded-xl overflow-hidden">
             {[
               { icon: <Layers size={24} strokeWidth={1.5} />, title: 'Multi-Format Ingest', desc: 'Accepts audio, video, and images — MP4, WAV, JPEG, PNG, WEBM, and 12 more formats.' },
-              { icon: <AudioLines size={24} strokeWidth={1.5} />, title: 'Spectral Denoising', desc: 'Strips ambient noise to isolate synthesis artifacts hidden under compression.' },
+              { icon: <AudioLines size={24} strokeWidth={1.5} />, title: 'Audio Signal Views', desc: 'Inspect measured waveforms and spectral energy alongside the speech prediction.' },
               { icon: <Grid3x3 size={24} strokeWidth={1.5} />, title: 'Layered Verdicts', desc: 'Each signal scores independently — you see the breakdown, not just a number.' },
               { icon: <Globe size={24} strokeWidth={1.5} />, title: '40+ Languages', desc: 'Voice analysis works across languages, dialects, and accent variations.' },
             ].map((f, i) => (
@@ -376,7 +383,7 @@ export default function Home() {
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
               <p className="text-[11px] text-cyan-600 uppercase tracking-[0.15em] font-semibold mb-4">Step 01</p>
               <h3 className="text-sm font-semibold text-gray-900 mb-3 leading-snug">Open the dashboard and sign up</h3>
-              <p className="text-[12px] text-gray-400 leading-relaxed">Free tier gives you 25 scans / month across audio, video, and image.</p>
+              <p className="text-[12px] text-gray-400 leading-relaxed">Upload audio, video or an image to begin an assessment.</p>
             </div>
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
               <p className="text-[11px] text-gray-400 uppercase tracking-[0.15em] font-semibold mb-4">Step 02</p>
@@ -401,22 +408,22 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 mb-16">
             <div>
-              <p className="text-[11px] text-gray-600 uppercase tracking-[0.2em] font-medium mb-5">Cross-Generator Coverage</p>
+              <p className="text-[11px] text-gray-600 uppercase tracking-[0.2em] font-medium mb-5">Audio, image and video review</p>
               <h2 className="text-[2.8rem] sm:text-[3.4rem] leading-[1.08] font-bold tracking-tight">
-                One engine.<br /><span className="text-cyan-400">Every major model.</span>
+                Three media types.<br /><span className="text-cyan-400">One review workspace.</span>
               </h2>
             </div>
             <div className="flex items-end">
               <p className="text-[15px] text-gray-500 leading-relaxed max-w-lg">
-                SynPhi doesn't just flag "AI or not." It identifies <em>which</em> generator
-                produced the content — from Stable Diffusion and MidJourney to ElevenLabs and
-                Tortoise TTS — by matching against known spectral and pixel fingerprints.
+                SynPhi uses separate classifiers for speech and visual media to predict Real or Fake.
+                Inspect the original, explore measured audio views, and export an assessment.
+                Results do not identify a generator or establish authenticity.
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-white/[0.04] rounded-xl overflow-hidden mb-16">
-            {['Stable Diffusion', 'MidJourney', 'DALL·E 3', 'Firefly', 'ElevenLabs', 'Tortoise TTS', 'Flux', 'Runway Gen-3'].map((model) => (
+            {['Speech assessment', 'Image assessment', 'Sampled video frames', 'Waveform view', 'Spectrogram view', 'Manual review prompts', 'PDF assessment', 'Account history'].map((model) => (
               <div key={model} className="bg-[#0e0e18] py-5 flex items-center justify-center hover:bg-white/[0.03] transition-colors">
                 <span className="text-sm text-gray-400 font-medium">{model}</span>
               </div>
@@ -427,23 +434,23 @@ export default function Home() {
             {/* Audio detection */}
             <div className="bg-[#0e0e18] border border-white/[0.06] rounded-2xl p-8">
               <p className="text-[11px] text-cyan-400 uppercase tracking-[0.15em] font-semibold mb-3">Voice Forensics</p>
-              <h3 className="text-xl font-bold mb-6">Hear what the ear can't.</h3>
+              <h3 className="text-xl font-bold mb-6">Review the voice and the signal.</h3>
               <div className="space-y-5 mb-8">
                 <div>
-                  <p className="text-sm text-white font-semibold mb-1">Maps voice-clone platform signatures</p>
-                  <p className="text-[12px] text-gray-500">Cross-references 60+ cloning engines — not just top-three.</p>
+                  <p className="text-sm text-white font-semibold mb-1">Classifies sampled speech windows</p>
+                  <p className="text-[12px] text-gray-500">A speech classifier predicts Real or Fake from sampled audio.</p>
                 </div>
                 <div>
-                  <p className="text-sm text-white font-semibold mb-1">Detects sub-millisecond timing artifacts</p>
-                  <p className="text-[12px] text-gray-500">Unnatural pitch curves and formant gaps invisible to human listeners.</p>
+                  <p className="text-sm text-white font-semibold mb-1">Displays measured audio signals</p>
+                  <p className="text-[12px] text-gray-500">Explore waveform amplitude and spectral energy from your recording.</p>
                 </div>
                 <div>
-                  <p className="text-sm text-white font-semibold mb-1">Strips ambient noise before analysis</p>
-                  <p className="text-[12px] text-gray-500">Integrated denoiser surfaces artifacts that compression masks.</p>
+                  <p className="text-sm text-white font-semibold mb-1">Records the scope of analysis</p>
+                  <p className="text-[12px] text-gray-500">The report records assessed windows and model limitations.</p>
                 </div>
               </div>
               <div className="bg-[#080812] rounded-xl p-4">
-                <p className="text-[10px] text-gray-600 font-mono mb-3">FREQ SPECTRUM · LIVE ANALYSIS</p>
+                <p className="text-[10px] text-gray-600 font-mono mb-3">SPECTRAL VIEW · ILLUSTRATION</p>
                 <SpectrumBars barCount={52} accent="indigo" />
               </div>
             </div>
@@ -451,23 +458,23 @@ export default function Home() {
             {/* Image detection */}
             <div className="bg-[#0e0e18] border border-white/[0.06] rounded-2xl p-8">
               <p className="text-[11px] text-emerald-400 uppercase tracking-[0.15em] font-semibold mb-3">Pixel Forensics</p>
-              <h3 className="text-xl font-bold mb-6">See the fingerprint of every generator.</h3>
+              <h3 className="text-xl font-bold mb-6">Review visual predictions in context.</h3>
               <div className="space-y-5 mb-8">
                 <div>
-                  <p className="text-sm text-white font-semibold mb-1">Identifies 8 major generator architectures</p>
-                  <p className="text-[12px] text-gray-500">Each platform leaves distinct spatial frequency patterns.</p>
+                  <p className="text-sm text-white font-semibold mb-1">Assesses detected face regions</p>
+                  <p className="text-[12px] text-gray-500">Visual classifiers assess learned patterns in detected face crops.</p>
                 </div>
                 <div>
-                  <p className="text-sm text-white font-semibold mb-1">Analyzes texture, lighting, and symmetry</p>
-                  <p className="text-[12px] text-gray-500">Catches the color-distribution quirks humans routinely miss.</p>
+                  <p className="text-sm text-white font-semibold mb-1">Samples faces across video frames</p>
+                  <p className="text-[12px] text-gray-500">The report describes frame coverage; not every frame is assessed.</p>
                 </div>
                 <div>
-                  <p className="text-sm text-white font-semibold mb-1">Detects face-swap blending edges</p>
-                  <p className="text-[12px] text-gray-500">Compares boundary gradients against known generator outputs.</p>
+                  <p className="text-sm text-white font-semibold mb-1">Supports independent manual verification</p>
+                  <p className="text-[12px] text-gray-500">Compare source footage and visible details before drawing conclusions.</p>
                 </div>
               </div>
               <div className="bg-[#080812] rounded-xl p-4">
-                <p className="text-[10px] text-gray-600 font-mono mb-3">PIXEL ANOMALY HEATMAP · LIVE</p>
+                <p className="text-[10px] text-gray-600 font-mono mb-3">VISUAL PATTERNS · ILLUSTRATION</p>
                 <NeuralDots />
               </div>
             </div>
@@ -499,7 +506,7 @@ export default function Home() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {[
               { icon: <Eye size={22} strokeWidth={1.5} />, title: 'Pixel-Level CNN Analysis', desc: 'EfficientNet-based spatial scanning detects manipulation artifacts down to sub-pixel resolution.' },
-              { icon: <Ear size={22} strokeWidth={1.5} />, title: 'Spectral Voice Forensics', desc: 'Mel-spectrogram and MFCC feature extraction surfaces cloning artifacts across 60+ platforms.' },
+              { icon: <Ear size={22} strokeWidth={1.5} />, title: 'Spectral Voice Forensics', desc: 'Assess speech windows and inspect measured signals alongside the prediction.' },
               { icon: <FileSearch size={22} strokeWidth={1.5} />, title: 'Container & Metadata Forensics', desc: 'EXIF, codec history, and container-level checks reveal re-encoding and tool signatures.' },
               { icon: <SlidersHorizontal size={22} strokeWidth={1.5} />, title: 'Calibrated Confidence Scores', desc: 'Temperature-scaled outputs give you honest probabilities — not inflated marketing numbers.' },
               { icon: <Layers size={22} strokeWidth={1.5} />, title: 'CNN + RNN Ensemble', desc: 'Spatial and temporal models fuse via learned weights for maximum cross-domain accuracy.' },
@@ -525,8 +532,7 @@ export default function Home() {
             Ready to separate<br /><span className="text-cyan-400">fact from fabrication?</span>
           </h2>
           <p className="text-[15px] text-gray-500 leading-relaxed mb-10 max-w-lg mx-auto">
-            Upload a file and get your forensic verdict in seconds. Free tier includes
-            25 scans per month with full six-layer analysis.
+            Upload a file, inspect the prediction, and download an assessment for your review.
           </p>
           <div className="flex flex-wrap gap-3 justify-center">
             <button onClick={() => navigate('/dashboard')} className="bg-cyan-600 hover:bg-cyan-700 text-white px-8 py-3.5 rounded-lg transition-all text-sm font-medium hover:shadow-lg hover:shadow-cyan-600/20 flex items-center gap-2">
@@ -576,9 +582,9 @@ export default function Home() {
             <div>
               <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-4">Legal</h4>
               <ul className="space-y-2.5 text-[13px] text-gray-500">
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Cookie Policy</a></li>
+                <li><Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms" className="hover:text-white transition-colors">Terms and Conditions</Link></li>
+                <li><Link to="/privacy" className="hover:text-white transition-colors">Storage and Cookies</Link></li>
               </ul>
             </div>
           </div>

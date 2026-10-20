@@ -17,7 +17,6 @@ try:
     import torch
     from backend.config import FAKE_THRESHOLD
     from backend.inference.postprocessing import PostProcessor
-    from backend.models.audio_model import AudioCNN
     from backend.models.model_factory import (
         AUDIO_CHECKPOINT_NAMES,
         VISION_CHECKPOINT_NAMES,
@@ -25,9 +24,6 @@ try:
         find_checkpoint,
         load_vision_model,
     )
-    from backend.preprocessing.face_detector import FaceDetector
-    from backend.preprocessing.frame_extractor import FrameExtractor
-    from backend.preprocessing.image_preprocessor import ImagePreprocessor
     from backend.preprocessing.audio_features import load_log_mel
     from backend.utils.gpu_utils import get_device
     from backend.utils.url_downloader import URLDownloader
@@ -48,26 +44,26 @@ class Predictor:
         self.threshold = FAKE_THRESHOLD
         self.vision_checkpoint_path = None
         self.audio_checkpoint_path = None
+        self.video_checkpoint_path = None
         self.model = None
         self.audio_model = None
+        self.video_model = None
         self.ml_available = ML_AVAILABLE
-        
+
         if ML_AVAILABLE:
             self.device = get_device()
+            from backend.models.weight_registry import local_weight, AUDIO_FILE, VIDEO_FILE, IMAGE_FILE
             self.vision_checkpoint_path = checkpoint_path or find_checkpoint(
                 "DEEPFAKE_VISION_CHECKPOINT",
                 VISION_CHECKPOINT_NAMES,
             )
-            
+            self.vision_checkpoint_path = self.vision_checkpoint_path or local_weight(IMAGE_FILE)
+
             if not self.vision_checkpoint_path:
                 try:
-                    from huggingface_hub import hf_hub_download
+                    from backend.models.weight_registry import private_weight, IMAGE_FILE
                     logger.info("Attempting to download vision model from Hugging Face Hub...")
-                    self.vision_checkpoint_path = hf_hub_download(
-                        repo_id="Shlok0829/deepfake-models",
-                        filename="backend/checkpoints/vision_best.pth",
-                        repo_type="model"
-                    )
+                    self.vision_checkpoint_path = private_weight(IMAGE_FILE)
                     logger.info(f"Downloaded vision model to {self.vision_checkpoint_path}")
                 except ImportError:
                     logger.warning("huggingface_hub not installed. Cannot download vision model automatically.")
@@ -77,49 +73,53 @@ class Predictor:
             if self.vision_checkpoint_path and not os.path.exists(self.vision_checkpoint_path):
                 logger.warning(f"Vision model checkpoint not found at {self.vision_checkpoint_path}")
 
-            self.audio_checkpoint_path = find_checkpoint(
-                "DEEPFAKE_AUDIO_CHECKPOINT",
-                AUDIO_CHECKPOINT_NAMES,
-            )
+            explicit_audio_path = os.getenv('DEEPFAKE_AUDIO_CHECKPOINT')
+            if explicit_audio_path:
+                if not Path(explicit_audio_path).is_file():
+                    raise FileNotFoundError('Configured audio checkpoint does not exist')
+                self.audio_checkpoint_path = explicit_audio_path
+            else:
+                self.audio_checkpoint_path = local_weight(AUDIO_FILE)
 
             # 2) Audio Model
             if not self.audio_checkpoint_path:
                 if "KAGGLE_KERNEL_RUN_TYPE" not in os.environ:
                     try:
-                        from huggingface_hub import hf_hub_download
+                        from backend.models.weight_registry import private_weight, AUDIO_FILE
                         logger.info("Attempting to download audio model from Hugging Face Hub...")
-                        self.audio_checkpoint_path = hf_hub_download(
-                            repo_id="Shlok0829/deepfake-models",
-                            filename="backend/checkpoints/audio_best.pth",
-                            repo_type="model"
-                        )
+                        self.audio_checkpoint_path = private_weight(AUDIO_FILE)
                         logger.info(f"Downloaded audio model to {self.audio_checkpoint_path}")
                     except ImportError:
                         logger.warning("huggingface_hub not installed. Cannot download audio model automatically.")
                     except Exception as e:
                         logger.warning(f"Could not download audio model from HF Hub: {e}")
-            
+
             # Lazy load transformers pipeline for summarization
             self._summarizer_pipeline = None
 
-            if self.vision_checkpoint_path:
-                self.model = load_vision_model(self.vision_checkpoint_path, self.device)
+            try:
+                from backend.preprocessing.face_detector import FaceDetector
+                from backend.preprocessing.frame_extractor import FrameExtractor
+                from backend.preprocessing.image_preprocessor import ImagePreprocessor
+                self.face_detector = FaceDetector(device=str(self.device))
+                self.preprocessor = ImagePreprocessor()
+                self.frame_extractor = FrameExtractor()
+                if self.vision_checkpoint_path:
+                    self.model = load_vision_model(self.vision_checkpoint_path, self.device)
+            except (ImportError, OSError) as exc:
+                logger.warning('Vision inference unavailable: %s; audio can still run.', exc)
+            if self.model is not None:
                 logger.info(
                     "Loaded vision checkpoint %s (%s)",
                     self.vision_checkpoint_path,
                     checkpoint_size(self.vision_checkpoint_path),
                 )
             else:
-                logger.warning("No vision checkpoint found; image/video scans are disabled.")
+                logger.warning("Vision inference is unavailable; image/video scans are disabled.")
 
             if self.audio_checkpoint_path:
-                self.audio_model = AudioCNN().to(self.device)
-                audio_state = torch.load(self.audio_checkpoint_path, map_location=self.device)
-                state_dict = audio_state.get("model_state_dict", audio_state)
-                # Strip 'module.' prefix if model was trained with DataParallel
-                state_dict = {k.replace("module.", "") if k.startswith("module.") else k: v for k, v in state_dict.items()}
-                self.audio_model.load_state_dict(state_dict)
-                self.audio_model.eval()
+                from backend.models.audio_ssl import load_audio_checkpoint
+                self.audio_model, self.audio_metadata = load_audio_checkpoint(self.audio_checkpoint_path, self.device)
                 logger.info(
                     "Loaded audio checkpoint %s (%s)",
                     self.audio_checkpoint_path,
@@ -128,9 +128,25 @@ class Predictor:
             else:
                 logger.warning("No audio checkpoint found; audio scans are disabled.")
 
-            self.face_detector = FaceDetector(device=str(self.device))
-            self.preprocessor = ImagePreprocessor()
-            self.frame_extractor = FrameExtractor()
+            video_path = os.getenv('DEEPFAKE_VIDEO_CHECKPOINT')
+            if not video_path:
+                local_video = local_weight(VIDEO_FILE)
+                if local_video:
+                    video_path = local_video
+                else:
+                    from backend.models.weight_registry import private_weight, VIDEO_FILE
+                    video_path = private_weight(VIDEO_FILE)
+            self.video_checkpoint_path = video_path
+            if 'gend_clip_l14' in str(video_path).lower():
+                from backend.models.replacement_models import load_gend
+                self.video_model = load_gend(video_path, self.device)
+                self.video_metadata = self.video_model.metadata
+            else:
+                from backend.models.genconvit import load_video_checkpoint
+                self.video_model = load_video_checkpoint(video_path, self.device)
+                self.video_metadata = {'arch':'genconvit_vae'}
+            logger.info('Loaded dedicated video detector: %s', self.video_metadata['arch'])
+
             self.postprocessor = PostProcessor()
             self.url_downloader = URLDownloader()
             logger.info("Predictor initialised on %s", self.device)
@@ -143,145 +159,218 @@ class Predictor:
         """Generate a human-readable AI summary."""
         verdict = "synthetic" if is_fake else "authentic"
         confidence = "high" if prob > 0.85 or prob < 0.15 else "moderate"
-        
+
         if is_fake:
             return f"Analysis indicates with {confidence} confidence ({round(prob*100)}%) that this {file_type} is {verdict}. Strong indicators of generative AI artifacts were found."
         else:
             return f"Analysis indicates with {confidence} confidence ({round(prob*100)}%) that this {file_type} is {verdict}. The media appears natural with consistent noise distributions and no structural anomalies."
 
-    def predict(self, file_path: str) -> dict:
+    def predict(self, file_path: str, original_name: str | None = None) -> dict:
         """Auto-detect file type and run prediction."""
-        file_type = self.file_handler.get_file_type(file_path)
-        
-        if file_type not in ["image", "video", "audio"]:
-            return {
-                "fake_probability": 0.0,
-                "is_fake": False,
-                "confidence": "none",
-                "reasons": [],
-                "error": f"Unsupported file: {Path(file_path).suffix}",
-            }
-            
+        validation = self.file_handler.validate_file(file_path)
+        if not validation['valid']:
+            raise ValueError(validation['error'])
+        file_type = validation['file_type']
+
         if not ML_AVAILABLE:
             raise RuntimeError("ML dependencies are not installed. Trained inference is unavailable.")
 
         if file_type == "audio":
             if getattr(self, "audio_model", None) is None:
                 raise RuntimeError(
-                    "Audio checkpoint is missing. Train on Kaggle and place audio_best.pth in backend/checkpoints."
+                    "The configured audio checkpoint is unavailable. Check model_weights/audio or private Hugging Face access."
                 )
-            return self.predict_audio(file_path)
+            return self._with_report(self.predict_audio(file_path), file_path, original_name)
+
+        if file_type == 'video':
+            if getattr(self, 'video_model', None) is None:
+                raise RuntimeError('The dedicated video checkpoint is unavailable')
+            return self._with_report(self.predict_video(file_path), file_path, original_name)
 
         if getattr(self, "model", None) is None:
             raise RuntimeError(
-                "Vision checkpoint is missing. Train on Kaggle and place vision_best.pth in backend/checkpoints."
+                "Vision inference is unavailable. Check the vision checkpoint and installed image/video dependencies."
             )
 
         if file_type == "image":
-            return self.predict_image(file_path)
+            return self._with_report(self.predict_image(file_path), file_path, original_name)
         else:
-            return self.predict_video(file_path)
+            return self._with_report(self.predict_video(file_path), file_path, original_name)
+
+    def _with_report(self, result, path, original_name=None):
+        try:
+            from backend.reports.evidence import attach_report
+            return attach_report(result, path, original_name or Path(path).name, self)
+        except Exception:
+            logger.exception('Audit report generation failed; retaining the detection result')
+            result['report_error'] = 'The PDF report could not be generated. Retry the scan to request a fresh report.'
+            return result
 
     def predict_image(self, image_path: str) -> dict:
         from PIL import Image
+        from backend.preprocessing.media_io import load_image
         import torch
         import numpy as np
+
+        detected_tool = None
+        try:
+            with Image.open(image_path) as pil_img:
+                exif = pil_img.getexif()
+                if exif and 305 in exif:
+                    detected_tool = str(exif[305])
+        except Exception as e:
+            logger.warning(f"Failed to read EXIF: {e}")
+
+        decoded_image = load_image(image_path)
         with torch.no_grad():
-            img = np.array(Image.open(image_path).convert("RGB"))
+            img = np.array(decoded_image)
             faces = self.face_detector.extract_faces(img)
-            if not faces: faces = [img]
 
-            probs: list[float] = []
-            for face in faces:
-                tensor = self.preprocessor.preprocess(face).to(self.device)
-                logits = self.model(tensor)
-                prob = torch.softmax(logits, dim=1)[0, 1].item()
-                probs.append(prob)
-
-            avg_prob = self.postprocessor.aggregate_frame_predictions(probs)
-
-            result = self.postprocessor.format_result(avg_prob)
-            result["file_type"] = "image"
-            result["num_faces_analysed"] = len(faces)
-            result["reasons"] = ["Trained vision checkpoint analysis"]
-            result["raw_scores"] = {"vision_model": round(avg_prob, 4)}
-            result["explainability_heatmap"] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
-            result["ai_summary"] = self._get_ai_summary(result["is_fake"], avg_prob, "image")
-            return result
-
-    def predict_video(self, video_path: str) -> dict:
-        import torch
-        import subprocess
-        import tempfile
-        import os
-
-        audio_score = None
-        audio_result = None
-        if getattr(self, "audio_model", None) is not None:
-            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_audio:
-                tmp_audio_path = tmp_audio.name
-            try:
-                cmd = ["ffmpeg", "-i", video_path, "-vn", "-acodec", "pcm_s16le", "-ar", "16000", "-ac", "1", "-y", tmp_audio_path]
-                subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-                audio_result = self.predict_audio(tmp_audio_path)
-                audio_score = audio_result["raw_scores"].get("audio_cnn")
-            except Exception as e:
-                logger.warning(f"Audio extraction from video failed or no audio track: {e}")
-            finally:
-                if os.path.exists(tmp_audio_path):
-                    os.unlink(tmp_audio_path)
-
-        with torch.no_grad():
-            frames = self.frame_extractor.extract(video_path)
-            if not frames:
-                if audio_score is not None:
-                    audio_result["file_type"] = "video"
-                    return audio_result
-                result = self.postprocessor.format_result(0.0)
-                result["file_type"] = "video"
-                result["num_faces_analysed"] = 0
-                return result
-
-            all_probs: list[float] = []
-            for frame in frames:
-                faces = self.face_detector.extract_faces(frame)
-                targets = faces if faces else [frame]
-                for face in targets:
+            if not faces:
+                raise ValueError('No face was detected. This face-image model cannot assess non-face image authenticity.')
+            else:
+                probs: list[float] = []
+                for face in faces:
                     tensor = self.preprocessor.preprocess(face).to(self.device)
                     logits = self.model(tensor)
                     prob = torch.softmax(logits, dim=1)[0, 1].item()
-                    all_probs.append(prob)
+                    probs.append(prob)
+                avg_prob = self.postprocessor.aggregate_frame_predictions(probs, strategy="weighted")
+                reasons = ["Trained vision checkpoint analysis"]
 
-            vision_prob = self.postprocessor.aggregate_frame_predictions(all_probs)
-
-            final_prob = vision_prob
-            reasons = ["Trained vision checkpoint analysis"]
-            raw_scores = {"vision_model": round(vision_prob, 4)}
-
-            if audio_score is not None:
-                final_prob = (vision_prob + audio_score) / 2.0
-                reasons.append("Audio checkpoint analysis")
-                reasons.append("Combined spatial artifact and voice forensic scores")
-                raw_scores["audio_cnn"] = round(audio_score, 4)
-
-            result = self.postprocessor.format_result(final_prob)
-            result["file_type"] = "video"
-            result["num_faces_analysed"] = len(all_probs)
-            result["frames_analysed"] = len(frames)
+            result = self.postprocessor.format_result(avg_prob)
+            result["file_type"] = "image"
+            result["num_faces_analysed"] = len(faces) if faces else 0
             result["reasons"] = reasons
-            result["raw_scores"] = raw_scores
+            result["raw_scores"] = {"vision_model": round(avg_prob, 4)}
             result["explainability_heatmap"] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
-            result["ai_summary"] = self._get_ai_summary(result["is_fake"], final_prob, "video")
+            result["ai_summary"] = self._get_ai_summary(result["is_fake"], avg_prob, "image")
+            result["detected_tool"] = detected_tool or 'Unknown'
+            result["score_calibrated"] = False
             return result
+
+    def predict_video(self, video_path: str) -> dict:
+        """Score face crops with the dedicated video checkpoint."""
+        import cv2
+        import numpy as np
+        import torch
+        if self.video_model is None:
+            raise RuntimeError('A dedicated video checkpoint is required')
+        from backend.preprocessing.media_io import sample_video_frames
+        frames = sample_video_frames(video_path)
+        scores = []
+        frame_scores = []
+        mean = torch.tensor([.485,.456,.406],device=self.device)[:,None,None]
+        std = torch.tensor([.229,.224,.225],device=self.device)[:,None,None]
+        with torch.inference_mode():
+            for position, frame in frames:
+                is_gend = getattr(self, 'video_metadata', {}).get('arch') == 'gend_clip_l14'
+                faces = (self.video_model.faces(frame, self.face_detector) if is_gend
+                         else self.face_detector.extract_faces(frame,margin=0.))
+                current = []
+                for face in faces[:4]:
+                    if not face.size:
+                        continue
+                    if is_gend:
+                        tensor = self.video_model.preprocess(face).to(self.device)
+                        logits = self.video_model(tensor.unsqueeze(0))
+                    else:
+                        face = cv2.resize(face,(224,224),interpolation=cv2.INTER_AREA)
+                        tensor = torch.from_numpy(face.transpose(2,0,1).copy()).float().to(self.device)/255.
+                        logits = self.video_model(((tensor-mean)/std).unsqueeze(0))
+                    if not torch.isfinite(logits).all():
+                        raise RuntimeError('Video model produced nonfinite scores')
+                    # Reference inference averages independent sigmoid class scores.
+                    evidence = (logits.float().softmax(-1) if is_gend else logits.float().sigmoid())[0].cpu().tolist()
+                    probability = evidence[1] / max(sum(evidence), 1e-12)
+                    scores.append(evidence); current.append(probability)
+                if current:
+                    frame_scores.append({'frame_index':int(position),'fake_probability':sum(current)/len(current)})
+        if not scores:
+            raise ValueError('No face was detected in the sampled video frames; the video detector cannot assess this clip')
+        real_evidence, fake_evidence = np.asarray(scores).mean(axis=0).tolist()
+        # Normalize evidence for a binary score; argmax matches the reference class decision.
+        probability = fake_evidence / max(real_evidence + fake_evidence, 1e-12)
+        result = self.postprocessor.format_result(probability)
+        result.update(file_type='video',num_faces_analysed=len(scores),frames_analysed=len(frame_scores),
+            raw_scores={getattr(self, 'video_metadata', {}).get('arch', 'genconvit_vae'):round(probability,4),
+                        'real_mean_evidence':real_evidence, 'fake_mean_evidence':fake_evidence},
+            reasons=['Dedicated face-video model: ' + getattr(self, 'video_metadata', {}).get('arch', 'genconvit_vae'),
+            f'Analyzed {len(scores)} face crops across {len(frame_scores)} sampled frames.'],
+            decision_threshold=.5,explainability_heatmap=None,
+            label='FAKE' if probability>=.5 else 'REAL',p_fake=probability,p_fake_int=round(100*probability))
+        result.update(score_calibrated=False, review_required=True, confidence='uncalibrated',
+                      video_frame_scores=frame_scores,
+                      analysis_scope='Sampled visible faces only; video audio and non-face manipulations are not assessed.')
+        result['ai_summary'] = (f"Video model prediction: {result['label']}. Synthetic score: {round(100*probability)}%. "
+                                'Sampled face analysis only. The score is uncalibrated and is not proof of authenticity.')
+        return result
 
     def predict_audio(self, audio_path: str) -> dict:
         import torch
-        with torch.no_grad():
-            features = load_log_mel(audio_path).unsqueeze(0).to(self.device)
-            logits = self.audio_model(features)
-            prob = torch.softmax(logits, dim=1)[0, 1].item()
 
-        result = self.postprocessor.format_result(prob)
+        if self.audio_model is None:
+            raise RuntimeError("A trained audio checkpoint is required")
+        metadata = getattr(self, "audio_metadata", {})
+        segments = []
+        with torch.no_grad():
+            if metadata.get('arch') == 'spectra_aasist3':
+                from backend.preprocessing.audio_waveform import read_waveform, window_starts, SAMPLE_RATE
+                from backend.models.replacement_models import spectra_crop, SPECTRA_SAMPLES
+                wave = read_waveform(audio_path)
+                duration = len(wave) / SAMPLE_RATE
+                starts = window_starts(len(wave), SPECTRA_SAMPLES, metadata['max_windows'])
+                real_margins = []
+                for start in starts:
+                    crop = spectra_crop(wave, start).unsqueeze(0).to(self.device)
+                    logits = self.audio_model(crop)
+                    if not torch.isfinite(logits).all():
+                        raise RuntimeError('Audio model produced nonfinite scores')
+                    real_margins.append(float(logits[0,0]))
+                # Aggregate native margins rather than silently substituting two-logit softmax.
+                prob = float(torch.sigmoid(torch.tensor(-sum(real_margins)/len(real_margins))))
+                segments = [{'start_seconds':round(start/SAMPLE_RATE,3),
+                             'end_seconds':round(min(duration,(start+SPECTRA_SAMPLES)/SAMPLE_RATE),3),
+                             'fake_probability':float(torch.sigmoid(torch.tensor(-margin)))}
+                            for start,margin in zip(starts,real_margins)]
+            elif metadata.get('arch') == 'antideepfake_mms_1b':
+                from backend.preprocessing.audio_waveform import read_waveform, window_starts, SAMPLE_RATE
+                wave = read_waveform(audio_path)
+                duration = len(wave) / SAMPLE_RATE
+                length = int(metadata['seconds'] * SAMPLE_RATE)
+                starts = window_starts(len(wave), length, metadata['max_windows'])
+                scores = []
+                for start in starts:
+                    crop = torch.from_numpy(wave[start:start+length].copy()).to(self.device)
+                    # Published preprocessing: layer_norm of the valid mono 16 kHz waveform.
+                    crop = torch.nn.functional.layer_norm(crop, crop.shape)
+                    logits = self.audio_model(crop.unsqueeze(0))
+                    if not torch.isfinite(logits).all():
+                        raise RuntimeError('Audio model produced nonfinite scores')
+                    scores.append(float(logits.float().softmax(-1)[0, 1]))
+                prob = sum(scores) / len(scores)
+                segments = [{'start_seconds':round(start/SAMPLE_RATE,3),
+                             'end_seconds':round(min(duration,(start+length)/SAMPLE_RATE),3),
+                             'fake_probability':round(score,4)} for start,score in zip(starts,scores)]
+            elif metadata.get("arch") == "audio_ssl":
+                from backend.preprocessing.audio_waveform import audio_windows, SAMPLE_RATE
+                inputs, masks, starts, duration = audio_windows(
+                    audio_path, metadata.get("seconds", 4.), metadata.get("max_windows", 12))
+                scores = []
+                for offset in range(0, len(inputs), 4):
+                    logits = self.audio_model(inputs[offset:offset+4].to(self.device), masks[offset:offset+4].to(self.device))
+                    scores.extend((logits.float() / metadata.get("temperature", 1.)).softmax(-1)[:, 1].cpu().tolist())
+                prob = max(scores) if metadata.get('aggregation') == 'max_window_probability' else sum(scores) / len(scores)
+                segments = [{"start_seconds": round(start / SAMPLE_RATE, 3),
+                             "end_seconds": round(min(duration, start / SAMPLE_RATE + metadata.get("seconds", 4.)), 3),
+                             "fake_probability": round(score, 4)} for start, score in zip(starts, scores)]
+            else:
+                features = load_log_mel(audio_path).unsqueeze(0).to(self.device)
+                logits = self.audio_model(features)
+                prob = torch.softmax(logits, dim=1)[0, 1].item()
+
+        from backend.inference.postprocessing import PostProcessor
+        result = PostProcessor(threshold=metadata.get("threshold", self.threshold)).format_result(prob)
         result["file_type"] = "audio"
         result["num_faces_analysed"] = 0
         result["frames_analysed"] = 0
@@ -289,8 +378,48 @@ class Predictor:
             "Audio checkpoint analysis",
             "Log-mel spectral classifier scored the clip for synthetic voice artifacts.",
         ]
-        result["raw_scores"] = {"audio_cnn": round(prob, 4)}
-        result["ai_summary"] = self._get_ai_summary(result["is_fake"], prob, "audio")
+        result["raw_scores"] = {metadata.get("arch", "audio_cnn"): round(prob, 4)}
+        if segments:
+            result["audio_segments"] = segments
+            result["audio_duration_seconds"] = round(duration, 3)
+            result["reasons"] = ["Multilingual speech encoder with model window scores",
+                                 f"Evaluated {len(segments)} windows across the recording."]
+            result["model_evaluation"] = metadata.get("evaluation", {})
+        result["spectrogram_is_attribution"] = False
+        result["explainability_heatmap"] = None
+        threshold = float(metadata.get("threshold", self.threshold))
+        result["decision_threshold"] = threshold
+        result['p_fake'] = prob
+        result['p_fake_int'] = int(round(100 * prob))
+        result['label'] = 'FAKE' if result['is_fake'] else 'REAL'
+        result['surety_int'] = int(round(100 * (prob if result['is_fake'] else 1-prob)))
+        result['surety_percentage'] = str(result['surety_int']) + '%'
+        # A probability near the calibrated cutoff is not high-confidence evidence.
+        margin = ((prob - threshold) / (1 - threshold) if result['is_fake']
+                  else (threshold - prob) / threshold)
+        result['confidence'] = 'high' if margin >= .8 else 'medium' if margin >= .5 else 'low'
+        result['review_required'] = result['confidence'] == 'low'
+        result['score_calibrated'] = bool(metadata.get('score_calibrated', False))
+        if not result['score_calibrated']:
+            result['review_required'] = True
+            result['confidence'] = 'uncalibrated'
+        if segments:
+            intervals = sorted((s['start_seconds'], s['end_seconds']) for s in segments)
+            covered = 0.; end = 0.
+            for start, stop in intervals:
+                covered += max(0., stop-max(start,end)); end=max(end,stop)
+            result['audio_assessment'] = {'analyzed_seconds':round(covered,3),
+                'coverage_fraction':min(1.,covered/duration), 'window_count':len(segments),
+                'max_window_fake_score':max(s['fake_probability'] for s in segments),
+                'min_window_fake_score':min(s['fake_probability'] for s in segments),
+                'scope':'Speech synthesis detection; non-speech sound authenticity is not established.'}
+        coverage_note = (f" Analyzed {covered:.1f} of {duration:.1f} seconds in sampled speech windows."
+                         if segments else '')
+        calibration_note = ('This is an uncalibrated model estimate, not proof of authenticity.'
+                            if not result['score_calibrated'] else 'This model estimate is not proof of authenticity.')
+        result['ai_summary'] = (f"Model prediction: {result['label']}. "
+                               f"Synthetic score: {result['p_fake_int']}%. "
+                               f'Decision threshold: {threshold:.0%}.{coverage_note} {calibration_note}')
         return result
 
     def predict_from_url(self, url: str) -> dict:

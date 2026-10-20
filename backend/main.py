@@ -15,8 +15,8 @@ logger = get_logger(__name__)
 app = FastAPI(
     title="AI Deepfake Detector API",
     description=(
-        "Upload images and videos to detect AI-generated deepfakes. "
-        "Powered by EfficientNet-B4 + LSTM ensemble."
+        "Analyze images, face videos and speech for deepfake indicators. "
+        "Audio: Spectra-AASIST3. Video: GenD CLIP-L/14."
     ),
     version="1.0.0",
 )

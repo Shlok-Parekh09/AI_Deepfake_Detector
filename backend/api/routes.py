@@ -11,6 +11,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from backend.utils.logger import get_logger
+from backend.utils.uploads import stage_upload
 
 logger = get_logger(__name__)
 
@@ -39,6 +40,10 @@ class BatchURLRequest(BaseModel):
 
 
 class DetectionResult(BaseModel):
+    audit_report: dict | None = None
+    report_pdf_base64: str | None = None
+    report_filename: str | None = None
+    report_error: str | None = None
     fake_probability: float
     is_fake: bool
     confidence: str
@@ -50,6 +55,25 @@ class DetectionResult(BaseModel):
     frames_analysed: int | None = None
     error: str | None = None
     ai_summary: str | None = None
+    detected_tool: str | None = None
+    decision_threshold: float | None = None
+    audio_segments: list[dict] | None = None
+    audio_duration_seconds: float | None = None
+    spectrogram_is_attribution: bool | None = None
+    model_evaluation: dict | None = None
+    review_required: bool | None = None
+    audio_assessment: dict | None = None
+    label: str | None = None
+    p_fake: float | None = None
+    p_fake_int: int | None = None
+    surety_int: int | None = None
+    surety_percentage: str | None = None
+    score_calibrated: bool = False
+    video_frame_scores: list[dict] | None = None
+    analysis_scope: str | None = None
+    score_calibrated: bool = False
+    video_frame_scores: list[dict] | None = None
+    analysis_scope: str | None = None
 
 
 # ── Endpoints ─────────────────────────────────────────────────
@@ -63,20 +87,20 @@ async def detect_deepfake(file: UploadFile = File(...)):
         predictor = _get_predictor()
 
         # Save uploaded file to a temp location
-        suffix = os.path.splitext(file.filename or "upload")[1]
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-            content = await file.read()
-            tmp.write(content)
-            tmp_path = tmp.name
+        tmp_path = await stage_upload(file)
 
         try:
-            result = predictor.predict(tmp_path)
+            result = predictor.predict(tmp_path, original_name=file.filename)
             return DetectionResult(**result)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
         except RuntimeError as exc:
             logger.warning("Detection unavailable: %s", exc)
             raise HTTPException(status_code=503, detail=str(exc))
         finally:
             os.unlink(tmp_path)
+    except HTTPException:
+        raise
     except Exception as exc:
         # Sentinel: Removed stack trace and specific error message to prevent information leakage
         logger.exception("Detection failed")
@@ -95,6 +119,10 @@ async def detect_from_url(request: URLRequest):
     except RuntimeError as exc:
         logger.warning("URL detection unavailable: %s", exc)
         raise HTTPException(status_code=503, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
         # Sentinel: Removed specific error message to prevent information leakage
         logger.exception("URL detection failed")
@@ -112,11 +140,7 @@ async def detect_batch(files: list[UploadFile] = File(...)):
 
     try:
         for upload in files:
-            suffix = os.path.splitext(upload.filename or "upload")[1]
-            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-                content = await upload.read()
-                tmp.write(content)
-                tmp_paths.append(tmp.name)
+            tmp_paths.append(await stage_upload(upload))
 
         for path in tmp_paths:
             try:
@@ -169,8 +193,57 @@ async def model_status():
         "ml_available": getattr(predictor, "ml_available", False),
         "vision_trained": getattr(predictor, "model", None) is not None,
         "audio_trained": getattr(predictor, "audio_model", None) is not None,
+        "audio_architecture": getattr(predictor, "audio_metadata", {}).get("arch"),
+        "audio_model_source": getattr(predictor, "audio_metadata", {}).get("source"),
+        "audio_model_revision": getattr(predictor, "audio_metadata", {}).get("revision"),
+        "audio_weights_sha256": getattr(predictor, "audio_metadata", {}).get("weights_sha256"),
+        "video_checkpoint": getattr(predictor, "video_checkpoint_path", None),
+        "video_trained": getattr(predictor, "video_model", None) is not None,
+        "video_architecture": getattr(predictor, "video_metadata", {}).get("arch"),
+        "video_model_source": getattr(predictor, "video_metadata", {}).get("source"),
+        "video_model_revision": getattr(predictor, "video_metadata", {}).get("revision"),
+        "video_weights_sha256": getattr(predictor, "video_metadata", {}).get("weights_sha256"),
+        "weights_repository": "Shlok0829/deepfake-models",
         "trained_only": True,
     }
+
+
+@router.get('/media/capabilities')
+def media_capabilities():
+    """Format candidates are decoder-dependent, not guarantees of model accuracy."""
+    from backend.preprocessing.media_io import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, AUDIO_EXTENSIONS, ffmpeg_binary
+    import shutil
+    try:
+        ffmpeg_available = bool(shutil.which(ffmpeg_binary()))
+    except RuntimeError:
+        ffmpeg_available = False
+    return {'routing':'decoded content', 'ffmpeg_available':ffmpeg_available,
+            'image_extensions':sorted(IMAGE_EXTENSIONS),
+            'video_extensions':sorted(VIDEO_EXTENSIONS),
+            'audio_extensions':sorted(AUDIO_EXTENSIONS),
+            'limitations':['Codec support depends on the installed decoder build.',
+                           'Encrypted/DRM, corrupt and unsupported proprietary files cannot be analyzed.',
+                           'Images use the first page/frame; video uses sampled faces; audio uses sampled speech windows.',
+                           'Successful decoding does not establish detection accuracy.']}
+
+
+@router.get('/media/capabilities')
+def media_capabilities():
+    """Format candidates are decoder-dependent, not guarantees of model accuracy."""
+    from backend.preprocessing.media_io import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, AUDIO_EXTENSIONS, ffmpeg_binary
+    import shutil
+    try:
+        ffmpeg_available = bool(shutil.which(ffmpeg_binary()))
+    except RuntimeError:
+        ffmpeg_available = False
+    return {'routing':'decoded content', 'ffmpeg_available':ffmpeg_available,
+            'image_extensions':sorted(IMAGE_EXTENSIONS),
+            'video_extensions':sorted(VIDEO_EXTENSIONS),
+            'audio_extensions':sorted(AUDIO_EXTENSIONS),
+            'limitations':['Codec support depends on the installed decoder build.',
+                           'Encrypted/DRM, corrupt and unsupported proprietary files cannot be analyzed.',
+                           'Images use the first page/frame; video uses sampled faces; audio uses sampled speech windows.',
+                           'Successful decoding does not establish detection accuracy.']}
 
 
 @router.get("/proxy-media")

@@ -1,216 +1,52 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useState, type FormEvent } from 'react';
+import { Link, useNavigate } from 'react-router';
+import { Eye, EyeOff, ShieldCheck, AudioLines, FileText, Github } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import svgPaths from '../../imports/MacBookPro166/svg-vk1owfvmuu';
 import BrandLogo from '../components/BrandLogo';
-
+import { GoogleLogo, AppleLogo } from '../components/ProviderLogo';
+const providers = ['Google','GitHub','Apple','Microsoft'] as const;
+const field = 'mt-2 min-h-12 w-full rounded-xl border border-white/10 bg-white/[0.035] px-4 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-500';
 export default function Login() {
-  const navigate = useNavigate();
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth();
-  
-  const [showEmailForm, setShowEmailForm] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-
-  const handleGoogleLogin = async () => {
-    try {
-      await signInWithGoogle();
-      navigate('/dashboard');
-    } catch (error: any) {
-      console.error("Failed to sign in", error);
-      if (error.code === 'auth/unauthorized-domain') {
-        setError('This domain is not authorized for OAuth operations for your Firebase project. Please add it in the Firebase console.');
-      } else {
-        setError(error.message || 'Failed to sign in with Google');
-      }
-    }
-  };
-
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) return;
-    try {
-      setLoading(true);
-      setError('');
-      setMessage('');
-      if (isSignUp) {
-        await signUpWithEmail(email, password);
-        setMessage('Successfully signed up!');
-      } else {
-        await signInWithEmail(email, password);
-        setMessage('Successfully signed in!');
-      }
-      navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Failed to authenticate');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-[#08080e] via-[#10101c] to-[#08080e] flex items-center justify-center p-4 overflow-hidden relative">
-      {/* Animated background gradients */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[30%] -left-[10%] w-[70%] h-[70%] bg-cyan-500/10 rounded-full blur-[120px] mix-blend-screen animate-pulse duration-10000"></div>
-        <div className="absolute -bottom-[30%] -right-[10%] w-[70%] h-[70%] bg-indigo-500/10 rounded-full blur-[120px] mix-blend-screen"></div>
-      </div>
-
-      <div className="relative z-10 w-full max-w-md">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <BrandLogo size={56} />
-          <h1 className="text-white text-4xl font-bold" style={{ fontFamily: "'Eagle Lake', serif" }}>
-            SynPhi
-          </h1>
-        </div>
-
-        {/* Login Card */}
-        <div className="bg-[#0e0e18]/80 backdrop-blur-2xl rounded-3xl p-8 sm:p-10 shadow-2xl border border-white/[0.06] relative z-20">
-          {/* Profile Icon */}
-          <div className="flex justify-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-tr from-cyan-500/20 to-indigo-500/20 rounded-2xl flex items-center justify-center border border-white/5 shadow-inner">
-              <svg className="w-8 h-8 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
-          </div>
-
-          {/* Title */}
-          <h2 className="text-center text-2xl md:text-3xl text-white mb-2 font-bold tracking-tight">
-            Welcome back
-          </h2>
-
-          {/* Subtitle */}
-          <p className="text-center text-sm md:text-base text-gray-400 mb-8">
-            Log in to continue to your dashboard
-          </p>
-
-          {showEmailForm ? (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-              <form onSubmit={handleEmailSubmit} className="space-y-4">
-                <div>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address"
-                    required
-                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl py-3.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all mb-4"
-                  />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    required
-                    className="w-full bg-white/[0.04] border border-white/[0.06] rounded-xl py-3.5 px-4 text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 transition-all"
-                  />
-                </div>
-                {error && <p className="text-red-400 text-sm text-center">{error}</p>}
-                {message && <p className="text-green-400 text-sm text-center">{message}</p>}
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-cyan-500 to-indigo-500 hover:from-cyan-400 hover:to-indigo-400 text-white rounded-xl py-3.5 px-4 font-semibold transition-all duration-200 shadow-lg shadow-cyan-500/25 disabled:opacity-50"
-                >
-                  {loading ? 'Authenticating...' : (isSignUp ? 'Sign Up' : 'Sign In')}
-                </button>
-              </form>
-              <div className="flex justify-between items-center px-1 text-sm mt-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSignUp(!isSignUp);
-                    setError('');
-                    setMessage('');
-                  }}
-                  className="text-cyan-400 hover:text-cyan-300 transition-colors"
-                >
-                  {isSignUp ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}
-                </button>
-              </div>
-              <button
-                onClick={() => {
-                  setShowEmailForm(false);
-                  setError('');
-                  setMessage('');
-                }}
-                className="w-full bg-transparent hover:bg-white/[0.04] border border-transparent hover:border-white/[0.06] rounded-xl py-3.5 px-4 text-gray-400 hover:text-white font-semibold transition-all duration-200 mt-2"
-              >
-                Back to options
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-              {/* Google Login */}
-              <button
-                onClick={handleGoogleLogin}
-                className="w-full bg-white hover:bg-gray-100 rounded-xl py-3.5 px-4 flex items-center justify-center gap-3 transition-all duration-200 shadow-[0_0_20px_rgba(255,255,255,0.05)] hover:shadow-[0_0_25px_rgba(255,255,255,0.1)] group"
-              >
-                <div className="w-5 h-5">
-                  <svg className="w-full h-full" fill="none" preserveAspectRatio="none" viewBox="0 0 50 50">
-                    <g clipPath="url(#clip0_1_85)">
-                      <path d={svgPaths.p261be200} fill="white" />
-                      <path d={svgPaths.p162c3280} fill="#E33629" />
-                      <path d={svgPaths.p2ef4a0c0} fill="#F8BD00" />
-                      <path d={svgPaths.p2e8dbf80} fill="#587DBD" />
-                      <path d={svgPaths.p35c11100} fill="#319F43" />
-                    </g>
-                    <defs>
-                      <clipPath id="clip0_1_85">
-                        <rect fill="white" height="50" width="50" />
-                      </clipPath>
-                    </defs>
-                  </svg>
-                </div>
-                <span className="text-base font-semibold text-gray-900 group-hover:text-black">
-                  Continue with Google
-                </span>
-              </button>
-
-              {/* Divider */}
-              <div className="relative py-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/[0.06]"></div>
-                </div>
-                <div className="relative flex justify-center text-xs uppercase tracking-widest font-semibold">
-                  <span className="px-4 bg-[#0e0e18] text-gray-500">or</span>
-                </div>
-              </div>
-
-              {/* Email Login */}
-              <button
-                onClick={() => setShowEmailForm(true)}
-                className="w-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.1] rounded-xl py-3.5 px-4 flex items-center justify-center gap-3 transition-all duration-200 group"
-              >
-                <svg className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <span className="text-base font-semibold text-gray-300 group-hover:text-white transition-colors">
-                  Continue with Email
-                </span>
-              </button>
-            </div>
-          )}
-
-          {/* Terms and Conditions */}
-          <p className="text-center text-xs md:text-sm text-slate-500 mt-6 leading-relaxed">
-            By continuing, you agree to SynPhi's{' '}
-            <a href="#" className="text-blue-400 hover:text-blue-300 underline">
-              Terms and Conditions
-            </a>
-            . Read our{' '}
-            <a href="#" className="text-blue-400 hover:text-blue-300 underline">
-              Privacy Policy
-            </a>
-          </p>
-        </div>
-      </div>
+ const navigate=useNavigate();
+ const {signInWithProvider,signInWithEmail,signUpWithEmail,configurationError,localBypass}=useAuth();
+ const [signup,setSignup]=useState(false), [email,setEmail]=useState(''), [password,setPassword]=useState('');
+ const [visible,setVisible]=useState(false), [agreed,setAgreed]=useState(false), [busy,setBusy]=useState(''), [error,setError]=useState('');
+ async function authenticate(method:'email'|typeof providers[number]) {
+  if(signup&&!agreed){setError('Please agree to the Terms and Conditions first.');return;}
+  setBusy(method);setError('');
+  try { if(method!=='email') await signInWithProvider(method); else if(signup) await signUpWithEmail(email,password); else await signInWithEmail(email,password); navigate('/dashboard'); }
+  catch(reason:unknown){const code=(reason as {code?:string}).code;setError(code==='auth/operation-not-allowed'?`${method} sign-in is not enabled in Firebase.`:code==='auth/popup-blocked'?'Allow pop-ups for this website and try again.':code==='auth/account-exists-with-different-credential'?'Use the sign-in method originally used for this account.':code==='auth/unauthorized-domain'?'This website domain must be authorized in Firebase.':code==='auth/popup-closed-by-user'?'Sign-in was cancelled. You can try again.':'Could not sign in. Check your details and try again.');}
+  finally{setBusy('');}
+ }
+ function submit(event:FormEvent){event.preventDefault();void authenticate('email');}
+ return <main className="min-h-dvh bg-[#191919] text-white lg:grid lg:grid-cols-[46%_54%]">
+  <aside className="hidden lg:flex flex-col justify-between p-12 xl:p-16 bg-[#090f16]" style={{backgroundImage:'radial-gradient(ellipse at 15% 85%, #06446a99, transparent 55%),radial-gradient(ellipse at 85% 25%, #12365277, transparent 55%)'}}>
+   <Link to="/" className="flex items-center gap-3 w-fit"><BrandLogo size={38}/><span className="text-2xl font-semibold">SynPhi <span className="font-normal text-gray-400">Detector</span></span></Link>
+   <div className="py-16 max-w-xl"><h1 className="text-4xl xl:text-5xl font-semibold leading-tight tracking-tight">A closer look at what's real.</h1><p className="mt-6 text-lg leading-8 text-gray-400">Check audio, images and video, then bring the evidence into your verification workflow.</p>
+    <div className="mt-14 space-y-8">
+     <Feature icon={<ShieldCheck size={24}/>} title="Your account, your workspace" text="Keep your scan history connected to your account."/>
+     <Feature icon={<AudioLines size={24}/>} title="Inspect the signal" text="Review measured audio views and media alongside the prediction."/>
+     <Feature icon={<FileText size={24}/>} title="Take the report with you" text="Download an assessment with model details and analysis limits."/>
     </div>
-  );
+   </div><p className="text-xs leading-5 text-gray-500">Automated predictions support review. They do not establish authenticity.</p>
+  </aside>
+  <section className="flex justify-center px-5 py-8 sm:px-10 lg:px-12 lg:py-14" aria-label="Account access"><div className="w-full max-w-lg my-auto">
+   <Link to="/" className="flex items-center gap-2 mb-10 lg:hidden"><BrandLogo size={28}/><span className="font-semibold text-lg">SynPhi</span></Link>
+   <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">{signup?'Create your account':'Welcome back'}</h2><p className="mt-3 mb-8 text-gray-400">{signup?'Start your media verification workspace.':'Sign in to your SynPhi workspace.'}</p>
+   {configurationError&&<p role="alert" className="mb-5 text-sm text-red-300">{configurationError}</p>}
+   {error&&<p role="alert" className="mb-5 rounded-lg border border-red-400/20 p-3 text-sm text-red-300">{error}</p>}
+   <form onSubmit={submit} className="space-y-5">
+    <label className="block text-sm text-gray-300">Email<input type="email" autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="you@example.com" className={field}/></label>
+    <div><label htmlFor="account-password" className="text-sm text-gray-300">Password</label><div className="relative"><input id="account-password" type={visible?'text':'password'} autoComplete={signup?'new-password':'current-password'} minLength={signup?6:undefined} value={password} onChange={e=>setPassword(e.target.value)} required placeholder={signup?'Create a password':'Your password'} className={`${field} pr-12`}/><button type="button" onClick={()=>setVisible(!visible)} aria-label={visible?'Hide password':'Show password'} aria-pressed={visible} className="absolute right-1 bottom-0 min-h-12 min-w-11 flex items-center justify-center text-gray-400">{visible?<EyeOff size={18}/>:<Eye size={18}/>}</button></div></div>
+    {signup&&<label className="flex items-start gap-3 text-sm leading-6 text-gray-400"><input type="checkbox" checked={agreed} onChange={e=>setAgreed(e.target.checked)} required className="mt-1 h-4 w-4 shrink-0 accent-sky-500"/><span>I agree to the <Link to="/terms" className="text-sky-400 hover:underline">Terms and Conditions</Link> and <Link to="/privacy" className="text-sky-400 hover:underline">Privacy Policy</Link>.</span></label>}
+    <button disabled={Boolean(busy)||Boolean(configurationError)} className="w-full min-h-12 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:opacity-50 font-semibold">{busy==='email'?'Please wait...':signup?'Create account':'Sign in'}</button>
+   </form>
+   <div className="flex items-center gap-4 my-6 text-xs text-gray-500"><span className="h-px flex-1 bg-white/10"/>or continue with<span className="h-px flex-1 bg-white/10"/></div>
+   <div className="grid grid-cols-2 gap-3">{providers.map(provider=><button key={provider} type="button" disabled={Boolean(busy)||Boolean(configurationError)} onClick={()=>void authenticate(provider)} className="min-h-12 flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.025] hover:bg-white/[0.07] disabled:opacity-50 text-sm">{provider==='GitHub'?<Github size={19} aria-hidden/>:provider==='Apple'?<AppleLogo/>:provider==='Microsoft'?<span aria-hidden className="grid grid-cols-2 gap-0.5 w-4 h-4">{['#f25022','#7fba00','#00a4ef','#ffb900'].map(color=><span key={color} style={{background:color}}/>)}</span>:<GoogleLogo/>}{busy===provider?'Connecting...':provider}</button>)}</div>
+   <p className="mt-7 text-center text-sm text-gray-400">{signup?'Already have an account?':'New to SynPhi?'} <button type="button" disabled={Boolean(busy)} onClick={()=>{setSignup(!signup);setError('');}} className="text-sky-400 hover:underline">{signup?'Sign in':'Create an account'}</button></p>
+   {!signup&&<p className="mt-5 text-center text-xs leading-5 text-gray-500">By continuing, you agree to our <Link to="/terms" className="text-gray-300 underline">Terms and Conditions</Link>. Read our <Link to="/privacy" className="text-gray-300 underline">Privacy Policy</Link>.</p>}
+   {localBypass&&<button type="button" onClick={()=>navigate('/dashboard')} className="mt-5 w-full min-h-11 text-xs text-gray-500 hover:text-gray-300">Continue locally without signing in</button>}
+  </div></section>
+ </main>;
 }
+function Feature({icon,title,text}:{icon:React.ReactNode;title:string;text:string}){return <div className="flex gap-5"><div className="h-12 w-12 shrink-0 rounded-xl bg-white/[0.07] flex items-center justify-center text-sky-200">{icon}</div><div><h2 className="font-semibold">{title}</h2><p className="mt-1 text-sm leading-6 text-gray-400">{text}</p></div></div>;}

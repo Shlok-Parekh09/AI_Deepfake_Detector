@@ -8,4 +8,15 @@ node_modules/
 .secrets
 *.zip
 *.pth
+model_weights/
+archive/
+audio_kaggle_run/
+.audio-venv/
+docs/
+tools/
+*.safetensors
+*.pt
+*.onnx
+*.ckpt
+*.bin
 .env*

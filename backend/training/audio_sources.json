@@ -1,0 +1,20 @@
+{
+  "hf": [
+    {"id": "ai4bharat/indicvoices_r", "configs": "all", "audio_field": "audio", "label": 0, "speaker_fields": ["speaker_id"], "provenance": "enhanced_human_speech", "group_source": "ai4bharat/IndicVoices"},
+    {"id": "Bisher/ASVspoof_2019_LA", "configs": ["default"], "splits": ["train"], "label_field": "key", "speaker_fields": ["speaker_id"], "generator_field": "system_id", "recording_field": "audio_file_name"},
+    {"id": "vdivyasharma/IndicSynth", "configs": "all", "label": 1, "speaker_fields": ["Source Speaker_ID", "Target Speaker ID"], "generator_field": "Generative Model", "license": "CC-BY-NC-4.0"},
+    {"id": "garystafford/deepfake-audio-detection", "configs": ["default"], "label_field": "label"},
+    {"id": "MLCommons/peoples_speech", "configs": ["clean"], "label": 0}
+  ],
+  "kaggle": [
+    {"id": "adarshsingh0903/audio-deepfake-detection-dataset", "folder_labels": {"FlashSpeech": 1, "NaturalSpeech3": 1, "OpenAI": 1, "PromptTTS2": 1, "VALLE": 1, "VoiceBox": 1, "real_samples": 0, "seedtts_files": 1, "xTTS": 1}, "speaker_filename_folders": {"real_samples": "_", "VALLE": "-", "xTTS": "_"}},
+    {"id": "prathmeshredekar/luminar-audio-deepfake-detection-bonafied-dataset", "label": 0},
+    {"id": "chirasmitchoudhury17/real-and-synthetic-threat-audio-dataset"},
+    {"id": "mohammedabdeldayem/the-fake-or-real-dataset", "holdout": true, "include_top_folders": ["for-2sec"]}
+  ],
+  "extra_sources": [
+    {"id": "openslr/12", "role": "real_speech", "subset": "train-clean-100", "max_per_speaker": 10},
+    {"id": "LibriVAD/LibriVAD", "role": "training_noise_augmentation", "file": "Files/Noises.zip", "license": "CC-BY-NC-SA-4.0"}
+  ],
+  "heldout_generators": ["freevc24"]
+}

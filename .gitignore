@@ -1,6 +1,50 @@
-# Dependencies
+# Model weights belong in private Hugging Face storage, never GitHub.
+*.safetensors
+*.pth
+*.pt
+*.onnx
+model_weights/
+/output/pdf/
+/tmp/pdfs/
+*.ckpt
+*.bin
+*.h5
+*.hdf5
+*.keras
+*.tflite
+*.pb
+*.pkl
+*.pickle
+*.joblib
+*.npz
+*.weights
+*.weights.*
+*.safetensors.*
+*.pth.*
+*.pt.*
+*.onnx.*
+*.ckpt.*
+*.data-*-of-*
+*.index
+*.gguf
+*.ggml
+*.msgpack
+*.ot
+# Local recovery archives and verification caches
+archive/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Dependencies and experimental data
 node_modules/
 .venv/
+.audio-venv/
+audio_data/
+audio_training/
+audio_kaggle_run/
 __pycache__/
 *.pyc
 
@@ -8,6 +52,9 @@ __pycache__/
 .secrets
 *.env.local
 frontend/.env
+frontend/.env.*
+!frontend/.env.example
+docs/reports/*.docx
 
 # Build artifacts
 dist/
@@ -25,15 +72,13 @@ Thumbs.db
 .vscode/
 *.swp
 
-.vercel
+.vercel/
 
-__pycache__/
+# Runtime and training outputs
 *.log
-*.pyc
 kaggle_output_tmp/
 checkpoints/
 kaggle_checkpoints_upload/
-backend_code.zip
 venv/
 
 # Vercel env
