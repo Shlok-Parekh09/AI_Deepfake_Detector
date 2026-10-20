@@ -1,8 +1,9 @@
 """Private model artifact locations, independent from architecture attribution."""
 PRIVATE_REPOSITORY='Shlok0829/deepfake-models'
-WEIGHTS_REVISION='c4d100041e4f5c5180cb9d840bf5858badfce459'
-AUDIO_FILE='audio/mms_1b.safetensors'
-VIDEO_FILE='video/genconvit_vae.pth'
+WEIGHTS_REVISION='1c27bfd1e29a99fac219f56a8d41b130ba092af6'
+AUDIO_FILE='audio/spectra_aasist3/model.safetensors'
+VIDEO_FILE='video/gend_clip_l14/model.safetensors'
+VIDEO_FACE_FILE='video/gend_clip_l14/det_10g.onnx'
 IMAGE_FILE='image/vision_best.pth'
 
 

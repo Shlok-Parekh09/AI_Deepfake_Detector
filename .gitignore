@@ -4,6 +4,8 @@
 *.pt
 *.onnx
 model_weights/
+/output/pdf/
+/tmp/pdfs/
 *.ckpt
 *.bin
 *.h5

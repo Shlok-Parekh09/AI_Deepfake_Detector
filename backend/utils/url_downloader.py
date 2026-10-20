@@ -25,7 +25,7 @@ class URLDownloader:
     require ``yt-dlp`` to be installed separately.
     """
 
-    def __init__(self, download_dir: str | None = None, max_file_size_mb: int = 500):
+    def __init__(self, download_dir: str | None = None, max_file_size_mb: int = 1024):
         self.max_file_size_mb = max_file_size_mb
         if download_dir is None:
             self._tmp = tempfile.TemporaryDirectory(prefix="deepfake_dl_")
@@ -45,13 +45,18 @@ class URLDownloader:
             raise ValueError(f"Invalid or unreachable URL: {url}")
 
         if output_path is None:
-            parsed = urlparse(url)
-            filename = os.path.basename(parsed.path) or "download"
-            output_path = os.path.join(self.download_dir, filename)
+            suffix = os.path.splitext(urlparse(url).path)[1][:16]
+            descriptor, output_path = tempfile.mkstemp(dir=self.download_dir, suffix=suffix)
+            os.close(descriptor)
 
         if self._is_youtube(url):
             return self.download_youtube(url, output_path)
-        return self.download_direct(url, output_path)
+        try:
+            return self.download_direct(url, output_path)
+        except Exception:
+            if os.path.isfile(output_path):
+                os.unlink(output_path)
+            raise
 
     def download_direct(self, url: str, output_path: str) -> str:
         """Stream-download a direct file URL with a progress bar."""
@@ -102,7 +107,11 @@ class URLDownloader:
         with open(output_path, "wb") as f, tqdm(
             total=total, unit="B", unit_scale=True, desc="Downloading"
         ) as bar:
+            received = 0
             for chunk in response.iter_content(chunk_size=8192):
+                received += len(chunk)
+                if received > self.max_file_size_mb * 1024 * 1024:
+                    raise ValueError('File exceeds the 1 GB maximum.')
                 f.write(chunk)
                 bar.update(len(chunk))
 
@@ -133,18 +142,16 @@ class URLDownloader:
             raise RuntimeError(f"YouTube download failed (possibly blocked or age-restricted): {e}")
 
     def validate_url(self, url: str) -> bool:
-        """Return ``True`` if *url* looks valid and is reachable (HEAD request)."""
+        """Validate public HTTP(S) destinations; GET validates reachability and redirects.
+
+        A HEAD preflight rejects legitimate hosts that support GET but not HEAD.
+        Every download redirect is still checked before its GET request.
+        """
         try:
             parsed = urlparse(url)
-            if parsed.scheme not in ("http", "https"):
-                return False
-            if not self._is_safe_public_url(url):
-                return False
-            if self._is_youtube(url):
-                return True
-            resp = requests.head(url, timeout=10, allow_redirects=True, headers={'User-Agent': 'Mozilla/5.0'})
-            return resp.status_code < 400
-        except Exception:
+            return (parsed.scheme in ('http', 'https') and not parsed.username
+                    and not parsed.password and self._is_safe_public_url(url))
+        except (ValueError, OSError):
             return False
 
     def get_file_size(self, url: str) -> int | None:

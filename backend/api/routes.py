@@ -11,6 +11,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from backend.utils.logger import get_logger
+from backend.utils.uploads import stage_upload
 
 logger = get_logger(__name__)
 
@@ -39,6 +40,10 @@ class BatchURLRequest(BaseModel):
 
 
 class DetectionResult(BaseModel):
+    audit_report: dict | None = None
+    report_pdf_base64: str | None = None
+    report_filename: str | None = None
+    report_error: str | None = None
     fake_probability: float
     is_fake: bool
     confidence: str
@@ -82,14 +87,10 @@ async def detect_deepfake(file: UploadFile = File(...)):
         predictor = _get_predictor()
 
         # Save uploaded file to a temp location
-        suffix = os.path.splitext(file.filename or "upload")[1]
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-            content = await file.read()
-            tmp.write(content)
-            tmp_path = tmp.name
+        tmp_path = await stage_upload(file)
 
         try:
-            result = predictor.predict(tmp_path)
+            result = predictor.predict(tmp_path, original_name=file.filename)
             return DetectionResult(**result)
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
@@ -139,11 +140,7 @@ async def detect_batch(files: list[UploadFile] = File(...)):
 
     try:
         for upload in files:
-            suffix = os.path.splitext(upload.filename or "upload")[1]
-            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-                content = await upload.read()
-                tmp.write(content)
-                tmp_paths.append(tmp.name)
+            tmp_paths.append(await stage_upload(upload))
 
         for path in tmp_paths:
             try:
@@ -202,7 +199,10 @@ async def model_status():
         "audio_weights_sha256": getattr(predictor, "audio_metadata", {}).get("weights_sha256"),
         "video_checkpoint": getattr(predictor, "video_checkpoint_path", None),
         "video_trained": getattr(predictor, "video_model", None) is not None,
-        "video_architecture": "genconvit_vae" if getattr(predictor, "video_model", None) is not None else None,
+        "video_architecture": getattr(predictor, "video_metadata", {}).get("arch"),
+        "video_model_source": getattr(predictor, "video_metadata", {}).get("source"),
+        "video_model_revision": getattr(predictor, "video_metadata", {}).get("revision"),
+        "video_weights_sha256": getattr(predictor, "video_metadata", {}).get("weights_sha256"),
         "weights_repository": "Shlok0829/deepfake-models",
         "trained_only": True,
     }

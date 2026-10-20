@@ -55,6 +55,7 @@ scipy                    # Signal processing filters to clean noise before spect
 pandas
 scikit-learn
 matplotlib
+reportlab>=4.2,<5
 seaborn
 
 # --- Explainable AI (XAI) & Model Interpretability ---

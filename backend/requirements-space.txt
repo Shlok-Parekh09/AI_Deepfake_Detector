@@ -18,3 +18,5 @@ tqdm
 transformers==4.57.6
 accelerate
 safetensors>=0.5.3
+onnxruntime>=1.20,<2
+reportlab>=4.2,<5

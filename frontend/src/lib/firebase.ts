@@ -1,5 +1,6 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: import.meta.env.FIREBASE_API_KEY || import.meta.env.VITE_FIREBASE_API_KEY,
@@ -10,5 +11,7 @@ const firebaseConfig = {
   appId: import.meta.env.FIREBASE_APP_ID || import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-export const app = firebaseConfig.apiKey ? initializeApp(firebaseConfig) : null;
-export const auth = app ? getAuth(app) : null as any;
+export const firebaseConfigured=Boolean(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId && firebaseConfig.appId);
+export const app = firebaseConfigured ? (getApps().length ? getApp() : initializeApp(firebaseConfig)) : null;
+export const auth = app ? getAuth(app) : null;
+export const database = app ? getFirestore(app) : null;

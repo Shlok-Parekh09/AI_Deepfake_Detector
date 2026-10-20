@@ -1,7 +1,9 @@
-import { createBrowserRouter, useRouteError, useNavigate } from "react-router";
+import { createBrowserRouter, useRouteError, useNavigate, Navigate } from "react-router";
+import { useAuth } from '../contexts/AuthContext';
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
+import Legal from './pages/Legal';
 
 function ErrorBoundary() {
   const error: any = useRouteError();
@@ -27,6 +29,13 @@ function ErrorBoundary() {
   );
 }
 
+function ProtectedDashboard() {
+  const {user,loading,localBypass}=useAuth();
+  if(loading)return <div role="status" className="min-h-screen bg-[#08080e] text-gray-300 p-8">Checking sign-in...</div>;
+  if(!localBypass && !user)return <Navigate to="/login" replace />;
+  return <Dashboard key={user?.uid || 'local-development'} />;
+}
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -35,7 +44,7 @@ export const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
-    Component: Dashboard,
+    Component: ProtectedDashboard,
     errorElement: <ErrorBoundary />,
   },
   {
@@ -43,4 +52,7 @@ export const router = createBrowserRouter([
     Component: Login,
     errorElement: <ErrorBoundary />,
   },
+  {path:'/terms',element:<Legal kind="terms" />},
+  {path:'/privacy',element:<Legal kind="privacy" />},
+  {path:'*',element:<Navigate to="/dashboard" replace />},
 ]);

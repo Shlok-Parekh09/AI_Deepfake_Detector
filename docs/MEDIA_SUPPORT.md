@@ -30,14 +30,16 @@ can support fewer formats than the backend decoder.
 
 - The supplied image/video models assess faces. An image/video with no detected
   face returns an error; a JPEG recompression heuristic is not a model verdict.
-- Video uses at most 15 sampled frames, up to four faces per frame. It does not
-  assess the soundtrack or every possible kind of edit. Its class decision uses
-  the reference GenConViT mean sigmoid evidence, normalized to a two-class score
-  for the UI. Raw mean real/fake sigmoid evidence is also returned.
-- Speech uses bounded ten-second windows (at most 12 by the pinned configuration).
-  Mean pooling can hide a short inserted fake. `audio_assessment` reports unique
-  seconds analyzed, coverage, and min/max window scores; partial coverage is not
-  described as a complete recording analysis.
+- Video uses GenD CLIP-L/14 with the official landmark detector, five-point alignment
+  at scale 1.3 and CLIP preprocessing. The largest face in each of at most 15
+  frames is assessed; class softmax evidence is averaged. Audio-only changes and
+  non-face manipulations are outside its scope. Recompression and crop changes
+  can cause false positives; this is not a certified low-FPR deployment.
+- Speech uses Spectra-AASIST3: 16 kHz mono, preemphasis 0.97 and 64,600-sample
+  windows, repeated if shorter. Up to 32 uniformly sampled windows are assessed.
+  Native bona-fide logit margins are averaged against the published cutoff.
+  `audio_assessment` reports actual coverage; partial coverage is not described
+  as complete recording analysis. Short inserted fakes may still be missed.
 - Reported scores are uncalibrated model estimates, not a measured chance that
   a given file is genuine. Pitch or volume differences alone do not establish a
   deepfake. Neither packaging nor these decoder fixes retrain a model.
@@ -48,8 +50,8 @@ conditions. The failing source clips are needed to determine whether an individu
 failure comes from sampling, face crops, preprocessing or model generalization.
 
 Reference implementations:
-- https://github.com/erprogs/GenConViT/blob/main/model/pred_func.py
-- https://huggingface.co/nii-yamagishilab/mms-1b-anti-deepfake
+- https://github.com/yermandy/GenD
+- https://huggingface.co/lab260/Spectra-AASIST3
 
 Verification uses real small encoded fixtures and stub detector routing; those
 checks establish decoding and software behavior, not deepfake detection accuracy.

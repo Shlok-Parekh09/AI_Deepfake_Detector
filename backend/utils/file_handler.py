@@ -23,7 +23,7 @@ class FileHandler:
     SUPPORTED_VIDEO = {'.'+ext for ext in VIDEO_EXTENSIONS}
     SUPPORTED_IMAGE = {'.'+ext for ext in IMAGE_EXTENSIONS}
     SUPPORTED_AUDIO = {'.'+ext for ext in AUDIO_EXTENSIONS}
-    MAX_SIZE_MB_DEFAULT = 100
+    MAX_SIZE_MB_DEFAULT = 1024
 
     def __init__(self, temp_dir: str | None = None):
         if temp_dir is None:
@@ -77,14 +77,6 @@ class FileHandler:
                 "valid": False,
                 "error": "No readable image, video or audio stream. The codec may be unsupported, damaged or encrypted.",
                 "file_type": None,
-            }
-
-        size_mb = os.path.getsize(filepath) / (1024 * 1024)
-        if size_mb > max_size_mb:
-            return {
-                "valid": False,
-                "error": f"File too large: {size_mb:.1f} MB (max {max_size_mb} MB)",
-                "file_type": file_type,
             }
 
         return {"valid": True, "error": None, "file_type": file_type}

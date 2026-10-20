@@ -43,6 +43,9 @@ class AudioSSL(nn.Module):
 
 def load_audio_checkpoint(path, device):
     if str(path).endswith('.safetensors'):
+        if 'spectra_aasist3' in str(path).lower():
+            from backend.models.replacement_models import load_spectra
+            return load_spectra(path, device)
         from backend.models.antideepfake import load_antideepfake
         return load_antideepfake(path, device)
     state = torch.load(path, map_location="cpu", weights_only=False, mmap=True)

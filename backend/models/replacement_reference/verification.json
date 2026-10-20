@@ -1,0 +1,20 @@
+{
+  "checks_date": "2026-10-20",
+  "audio": {
+    "known_elevenlabs_clip": "FAKE",
+    "human_speech_reference": "REAL",
+    "independent_fpr_evaluation": false
+  },
+  "video": {
+    "author_preprocessed_real_crop": "REAL",
+    "author_preprocessed_fake_crop": "FAKE",
+    "full_frame_real_photograph_video_fixture": "REAL",
+    "recompressed_real_reference": "false positive",
+    "independent_fpr_evaluation": false
+  },
+  "limitations": [
+    "Small local regression checks only, not an independent accuracy benchmark.",
+    "Video recompression and repeated face preprocessing can change predictions.",
+    "Multilingual ElevenLabs detection is not established by one tested clip."
+  ]
+}

@@ -128,7 +128,6 @@ class Predictor:
             else:
                 logger.warning("No audio checkpoint found; audio scans are disabled.")
 
-            from backend.models.genconvit import load_video_checkpoint
             video_path = os.getenv('DEEPFAKE_VIDEO_CHECKPOINT')
             if not video_path:
                 local_video = local_weight(VIDEO_FILE)
@@ -138,8 +137,15 @@ class Predictor:
                     from backend.models.weight_registry import private_weight, VIDEO_FILE
                     video_path = private_weight(VIDEO_FILE)
             self.video_checkpoint_path = video_path
-            self.video_model = load_video_checkpoint(video_path, self.device)
-            logger.info('Loaded dedicated GenConViT video detector')
+            if 'gend_clip_l14' in str(video_path).lower():
+                from backend.models.replacement_models import load_gend
+                self.video_model = load_gend(video_path, self.device)
+                self.video_metadata = self.video_model.metadata
+            else:
+                from backend.models.genconvit import load_video_checkpoint
+                self.video_model = load_video_checkpoint(video_path, self.device)
+                self.video_metadata = {'arch':'genconvit_vae'}
+            logger.info('Loaded dedicated video detector: %s', self.video_metadata['arch'])
 
             self.postprocessor = PostProcessor()
             self.url_downloader = URLDownloader()
@@ -159,7 +165,7 @@ class Predictor:
         else:
             return f"Analysis indicates with {confidence} confidence ({round(prob*100)}%) that this {file_type} is {verdict}. The media appears natural with consistent noise distributions and no structural anomalies."
 
-    def predict(self, file_path: str) -> dict:
+    def predict(self, file_path: str, original_name: str | None = None) -> dict:
         """Auto-detect file type and run prediction."""
         validation = self.file_handler.validate_file(file_path)
         if not validation['valid']:
@@ -174,12 +180,12 @@ class Predictor:
                 raise RuntimeError(
                     "The configured audio checkpoint is unavailable. Check model_weights/audio or private Hugging Face access."
                 )
-            return self.predict_audio(file_path)
+            return self._with_report(self.predict_audio(file_path), file_path, original_name)
 
         if file_type == 'video':
             if getattr(self, 'video_model', None) is None:
                 raise RuntimeError('The dedicated video checkpoint is unavailable')
-            return self.predict_video(file_path)
+            return self._with_report(self.predict_video(file_path), file_path, original_name)
 
         if getattr(self, "model", None) is None:
             raise RuntimeError(
@@ -187,9 +193,18 @@ class Predictor:
             )
 
         if file_type == "image":
-            return self.predict_image(file_path)
+            return self._with_report(self.predict_image(file_path), file_path, original_name)
         else:
-            return self.predict_video(file_path)
+            return self._with_report(self.predict_video(file_path), file_path, original_name)
+
+    def _with_report(self, result, path, original_name=None):
+        try:
+            from backend.reports.evidence import attach_report
+            return attach_report(result, path, original_name or Path(path).name, self)
+        except Exception:
+            logger.exception('Audit report generation failed; retaining the detection result')
+            result['report_error'] = 'The PDF report could not be generated. Retry the scan to request a fresh report.'
+            return result
 
     def predict_image(self, image_path: str) -> dict:
         from PIL import Image
@@ -249,18 +264,24 @@ class Predictor:
         std = torch.tensor([.229,.224,.225],device=self.device)[:,None,None]
         with torch.inference_mode():
             for position, frame in frames:
-                faces = self.face_detector.extract_faces(frame,margin=0.)
+                is_gend = getattr(self, 'video_metadata', {}).get('arch') == 'gend_clip_l14'
+                faces = (self.video_model.faces(frame, self.face_detector) if is_gend
+                         else self.face_detector.extract_faces(frame,margin=0.))
                 current = []
                 for face in faces[:4]:
                     if not face.size:
                         continue
-                    face = cv2.resize(face,(224,224),interpolation=cv2.INTER_AREA)
-                    tensor = torch.from_numpy(face.transpose(2,0,1).copy()).float().to(self.device)/255.
-                    logits = self.video_model(((tensor-mean)/std).unsqueeze(0))
+                    if is_gend:
+                        tensor = self.video_model.preprocess(face).to(self.device)
+                        logits = self.video_model(tensor.unsqueeze(0))
+                    else:
+                        face = cv2.resize(face,(224,224),interpolation=cv2.INTER_AREA)
+                        tensor = torch.from_numpy(face.transpose(2,0,1).copy()).float().to(self.device)/255.
+                        logits = self.video_model(((tensor-mean)/std).unsqueeze(0))
                     if not torch.isfinite(logits).all():
                         raise RuntimeError('Video model produced nonfinite scores')
                     # Reference inference averages independent sigmoid class scores.
-                    evidence = logits.float().sigmoid()[0].cpu().tolist()
+                    evidence = (logits.float().softmax(-1) if is_gend else logits.float().sigmoid())[0].cpu().tolist()
                     probability = evidence[1] / max(sum(evidence), 1e-12)
                     scores.append(evidence); current.append(probability)
                 if current:
@@ -272,8 +293,9 @@ class Predictor:
         probability = fake_evidence / max(real_evidence + fake_evidence, 1e-12)
         result = self.postprocessor.format_result(probability)
         result.update(file_type='video',num_faces_analysed=len(scores),frames_analysed=len(frame_scores),
-            raw_scores={'genconvit_vae':round(probability,4),'real_sigmoid_mean':real_evidence,
-                        'fake_sigmoid_mean':fake_evidence},reasons=['Dedicated GenConViT VAE face-video model',
+            raw_scores={getattr(self, 'video_metadata', {}).get('arch', 'genconvit_vae'):round(probability,4),
+                        'real_mean_evidence':real_evidence, 'fake_mean_evidence':fake_evidence},
+            reasons=['Dedicated face-video model: ' + getattr(self, 'video_metadata', {}).get('arch', 'genconvit_vae'),
             f'Analyzed {len(scores)} face crops across {len(frame_scores)} sampled frames.'],
             decision_threshold=.5,explainability_heatmap=None,
             label='FAKE' if probability>=.5 else 'REAL',p_fake=probability,p_fake_int=round(100*probability))
@@ -292,7 +314,26 @@ class Predictor:
         metadata = getattr(self, "audio_metadata", {})
         segments = []
         with torch.no_grad():
-            if metadata.get('arch') == 'antideepfake_mms_1b':
+            if metadata.get('arch') == 'spectra_aasist3':
+                from backend.preprocessing.audio_waveform import read_waveform, window_starts, SAMPLE_RATE
+                from backend.models.replacement_models import spectra_crop, SPECTRA_SAMPLES
+                wave = read_waveform(audio_path)
+                duration = len(wave) / SAMPLE_RATE
+                starts = window_starts(len(wave), SPECTRA_SAMPLES, metadata['max_windows'])
+                real_margins = []
+                for start in starts:
+                    crop = spectra_crop(wave, start).unsqueeze(0).to(self.device)
+                    logits = self.audio_model(crop)
+                    if not torch.isfinite(logits).all():
+                        raise RuntimeError('Audio model produced nonfinite scores')
+                    real_margins.append(float(logits[0,0]))
+                # Aggregate native margins rather than silently substituting two-logit softmax.
+                prob = float(torch.sigmoid(torch.tensor(-sum(real_margins)/len(real_margins))))
+                segments = [{'start_seconds':round(start/SAMPLE_RATE,3),
+                             'end_seconds':round(min(duration,(start+SPECTRA_SAMPLES)/SAMPLE_RATE),3),
+                             'fake_probability':float(torch.sigmoid(torch.tensor(-margin)))}
+                            for start,margin in zip(starts,real_margins)]
+            elif metadata.get('arch') == 'antideepfake_mms_1b':
                 from backend.preprocessing.audio_waveform import read_waveform, window_starts, SAMPLE_RATE
                 wave = read_waveform(audio_path)
                 duration = len(wave) / SAMPLE_RATE

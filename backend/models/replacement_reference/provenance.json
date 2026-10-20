@@ -1,0 +1,20 @@
+[
+  {
+    "source": "lab260/Spectra-AASIST3",
+    "revision": "bc0ded888080ddad493177bb53aa6f5b95219d7c",
+    "size": 1276330956,
+    "sha256": "327762caab3106ecee5f26b821ccdc6ab1fe34906a3e7042f416c87927df2088"
+  },
+  {
+    "source": "yermandy/GenD_CLIP_L_14",
+    "revision": "891ce014a0308386c4d7d25b3dcf436a22db5504",
+    "size": 1215928160,
+    "sha256": "d76f0bdfd74a29fe1b1c1b84a80ac92486993e426878e8c7a3944281fbb96833"
+  },
+  {
+    "source": "GenD documented buffalo_l/det_10g.onnx",
+    "sha256": "5838f7fe053675b1c7a08b633df49e7af5495cee0493c7dcf6697200b85b5b91",
+    "role": "landmark preprocessing",
+    "license_note": "InsightFace pretrained model terms: non-commercial research; separate from GenD MIT code license."
+  }
+]

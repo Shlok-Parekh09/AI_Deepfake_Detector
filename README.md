@@ -21,24 +21,32 @@ format handling, video score aggregation and audio coverage reporting.
 - `archive/`: ignored recovery copies of obsolete helpers; not part of the application.
 - `assets/`: documentation images. Dependencies and virtual environments stay in their existing locations.
 
-Audio inference now uses the supplied `model.safetensors`, identified by SHA-256 as
-[NII MMS-1B AntiDeepfake](https://huggingface.co/nii-yamagishilab/mms-1b-anti-deepfake)
-(revision `e8574a77b9934a18383292678ac441cc495707b5`). The loader checks the file hash,
-maps all inference weights strictly, and converts the upstream Fake/Real output order
-to the application's Real/Fake order. Input is mono 16 kHz speech with published
-layer normalization; long recordings use bounded ten-second windows. Scores are
-model estimates, not calibrated certainty. The model is developed by NII Yamagishi
-Lab and licensed CC BY-NC-SA 4.0. The local `model_weights/audio/mms_1b.safetensors` is preferred;
-the hosted backend loads its copies from the private `Shlok0829/deepfake-models`
-repository. Audio, video and image artifacts live in separate `audio/`, `video/`
-and `image/` folders; weights are excluded from Git and from Space source uploads.
-Video detection uses `model_weights/video/genconvit_vae.pth`, matched to the GenConViT VAE
-architecture. It scores ImageNet-normalized RGB face crops at 224x224 across up
-to 15 uniformly sampled frames. Videos with no detected faces return an explicit
-error rather than a fabricated real/fake score. Image detection retains the
-existing image checkpoint. Architecture attribution is separate from artifact
-storage; file hashes are retained as integrity checks.
-Set `DEEPFAKE_AUDIO_CHECKPOINT` only to explicitly override this model.
+Audio inference uses [Spectra-AASIST3](https://huggingface.co/lab260/Spectra-AASIST3)
+(Apache-2.0), revision `bc0ded888080ddad493177bb53aa6f5b95219d7c`.
+It applies 16 kHz mono decoding, preemphasis 0.97 and 64,600-sample windows,
+with tile repetition for short crops. Up to 32 uniformly distributed windows
+are evaluated. The published bona-fide raw-logit threshold is preserved; long
+recordings aggregate native logit margins. This multi-window extension has not
+been independently calibrated. The UI shows Real/Fake, not certainty percentages.
+Local weights: `model_weights/audio/spectra_aasist3/model.safetensors`.
+
+Video inference uses [GenD CLIP-L/14](https://huggingface.co/yermandy/GenD_CLIP_L_14)
+(MIT), revision `891ce014a0308386c4d7d25b3dcf436a22db5504`. Five-landmark face
+alignment at scale 1.3 precedes CLIP resizing, cropping and normalization.
+L2-normalized visual features feed the trained classifier. Real=0 and Fake=1;
+softmax scores are averaged over the largest face in up to 15 sampled frames.
+It assesses visible face manipulation, not arbitrary edits or audio-only fakes.
+Missing aligned faces produces an explicit error.
+Local weights: `model_weights/video/gend_clip_l14/model.safetensors`.
+
+Both adapters load checkpoints strictly and verify SHA-256 checksums. Architecture
+construction is offline, without redundant base-weight downloads or Hub remote
+code. Image detection retains its existing checkpoint. Weights remain ignored
+by Git and deployment bundles; the hosted backend retrieves pinned copies from
+private `Shlok0829/deepfake-models`. Original checkpoints remain for rollback.
+Reference-file checks are not an accuracy or false-positive benchmark, and no
+checkpoint guarantees detection of every unseen generator.
+`DEEPFAKE_AUDIO_CHECKPOINT` and `DEEPFAKE_VIDEO_CHECKPOINT` explicitly override defaults.
 
 Audio training uses the document-defined registry below. See [the audio training
 protocol](backend/training/AUDIO_TRAINING.md) for the earlier experiments. A submitted
