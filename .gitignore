@@ -80,3 +80,7 @@ kaggle_output_tmp/
 checkpoints/
 kaggle_checkpoints_upload/
 venv/
+
+# Vercel env
+frontend/.env.vercel
+*.env.vercel
