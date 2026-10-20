@@ -418,7 +418,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="w-full max-w-xl">
+            <div className="w-full max-w-4xl">
               <div className="flex items-center gap-3 mb-6 text-gray-400">
                 <span title={currentTitle} className="block w-full min-w-0 break-words [overflow-wrap:anywhere] font-mono text-xs sm:text-sm uppercase tracking-wider">{currentTitle}</span>
               </div>
@@ -455,7 +455,7 @@ export default function Dashboard() {
                 {/* Binary model prediction; no confidence score is displayed. */}
                 <div className={`p-5 rounded-2xl border mb-6 ${currentIsFake ? 'bg-red-500/10 border-red-500/30' : 'bg-emerald-500/10 border-emerald-500/30'}`}>
                   <div className="flex items-center gap-3">{currentIsFake ? <ShieldAlert className="text-red-400 shrink-0" size={22} /> : <ShieldCheck className="text-emerald-400 shrink-0" size={22} />}<p className="text-lg font-bold text-white">{currentIsFake ? (currentScanType === 'audio' ? 'Fake (Synthetic audio)' : 'Fake') : 'Real'}</p></div>
-                  <p className="mt-3 text-xs leading-6 text-gray-300">{currentScanType === 'audio' ? `The speech detector classified the recording as ${currentIsFake ? 'synthetic' : 'real'} from sampled speech windows. This recording-level decision does not confirm specific manipulated segments.` : 'Model prediction based on analyzed face regions. This result is not proof of authenticity.'}</p>
+                  <p className="mt-3 text-xs leading-6 text-gray-300">{currentScanType === 'audio' ? `The speech detector classified the recording as ${currentIsFake ? 'synthetic' : 'real'} from sampled speech windows. This recording-level decision does not confirm specific manipulated segments.` : (currentEvidence?.scope || 'Model prediction based on the analyzed regions.') + ' This result is not proof of authenticity.'}</p>
                 </div>
                 <div className="hidden md:flex gap-2.5 rounded-xl border border-gray-800 bg-[#12121f] p-4 mb-4 text-xs leading-5 text-gray-300"><Info size={17} className="shrink-0 mt-0.5 text-gray-400" /><p>This automated assessment is a prediction, not definitive proof. Review the original file and the report before drawing conclusions.</p></div>
                 {currentScanType === 'audio' && (

@@ -34,9 +34,11 @@ Video inference uses [GenD CLIP-L/14](https://huggingface.co/yermandy/GenD_CLIP_
 (MIT), revision `891ce014a0308386c4d7d25b3dcf436a22db5504`. Five-landmark face
 alignment at scale 1.3 precedes CLIP resizing, cropping and normalization.
 L2-normalized visual features feed the trained classifier. Real=0 and Fake=1;
-softmax scores are averaged over the largest face in up to 15 sampled frames.
+softmax evidence is assessed on up to 16 aligned faces per sampled frame. The maximum face evidence per frame is averaged across up to 15 sampled frames. This application aggregation rule is uncalibrated.
 It assesses visible face manipulation, not arbitrary edits or audio-only fakes.
-Missing aligned faces produces an explicit error.
+When no faces are detected in the sampled frames, a separate whole-image ViT-S/16 checkpoint assesses central crops of those frames. This fallback does not analyze motion or the soundtrack.
+
+Images retain the existing EfficientNet-B4 face classifier, extended to score up to 16 faces independently using maximum face evidence. Images without detected faces use [Community Forensics ViT-S/16](https://huggingface.co/OwensLab/commfor-model-384) (MIT), pinned revision `6076002bf0d9dd37537f965ee2f06f826c333b61`, with the official 440-pixel resize, 384-pixel central crop and ImageNet normalization. Source provenance stays in the audit metadata; PDFs present architecture names and checkpoint fingerprints. These changes add coverage, not a measured accuracy guarantee.
 Local weights: `model_weights/video/gend_clip_l14/model.safetensors`.
 
 Both adapters load checkpoints strictly and verify SHA-256 checksums. Architecture

@@ -63,7 +63,8 @@ def build_pdf(evidence):
            ('Source filename',evidence['filename'][:170]),('Media / size',f"{kind.title()} / {evidence['file_bytes']:,} bytes"),
            ('Source SHA-256',evidence['file_sha256']),('Model classification',evidence['prediction'] + ' - automated prediction; human review pending')])
     section('2. Detector identity and method')
-    table([('Architecture',model.get('arch')),('Model source',model.get('source')),('Model revision',model.get('revision')),
+    architecture = {'gend_clip_l14':'clip_vit_large_patch14', 'spectra_aasist3':'wav2vec2_xlsr_aasist3'}.get(model.get('arch'), model.get('arch'))
+    table([('Architecture',architecture),('Checkpoint revision',model.get('revision')),
            ('Weights SHA-256',model.get('weights_sha256'))])
     story.append(Spacer(1,6));story.append(p(evidence['decision_method']))
     section('3. Measured evidence and analysis scope')

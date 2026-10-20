@@ -41,5 +41,15 @@ class ReplacementContractTests(unittest.TestCase):
         self.assertEqual(tuple(crop.shape),(3,224,224))
         self.assertTrue(torch.isfinite(crop).all())
 
+    def test_video_alignment_can_retain_multiple_faces(self):
+        from types import SimpleNamespace
+        landmarks = np.array([[[20,20],[40,20],[30,30],[23,40],[37,40]],
+                              [[90,20],[110,20],[100,30],[93,40],[107,40]]],dtype=np.float32)
+        detector = SimpleNamespace(detect=lambda _: (np.array([[10,10,50,50,.99],[80,10,120,50,.99]]),landmarks))
+        adapter = SimpleNamespace(landmark_detector=detector)
+        frame = np.zeros((150,150,3),dtype=np.uint8)
+        self.assertEqual(len(GenDDetector.faces(adapter,frame)),1)
+        self.assertEqual(len(GenDDetector.faces(adapter,frame,max_faces=16)),2)
+
 
 if __name__ == '__main__': unittest.main()

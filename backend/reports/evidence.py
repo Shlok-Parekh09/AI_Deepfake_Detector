@@ -64,7 +64,9 @@ def _audio_evidence(path):
 
 def create_evidence(result, path, filename, predictor):
     kind = result.get('file_type', 'unknown')
-    if kind == 'audio':
+    if result.get('detector_metadata', {}).get('weights_sha256'):
+        model = dict(result['detector_metadata'])
+    elif kind == 'audio':
         model = dict(getattr(predictor, 'audio_metadata', {}))
     elif kind == 'video':
         model = dict(getattr(predictor, 'video_metadata', {}))
@@ -95,7 +97,7 @@ def create_evidence(result, path, filename, predictor):
         evidence['segments'] = [dict(start_seconds=s['start_seconds'],end_seconds=s['end_seconds'],
             prediction='Fake' if s['fake_probability']>=.5 else 'Real') for s in result.get('audio_segments',[])]
         evidence['scope'] = 'Sampled speech windows; no confirmed localization of manipulated intervals.'
-        evidence['decision_method'] = ('Spectra-AASIST3 applies 0.97 preemphasis to mono 16 kHz speech, then 64,600-sample '
+        evidence['decision_method'] = ('The wav2vec2_xlsr_aasist3 architecture applies 0.97 preemphasis to mono 16 kHz speech, then 64,600-sample '
             'windows. Short windows are tile-repeated. The mean bona-fide logit is compared with the published '
             'cutoff -1.0625009: above the cutoff is Real; otherwise Fake. This application averages native '
             'logit margins across sampled windows. The model does not identify a causal pitch, breath or noise defect.'
@@ -103,7 +105,7 @@ def create_evidence(result, path, filename, predictor):
             'The configured speech classifier produces window evidence, aggregated with its configured decision rule. '
             'An attribution to a particular acoustic defect was not measured.')
     elif kind == 'video':
-        evidence['metrics'] = {'Sampled frames with detected faces':str(result.get('frames_analysed',0)),
+        evidence['metrics'] = {'Sampled frames assessed':str(result.get('frames_analysed',0)),
                                'Face crops assessed':str(result.get('num_faces_analysed',0))}
         import cv2
         capture = cv2.VideoCapture(str(path))
@@ -119,10 +121,10 @@ def create_evidence(result, path, filename, predictor):
         finally:
             capture.release()
         evidence['frame_indices'] = [s['frame_index'] for s in result.get('video_frame_scores',[])]
-        evidence['decision_method'] = ('GenD CLIP-L/14 uses the largest detected face in each sampled frame, '
+        evidence['decision_method'] = result.get('detector_method') or ('CLIP ViT-L/14 assesses up to 16 detected faces in each sampled frame, '
             'five-landmark alignment at scale 1.3, CLIP normalization, L2-normalized learned features and a '
-            'trained linear classifier. Class 0 is Real and class 1 is Fake. Mean class evidence across sampled '
-            'faces gives the binary decision at 0.5. The model does not separately measure lip-sync, eye motion '
+            'trained linear classifier. Class 0 is Real and class 1 is Fake. Maximum face evidence per frame, '
+            'then mean across sampled frames gives the binary decision at 0.5. The model does not separately measure lip-sync, eye motion '
             'or compression defects as explanations for this verdict.' if model.get('arch')=='gend_clip_l14' else
             'The configured face-video classifier aggregates learned evidence across sampled faces. '
             'No independently verified causal manipulation feature is reported.')
@@ -132,8 +134,8 @@ def create_evidence(result, path, filename, predictor):
         evidence['metrics'] = {'Decoded dimensions':f'{image.width} x {image.height} pixels',
                                'Face crops assessed':str(result.get('num_faces_analysed',0)),
                                'Decoded color mode':image.mode}
-        evidence['scope'] = 'Detected face regions in the decoded image; first frame/page for multi-frame formats.'
-        evidence['decision_method'] = ('EfficientNet-B4 scores normalized detected face crops with a learned '
+        evidence['scope'] = result.get('analysis_scope') or 'Detected face regions; first frame/page for multi-frame formats.'
+        evidence['decision_method'] = result.get('detector_method') or ('EfficientNet-B4 scores normalized detected face crops with a learned '
             'two-class classifier. Face predictions are aggregated using confidence-distance weights and '
             'compared with the application decision threshold. The score is not calibrated certainty. '
             'A localized editing boundary, generator identity or pixel-level causal artifact was not established.')
