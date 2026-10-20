@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import {
-  User,
   onAuthStateChanged,
   signInWithPopup,
   GoogleAuthProvider,
@@ -26,6 +25,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!auth) {
+      setUser({
+        id: "local-dev-user",
+        uid: "local-dev-user",
+        email: "local@dev.com",
+        displayName: "Local Developer"
+      });
+      setLoading(false);
+      return () => {};
+    }
+
     // Listen for auth changes
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
@@ -45,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
+      if (!auth) return;
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
     } catch (error) {
@@ -55,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithEmail = async (email: string, password?: string) => {
     try {
+      if (!auth) return;
       if (!password) throw new Error("Password is required for email login");
       await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
@@ -65,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUpWithEmail = async (email: string, password?: string) => {
     try {
+      if (!auth) return;
       if (!password) throw new Error("Password is required for email signup");
       await createUserWithEmailAndPassword(auth, email, password);
     } catch (error) {
@@ -75,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
+      if (!auth) return;
       await firebaseSignOut(auth);
     } catch (error) {
       console.error("Error signing out", error);

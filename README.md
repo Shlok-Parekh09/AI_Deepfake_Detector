@@ -1,5 +1,162 @@
 If you like this then please star the repo
 
+## Local project layout
+
+The original theme is preserved. The dashboard supports phone, tablet and desktop layouts with
+a mobile navigation drawer, touch-sized controls, native media playback and
+stacked result panels on narrow screens. Results use the backend's Real/Fake
+decision without displaying prediction scores or percentages. Optional preview graphics never
+block playback or model results.
+
+See [media support and detection limits](docs/MEDIA_SUPPORT.md) for decoder-based
+format handling, video score aggregation and audio coverage reporting.
+
+- `frontend/`: web interface; run `npm run dev` from the project root.
+- `backend/`: API, inference, model definitions, preprocessing, evaluation and training source.
+- `model_weights/audio/`, `model_weights/video/`, `model_weights/image/`: local detector weights, excluded from Git and deployment bundles.
+- `audio_kaggle_run/`: existing training notebooks, checkpoint archives, reports and continuation records; paths retained for reproducibility.
+- `kaggle_kernel/`: existing vision training and dataset-builder notebooks.
+- `docs/`: reports, training history and [local organization notes](docs/LOCAL_LAYOUT.md).
+- `tools/reports/`: optional report-generation utilities.
+- `archive/`: ignored recovery copies of obsolete helpers; not part of the application.
+- `assets/`: documentation images. Dependencies and virtual environments stay in their existing locations.
+
+Audio inference now uses the supplied `model.safetensors`, identified by SHA-256 as
+[NII MMS-1B AntiDeepfake](https://huggingface.co/nii-yamagishilab/mms-1b-anti-deepfake)
+(revision `e8574a77b9934a18383292678ac441cc495707b5`). The loader checks the file hash,
+maps all inference weights strictly, and converts the upstream Fake/Real output order
+to the application's Real/Fake order. Input is mono 16 kHz speech with published
+layer normalization; long recordings use bounded ten-second windows. Scores are
+model estimates, not calibrated certainty. The model is developed by NII Yamagishi
+Lab and licensed CC BY-NC-SA 4.0. The local `model_weights/audio/mms_1b.safetensors` is preferred;
+the hosted backend loads its copies from the private `Shlok0829/deepfake-models`
+repository. Audio, video and image artifacts live in separate `audio/`, `video/`
+and `image/` folders; weights are excluded from Git and from Space source uploads.
+Video detection uses `model_weights/video/genconvit_vae.pth`, matched to the GenConViT VAE
+architecture. It scores ImageNet-normalized RGB face crops at 224x224 across up
+to 15 uniformly sampled frames. Videos with no detected faces return an explicit
+error rather than a fabricated real/fake score. Image detection retains the
+existing image checkpoint. Architecture attribution is separate from artifact
+storage; file hashes are retained as integrity checks.
+Set `DEEPFAKE_AUDIO_CHECKPOINT` only to explicitly override this model.
+
+Audio training uses the document-defined registry below. See [the audio training
+protocol](backend/training/AUDIO_TRAINING.md) for the earlier experiments. A submitted
+notebook is not proof of completed training; use its admission, deduplication and
+epoch coverage reports. Candidates never automatically replace the deployed model.
+
+## Audio datasets and current training workflow
+
+**Current repair: `audio-native-waveform-15-fp32-v3`.** Adds the user-labeled
+real-only `shlokparekh08/voxceleb2-real-audio-500k` as the fifteenth audio source.
+The fourteen-source run stopped on nonfinite FP16 gradients. This repair uses
+FP32, stabilized variance pooling, finite-gradient checks and same-batch retries.
+At the user's request, this phase starts fresh, without prior weights or a checkpoint
+attachment; its optimizer, duplicate ledger and full-pass count start from zero.
+Indexing logs combined real/fake candidate totals; epoch reports contain trained
+counts and exclusions. It never advances coverage for a failed optimizer step.
+
+**Previous submission: `audio-native-waveform-14-v1`.** The standalone
+[training notebook](audio_kaggle_run/native_waveform14/training.ipynb) uses exactly
+the fourteen audio inputs in [the source registry](backend/training/kaggle_native_sources.json).
+It has no Hugging Face or Transformers code, tokens, package installation, model
+downloads or network access. A fresh PyTorch network learns raw waveform features
+alongside short-time Fourier spectral patterns. It does not reuse the old encoder.
+The GPU session has an eight-hour work budget and nine-hour timeout; twenty full
+epochs may require multiple resumed sessions. Automatic continuation is not yet
+configured for this new architecture.
+
+Metadata indexing precedes training and logs progress. Decoding rejects recordings
+under one second, silent/corrupt recordings, and encountered duplicate decoded
+waveforms. Exact duplicates share a deterministic recording holdout assignment;
+cross-label waveform conflicts halt the run rather than inventing labels. This is
+not a perceptual duplicate or verified speaker-disjoint split. Epoch coverage reports
+contain actual training counts by class/source and exclusions. Original audio is
+read-only; four-second training crops receive augmentation. Checkpoint ZIPs saved
+every five minutes and each epoch contain weights, optimizer, cursor, random state
+and matching duplicate ledger. Attach the prior output and set `RESUME_CHECKPOINT`
+to continue. Internal validation is not proof of unseen-generator accuracy; this
+candidate requires independent evaluation and inference integration before deployment.
+
+The following paragraphs describe earlier experiments:
+
+The replacement `audio-kaggle-only-v4` notebook uses
+[kaggle_only_v4.json](research/audio_datasets/kaggle_only_v4.json), attaches a
+Kaggle-hosted XLS-R Bengali ASR-adapted encoder, and disables remote Hub/model
+access with offline mode. Dataset indexing and audio loading do not initialize
+Hugging Face clients. Transformers' internal Hub package remains a library
+dependency; no Hugging Face token, datasets or model downloads are used at runtime.
+The faster indexer uses directory listings rather than individual file-size
+requests and prints progress every 15 seconds. This phase changes encoder
+initialization from the original multilingual base weights and needs evaluation.
+
+**17 October update:** the active direct-audio experiment uses
+[kaggle_direct_v3.json](research/audio_datasets/kaggle_direct_v3.json), the updated
+`datasets.docx`: 14 training sources and two reserved evaluation sources. Kathbath,
+IndicSynth, Svarah and Gary Stafford now use the user's Kaggle copies. Indian English
+Fake Audio and DEEP-VOICE are added; Multilingual TTS and LibriSpeech are absent from
+the updated document and are not attached to this phase. Audio is read directly from
+Kaggle inputs, including M4A through FFmpeg; no HF dataset token or Parquet extraction
+is needed. The table below records the preceding document version.
+
+Launch: `python -m backend.scripts.launch_document_multisource --registry research/audio_datasets/kaggle_direct_v3.json --kernel shlokparekh08/audio-kaggle-direct-v3 --submit`.
+
+The authoritative registry is [document_exact_v1.json](research/audio_datasets/document_exact_v1.json),
+transcribed from the user's `datasets.docx` on 16 October 2026, including the subsequently
+provided ASV part 3 link. Only these sources enter this experiment. Real is class **0**;
+fake/spoof is class **1**. Matching uses exact directory components, case-insensitively.
+
+| Source | Label and partition rule |
+| --- | --- |
+| [Kathbath](https://huggingface.co/datasets/ai4bharat/Kathbath) | Real; official training language shards; gated access requires an authorized HF_TOKEN. |
+| [IndicSynth](https://huggingface.co/datasets/vdivyasharma/IndicSynth) | Fake; official training shards; source/target speakers are grouped to prevent leakage. |
+| [Svarah](https://huggingface.co/datasets/ai4bharat/Svarah) | Real; reserved for evaluation, never used for training. |
+| [Multilingual TTS](https://huggingface.co/datasets/MohamedRashad/multilingual-tts) | Fake; documented training Parquet shards. |
+| [Gary Stafford](https://huggingface.co/datasets/garystafford/deepfake-audio-detection) | Mixed; original `real/` and `fake/` audio, including FLAC. Parquet copies are not also included. |
+| [MLAAD Kaggle copy](https://www.kaggle.com/datasets/trapka/mlaadthe-multi-languagaudioanti-spoofing-dataset) | Fake; audio within `fake/`, with its language subfolders. |
+| [Adarsh Singh](https://www.kaggle.com/datasets/adarshsingh0903/audio-deepfake-detection-dataset) | `real_samples` is real; the explicitly listed synthesis folders are fake. Unexpected folders block source admission. |
+| [Fake-or-Real](https://www.kaggle.com/datasets/mohammedabdeldayem/the-fake-or-real-dataset) | Mixed; `training/real` and `training/fake` only. Official test/validation remain reserved. |
+| [In-The-Wild evaluation copy](https://www.kaggle.com/datasets/abdallamohamed312/in-the-wild-audio-deepfake) | Reserved; must check overlap with the release-in-the-wild training copy before evaluation. |
+| [LibriSpeech](https://huggingface.co/datasets/openslr/librispeech_asr) | Real; `all` configuration, its three official training splits only. Do not also load duplicate `clean`/`other` configurations. |
+| [Release In The Wild](https://www.kaggle.com/datasets/bhaveshkumars/release-in-the-wild) | Mixed; only `train/real` and `train/fake`. |
+| [Human and AI-Generated Voices](https://www.kaggle.com/datasets/kambingbersayaphitam/speech-dataset-of-human-and-ai-generated-voices) | Mixed; exact `Real` and `Fake` folders. |
+| [ASV 2021 PA parts 1–2](https://www.kaggle.com/datasets/abdallamohamed312/asv-2021-pa-pt12-into-real-and-fake) | Mixed; `real`/`fake`. PA includes replay attacks; it is not exclusively TTS. |
+| [ASV 2021 PA part 3](https://www.kaggle.com/datasets/abdallamohamed312/asv-2021-pa-part-3) | Mixed; `real`/`fake`. These admitted files cannot also serve as an independent ASV PA test. |
+| [Gender Balanced Audio Deepfake](https://www.kaggle.com/datasets/triciaestella/gender-balanced-audio-deepfake-dataset) | Training audio only, `REAL`/`FAKE`; spectrogram PNGs and test folders excluded. |
+| [LJSpeech](https://www.kaggle.com/datasets/shlokparekh08/ljspeech) | Real; `wavs/`; its single speaker stays entirely in training. |
+
+Prepare the private notebook with `python -m backend.scripts.launch_document_multisource`;
+submit with `--submit`. Submission reads local credentials without putting them into
+notebook source. Enable the existing `HF_TOKEN` Kaggle Secret for gated sources.
+All bulk decoding and training run on Kaggle; the laptop packages code and reads reports.
+
+The revised direct-training phase indexes source labels, then decodes audio while
+loading training segments instead of scanning every waveform before the first batch.
+It rejects corrupt/silent clips and clips shorter than one second, and checks decoded
+waveform hashes against recordings already encountered. This is **not** a global
+pretraining duplicate audit: a conflicting copy found later can reveal contamination
+of an earlier segment. Independent evaluation requires a separate overlap audit.
+Original audio bytes are
+preserved; model-input decoding/resampling is separate. Matching speaker tuples alone
+does not establish duplicate audio. Lossy near-duplicate detection is not guaranteed.
+
+Unavailable sources are explicitly reported as pending and excluded as whole sources
+from a new, pinned admitted phase; they are never silently counted as trained. The
+user-authorized ready-source phase can proceed while blocked sources await a later phase.
+No file-count caps are imposed on the admitted training partitions. An epoch visits each
+eligible unique training recording once, using a random four-second crop (or the full
+shorter recording with padding); this does not process every second of long recordings.
+The target is **20 full corpus passes**, with class-weighted loss, completed-segment and
+epoch checkpoints, and per-epoch real/fake coverage. An eight-hour work budget leaves
+room before the nine-hour session timeout. Automatic successor scheduling for this new
+experiment is not yet verified; a saved checkpoint alone does not schedule another run.
+
+Inspect `direct_audio_index/index_report.json` and `large_training/progress.json`
+in Kaggle outputs. `direct_audio_verified/index_report.json` belongs to the older
+full-pre-scan mode and is not produced by the direct-training phase. Progress exists only after a
+training segment completes. No 80–90% or unseen-generator performance claim is made
+until independent, overlap-checked tests substantiate it.
+
 # 🛡️ Enterprise AI Deepfake Detector: The Comprehensive Guide
 
 This document serves as the complete, authoritative guide to the Enterprise AI Deepfake Detector. It covers the theoretical foundations of generative media, the mechanics of manipulation, the science of detection, and the exhaustive technical architecture of this multimodal software platform.
@@ -106,20 +263,30 @@ The batched tensors are passed through the EfficientNet-B4 backbone. The final c
 
 ## 5. Audio Detection Pipeline
 
-Audio manipulation operates in an entirely different domain than spatial imagery. To bridge this gap, our system converts audio into a visual format.
+The current training candidate combines an XLS-R speech waveform encoder with a
+learned spectral residual branch. It learns a binary decision from labeled recordings;
+a waveform plot alone cannot determine whether speech is real or synthetic.
 
 ### 5.1 The Mel-Spectrogram Transformation
-Raw audio waveforms (amplitudes over time) are incredibly dense and difficult for standard neural networks to parse effectively for deepfake signatures. 
-Instead, we apply a Short-Time Fourier Transform (STFT) to compute the frequencies present in the audio over time. This is then mapped to the Mel-scale (a logarithmic scale that mimics human auditory perception). 
+The speech encoder consumes mono 16 kHz model inputs. The spectral branch computes
+Fourier-derived features to complement speech representations. These features are
+learned evidence, not a universal rule that all generated speech has visible disruptions.
 The result is a **Log-Mel Spectrogram**: a 2D image where the X-axis is time, the Y-axis is frequency, and the color intensity represents amplitude.
 
 ### 5.2 ResNet-34 Acoustic Backbone
-By transforming the audio into a 2D image, we can leverage the immense power of Convolutional Neural Networks designed for computer vision. 
+The detector head is initialized fresh for this experiment, while the speech encoder
+starts from pretrained XLS-R weights. The last encoder layers and detector are trained.
 We utilize a **ResNet-34** architecture. ResNet (Residual Network) introduced skip connections, allowing gradients to flow backwards through deep layers without vanishing. 
-Because our spectrograms are single-channel (grayscale), the first convolutional layer (`conv1`) of the pre-trained ResNet-34 is dynamically modified from accepting 3 channels (RGB) to 1 channel.
+Older spectrogram CNN checkpoints remain a separate legacy architecture.
 
 ### 5.3 Acoustic Inference
-The ResNet-34 scans the spectrogram for the blocky artifacts left by neural vocoders (like HiFi-GAN) and outputs a probability score indicating whether the speech is authentic human vocalization or AI-cloned synthesis.
+For this new candidate, `p_fake = sigmoid((logit_fake - logit_real) / temperature)`
+per scored window, then maximum window probability per recording. Calibration and
+evaluation use the same aggregation. The new candidate's decision threshold is 50%.
+The API returns Real/Fake, integer `p_fake_int`, and integer model surety (`p_fake`
+for Fake, `1-p_fake` for Real). Surety is a model estimate, not guaranteed correctness.
+Existing deployed checkpoints retain their saved aggregation and threshold until an
+evaluated candidate is explicitly promoted.
 
 ---
 
@@ -139,7 +306,12 @@ The system is deeply robust. If an image is uploaded, the audio pipeline safely 
 ### 6.3 Real-Time Web Audio API Fourier Visualization
 To provide interpretability into the audio detection process, the frontend UI features a live **Fourier Spectrogram**. 
 Rather than displaying a simulated animation, the React dashboard connects directly to the media source (`<video>` or `<audio>` tag) using the browser's native `window.AudioContext` and an `AnalyserNode`. 
-As the media plays, a `requestAnimationFrame` loop rapidly reads `getByteFrequencyData()`, mapping the true frequency bins of the playing audio into a live 64-band spectrogram. This allows forensic analysts to visually identify high-frequency dropouts or phase anomalies in real-time as they watch the video.
+As the media plays, a `requestAnimationFrame` loop rapidly reads `getByteFrequencyData()`, mapping the true frequency bins of the playing audio into a live 64-band spectrogram.
+
+### 6.4 Audio Waveform Display
+The audio results view displays the recording's waveform and integer model scores.
+Audio inference sets `explainability_heatmap` to null. Neither a waveform nor a
+spectrogram is, by itself, an explanation or proof of the model's Real/Fake prediction.
 
 ---
 

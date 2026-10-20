@@ -1,0 +1,15 @@
+# Local audio inference and API; model training remains Kaggle-only.
+-r requirements-audio.txt
+fastapi
+uvicorn
+python-multipart
+httpx
+matplotlib
+# Shared image/video inference runtime. Install torchvision from the same index as torch.
+torchvision>=0.29,<0.30
+timm==1.0.30
+opencv-python-headless==5.0.0.93
+facenet-pytorch==2.5.3
+imageio-ffmpeg==0.6.0
+pillow-heif>=0.18
+rawpy>=0.24

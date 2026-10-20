@@ -110,32 +110,27 @@ class URLDownloader:
         return output_path
 
     def download_youtube(self, url: str, output_path: str) -> str:
-        """Download from YouTube using ``yt-dlp`` (must be installed)."""
+        """Download from YouTube using ``pytubefix`` to bypass bot blocks."""
         try:
-            import subprocess
-            import sys
+            from pytubefix import YouTube
+            from pytubefix.cli import on_progress
 
-            cmd = [
-                sys.executable, "-m", "yt_dlp",
-                "-f", "best[ext=mp4]",
-                "--no-warnings",
-                "--geo-bypass",
-                "--extractor-args", "youtube:player_client=android",
-                "-o", output_path,
-                url,
-            ]
-            logger.info("Running yt-dlp for %s", url)
-            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30)
-            if result.returncode != 0:
-                logger.error(f"yt-dlp failed: {result.stderr}")
-                raise RuntimeError(f"yt-dlp failed to download: {result.stderr}")
+            logger.info("Running pytubefix for %s", url)
+            yt = YouTube(url, use_po_token=True)
+            stream = yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first()
+            if not stream:
+                # fallback to any mp4
+                stream = yt.streams.filter(file_extension='mp4').first()
+
+            if not stream:
+                raise RuntimeError("No suitable MP4 stream found for this YouTube video.")
+
+            stream.download(output_path=os.path.dirname(output_path), filename=os.path.basename(output_path))
+            logger.info("pytubefix download complete: %s", output_path)
             return output_path
-        except subprocess.TimeoutExpired:
-            raise RuntimeError("YouTube extraction timed out (likely due to IP block by YouTube on data center).")
         except Exception as e:
-            raise RuntimeError(
-                f"Failed to download YouTube video: {e}"
-            )
+            logger.error(f"pytubefix failed: {e}")
+            raise RuntimeError(f"YouTube download failed (possibly blocked or age-restricted): {e}")
 
     def validate_url(self, url: str) -> bool:
         """Return ``True`` if *url* looks valid and is reachable (HEAD request)."""

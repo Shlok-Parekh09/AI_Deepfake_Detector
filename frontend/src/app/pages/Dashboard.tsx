@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowRight, Upload, X, Monitor, Moon, Sun, Paperclip, ChevronLeft, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { Menu, ArrowRight, Upload, X, Monitor, Moon, Sun, Paperclip, ChevronLeft, ShieldAlert, ShieldCheck } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo';
+import { AudioWaveform } from '../components/visualizers/AudioWaveform';
 
 // Visualizers
 import { ScanningView } from '../components/visualizers/ScanningView';
@@ -8,7 +9,8 @@ import { VideoVisualizer } from '../components/visualizers/VideoVisualizer';
 import { AudioVisualizer } from '../components/visualizers/AudioVisualizer';
 import { ImageVisualizer } from '../components/visualizers/ImageVisualizer';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:8000');
+// Use the hosted backend consistently in local development and deployed builds.
+const API_BASE_URL = 'https://shlok0829-deepfake.hf.space';
 
 interface ScanHistory {
   id: string;
@@ -23,27 +25,36 @@ type Theme = 'system' | 'dark' | 'light';
 type ScanState = 'idle' | 'scanning' | 'results';
 
 export default function Dashboard() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'recent' | 'top'>('recent');
   const [urlInput, setUrlInput] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [scanHistory, setScanHistory] = useState<ScanHistory[]>([]);
-  
+
   // Scanning & Results State
   const [scanState, setScanState] = useState<ScanState>('idle');
   const [scanProgress, setScanProgress] = useState(0);
   const [scanStatusText, setScanStatusText] = useState('Initiating Scan...');
   const [currentScanType, setCurrentScanType] = useState<'video' | 'audio' | 'image'>('video');
   const [currentMediaUrl, setCurrentMediaUrl] = useState<string>('');
-  const [currentResultProbability, setCurrentResultProbability] = useState(0);
+  const [currentIsFake, setCurrentIsFake] = useState(false);
+  const [currentAudioNeedsReview, setCurrentAudioNeedsReview] = useState(false);
   const [currentAiSummary, setCurrentAiSummary] = useState<string>('');
+  const [currentDetectedTool, setCurrentDetectedTool] = useState<string>('');
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [currentTheme, setCurrentTheme] = useState<Theme>('dark');
+  useEffect(() => {
+    const preference = window.matchMedia('(prefers-color-scheme: dark)');
+    const applyTheme = () => document.documentElement.classList.toggle('dark', currentTheme === 'dark' || (currentTheme === 'system' && preference.matches));
+    applyTheme();
+    preference.addEventListener('change', applyTheme);
+    return () => preference.removeEventListener('change', applyTheme);
+  }, [currentTheme]);
   const themeMenuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoElementRef = useRef<HTMLVideoElement>(null);
-  const [currentRawScores, setCurrentRawScores] = useState<any>({});
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -54,6 +65,13 @@ export default function Dashboard() {
     if (showThemeMenu) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showThemeMenu]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setMobileMenuOpen(false); };
+    document.addEventListener('keydown', close);
+    return () => document.removeEventListener('keydown', close);
+  }, [mobileMenuOpen]);
 
   // Clean up object URLs to avoid memory leaks
   useEffect(() => {
@@ -89,12 +107,12 @@ export default function Dashboard() {
     // Determine type and set media URL
     const type = determineMediaType(selectedFile, urlInput);
     setCurrentScanType(type);
-    
+
     if (selectedFile) {
       setCurrentMediaUrl(URL.createObjectURL(selectedFile));
     } else {
       // Proxy the URL through our backend to avoid CORS and ensure it loads properly
-      setCurrentMediaUrl(`${API_BASE_URL}/api/v1/proxy-media?url=${encodeURIComponent(urlInput)}`); 
+      setCurrentMediaUrl(`${API_BASE_URL}/api/v1/proxy-media?url=${encodeURIComponent(urlInput)}`);
     }
 
     setScanState('scanning');
@@ -141,24 +159,31 @@ export default function Dashboard() {
         }
       }
 
+      if (resultData.error || typeof resultData.fake_probability !== 'number' ||
+          !Number.isFinite(resultData.fake_probability) || resultData.fake_probability < 0 ||
+          resultData.fake_probability > 1 || typeof resultData.is_fake !== 'boolean') {
+        throw new Error('The detector returned no valid prediction. Please retry the analysis.');
+      }
       window.clearInterval(interval);
       setScanProgress(100);
       setScanStatusText('Finalizing report...');
 
       setTimeout(() => {
         // The backend returns a probability float (0.0 to 1.0)
-        const prob = Math.round((resultData.fake_probability || 0) * 100);
-        setCurrentResultProbability(prob);
-        setCurrentAiSummary(resultData.ai_summary || '');
-        setCurrentRawScores(resultData.raw_scores || {});
-        
+        const prob = Math.round(resultData.fake_probability * 100);
+        setCurrentIsFake(Boolean(resultData.is_fake));
+        if (['audio', 'video', 'image'].includes(resultData.file_type)) setCurrentScanType(resultData.file_type);
+        setCurrentAudioNeedsReview(Boolean(resultData.review_required));
+        setCurrentAiSummary(`Model prediction: ${resultData.is_fake ? 'Fake' : 'Real'}. This is not proof of authenticity.`);
+        setCurrentDetectedTool(resultData.detected_tool || '');
+
         const newScan: ScanHistory = {
           id: Date.now().toString(),
           title: selectedFile ? selectedFile.name : urlInput,
-          type: type,
+          type: ['audio', 'video', 'image'].includes(resultData.file_type) ? resultData.file_type : type,
           probability: prob,
           time: 'Just now',
-          status: prob > 70 ? 'high' : prob > 40 ? 'medium' : 'low',
+          status: resultData.is_fake ? 'high' : 'low',
         };
         setScanHistory(prev => [newScan, ...prev]);
         setScanState('results');
@@ -171,12 +196,6 @@ export default function Dashboard() {
       // Revert after error
       setTimeout(() => setScanState('idle'), 5000);
     }
-  };
-
-  const getStatusColor = (probability: number) => {
-    if (probability > 70) return 'bg-red-500';
-    if (probability > 40) return 'bg-orange-500';
-    return 'bg-yellow-500';
   };
 
   const handleThemeChange = (theme: Theme) => {
@@ -194,9 +213,11 @@ export default function Dashboard() {
 
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#08080e] text-gray-900 dark:text-white flex transition-colors duration-200">
+    <div className="min-h-dvh lg:h-dvh bg-white dark:bg-[#08080e] text-gray-900 dark:text-white flex flex-col lg:flex-row lg:overflow-hidden transition-colors duration-200">
+      {mobileMenuOpen && <button aria-label="Close navigation overlay" onClick={() => setMobileMenuOpen(false)} className="fixed inset-0 z-40 bg-black/60 lg:hidden" />}
       {/* Sidebar */}
-      <div className="w-56 bg-gray-50 dark:bg-[#0e0e18] border-r border-gray-200 dark:border-gray-800/50 flex flex-col transition-colors duration-200 flex-shrink-0 z-20">
+      <div id="dashboard-navigation" className={`${mobileMenuOpen ? 'fixed inset-y-0 left-0 flex' : 'hidden'} lg:relative lg:flex w-56 max-w-[85vw] bg-gray-50 dark:bg-[#0e0e18] border-r border-gray-200 dark:border-gray-800/50 flex flex-col transition-colors duration-200 flex-shrink-0 z-50`}>
+        <button aria-label="Close navigation" onClick={() => setMobileMenuOpen(false)} className="min-h-11 px-5 text-right text-gray-500 lg:hidden">Close ×</button>
         {/* Logo */}
         <div className="p-5 border-b border-gray-200 dark:border-gray-800/50">
           <div className="flex items-center gap-2">
@@ -210,8 +231,8 @@ export default function Dashboard() {
 
         {/* Scan Button */}
         <div className="p-3">
-          <button 
-            onClick={() => { setScanState('idle'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          <button
+            onClick={() => { setMobileMenuOpen(false); setScanState('idle'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
             className="w-full bg-white dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 text-gray-900 dark:text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium border border-gray-200 dark:border-gray-700/50"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -254,7 +275,7 @@ export default function Dashboard() {
         {/* Bottom Menu */}
         <div className="p-3 border-t border-gray-200 dark:border-gray-800/50 space-y-0.5">
           <div className="relative" ref={themeMenuRef}>
-            <button 
+            <button
               onClick={() => setShowThemeMenu(!showThemeMenu)}
               className="w-full text-left text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-xs py-2 px-3 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors flex items-center gap-2"
             >
@@ -276,12 +297,13 @@ export default function Dashboard() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 relative">
-        
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 relative">
+        <header className="flex items-center gap-3 border-b border-gray-200 dark:border-gray-800/50 bg-white dark:bg-[#0e0e18] px-3 py-2 lg:hidden"><button aria-label="Open navigation" aria-expanded={mobileMenuOpen} aria-controls="dashboard-navigation" onClick={() => setMobileMenuOpen(true)} className="flex min-h-11 min-w-11 items-center justify-center text-gray-500 dark:text-gray-300"><Menu size={22} /></button><BrandLogo size={25} /><span className="text-sm font-semibold">SynPhi</span></header>
+
         {scanState === 'idle' && (
           <div className="flex-1 overflow-y-auto">
             {/* Header */}
-            <div className="text-center py-12 border-b border-gray-200 dark:border-gray-800/50 bg-white dark:bg-[#08080e] transition-colors duration-200">
+            <div className="text-center px-4 py-8 sm:py-12 border-b border-gray-200 dark:border-gray-800/50 bg-white dark:bg-[#08080e] transition-colors duration-200">
               <div className="flex items-center justify-center gap-2.5 mb-3">
                 <BrandLogo size={48} />
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">SynPhi</h1>
@@ -291,7 +313,7 @@ export default function Dashboard() {
               </p>
             </div>
 
-            <div className="p-8">
+            <div className="p-4 sm:p-8">
               <div className="max-w-3xl mx-auto">
                 {/* Input Bar */}
                 <div className="mb-4">
@@ -300,13 +322,13 @@ export default function Dashboard() {
                       ref={fileInputRef}
                       type="file"
                       onChange={handleFileChange}
-                      accept="video/*,image/*,audio/*"
+                      accept="*/*"
                       className="hidden"
                       id="file-attach"
                     />
-                    <div className="flex-1 relative flex items-center bg-white dark:bg-[#0e0e18] border border-gray-300 dark:border-gray-800 rounded-xl overflow-hidden focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all shadow-sm">
+                    <div className="min-w-0 flex-1 relative flex flex-wrap sm:flex-nowrap items-center bg-white dark:bg-[#0e0e18] border border-gray-300 dark:border-gray-800 rounded-xl overflow-hidden focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all shadow-sm">
                       {selectedFile ? (
-                        <div className="flex-1 flex items-center gap-3 px-5 py-4">
+                        <div className="min-w-0 flex-1 flex items-center gap-2 px-3 sm:px-5 py-4">
                           <Paperclip size={18} className="text-indigo-400 flex-shrink-0" />
                           <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{selectedFile.name}</span>
                           <span className="text-xs text-gray-400 flex-shrink-0">({(selectedFile.size / 1024 / 1024).toFixed(1)} MB)</span>
@@ -319,7 +341,7 @@ export default function Dashboard() {
                           onChange={(e) => setUrlInput(e.target.value)}
                           onKeyDown={(e) => { if (e.key === 'Enter') handleAnalyze(); }}
                           placeholder="Paste URL or upload a file to scan"
-                          className="flex-1 bg-transparent px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none text-sm"
+                          className="min-w-0 flex-1 bg-transparent px-3 sm:px-5 py-4 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none text-base sm:text-sm"
                         />
                       )}
                       {!selectedFile && (
@@ -328,7 +350,7 @@ export default function Dashboard() {
                       <button
                         onClick={handleAnalyze}
                         disabled={!urlInput && !selectedFile}
-                        className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-800 disabled:text-gray-500 text-white px-6 py-4 transition-colors flex items-center gap-2 text-sm font-semibold flex-shrink-0"
+                        className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-800 disabled:text-gray-500 text-white w-full sm:w-auto justify-center px-4 sm:px-6 py-4 transition-colors flex items-center gap-2 text-sm font-semibold flex-shrink-0"
                       >
                         Analyse <ArrowRight size={16} />
                       </button>
@@ -337,7 +359,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className="flex items-center gap-3 mb-10 text-xs text-gray-400 dark:text-gray-500 px-2">
-                  <span>Supports large videos (up to 500MB) and high-res images</span>
+                  <span>Supports media files up to 100 MB</span>
                 </div>
 
                 {/* Tabs & Table */}
@@ -346,7 +368,7 @@ export default function Dashboard() {
                 </div>
 
                 {scanHistory.length === 0 ? (
-                  <div className="bg-white dark:bg-[#0e0e18] rounded-xl p-16 text-center border border-gray-200 dark:border-gray-800/50">
+                  <div className="bg-white dark:bg-[#0e0e18] rounded-xl p-8 sm:p-16 text-center border border-gray-200 dark:border-gray-800/50">
                     <div className="w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center mx-auto mb-4">
                       <ShieldCheck size={32} className="text-indigo-400" />
                     </div>
@@ -358,14 +380,9 @@ export default function Dashboard() {
                     {/* Simplified table rendering for brevity */}
                     <div className="divide-y divide-gray-100 dark:divide-gray-800/50">
                       {scanHistory.map((scan) => (
-                        <div key={scan.id} className="grid grid-cols-12 gap-4 px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                        <div key={scan.id} className="grid grid-cols-12 gap-2 sm:gap-4 px-3 sm:px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
                           <div className="col-span-7 text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{scan.title}</div>
-                          <div className="col-span-3 flex items-center gap-3">
-                            <div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 max-w-[100px]">
-                              <div className={`h-1.5 rounded-full ${getStatusColor(scan.probability)}`} style={{ width: `${scan.probability}%` }}></div>
-                            </div>
-                            <span className="text-xs text-gray-500">{scan.probability}%</span>
-                          </div>
+                          <div className="col-span-3 text-xs text-gray-500">{scan.status === 'high' ? 'Fake' : 'Real'}</div>
                           <div className="col-span-2 text-xs text-gray-400 text-right">{scan.time}</div>
                         </div>
                       ))}
@@ -379,9 +396,9 @@ export default function Dashboard() {
 
         {/* SCANNING STATE */}
         {scanState === 'scanning' && (
-          <div className="flex-1 flex flex-col p-8 items-center justify-center bg-[#08080e]">
+          <div className="flex-1 flex flex-col p-4 sm:p-8 items-center justify-center bg-[#08080e]">
             {/* Top Toast */}
-            <div className="absolute top-6 right-6 bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 rounded-xl flex items-start gap-3 shadow-2xl animate-[slideIn_0.3s_ease-out]">
+            <div className="hidden sm:flex absolute top-6 right-6 bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 rounded-xl flex items-start gap-3 shadow-2xl animate-[slideIn_0.3s_ease-out]">
               <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
               </div>
@@ -394,12 +411,12 @@ export default function Dashboard() {
 
             <div className="w-full max-w-4xl">
               <div className="flex items-center gap-3 mb-6 text-gray-400">
-                <span className="font-mono text-sm uppercase tracking-wider">{selectedFile ? selectedFile.name : urlInput}</span>
+                <span className="min-w-0 truncate font-mono text-xs sm:text-sm uppercase tracking-wider">{selectedFile ? selectedFile.name : urlInput}</span>
               </div>
-              
-              <ScanningView 
-                progress={scanProgress} 
-                statusText={scanStatusText} 
+
+              <ScanningView
+                progress={scanProgress}
+                statusText={scanStatusText}
                 mediaUrl={currentMediaUrl}
                 mediaType={currentScanType}
               />
@@ -415,80 +432,37 @@ export default function Dashboard() {
               <button onClick={() => setScanState('idle')} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors">
                 <ChevronLeft size={20} />
               </button>
-              <div>
-                <h2 className="text-lg font-bold text-white truncate max-w-md">{selectedFile ? selectedFile.name : urlInput}</h2>
+              <div className="min-w-0">
+                <h2 className="text-base sm:text-lg font-bold text-white truncate max-w-md">{selectedFile ? selectedFile.name : urlInput}</h2>
                 <p className="text-xs text-gray-400 font-mono uppercase tracking-wider">Analysis Complete · {currentScanType} · {scanHistory[0]?.time}</p>
               </div>
             </div>
 
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+            <div className="flex-1 min-h-0 flex flex-col xl:flex-row xl:overflow-hidden">
               {/* Left Panel: Summary Classification */}
-              <div className="w-full md:w-80 border-r border-gray-800/50 bg-[#0a0a14] p-6 overflow-y-auto flex-shrink-0">
+              <div className="w-full xl:w-80 border-b xl:border-b-0 xl:border-r border-gray-800/50 bg-[#0a0a14] p-4 sm:p-6 xl:overflow-y-auto flex-shrink-0">
                 <h3 className="text-sm font-bold text-white mb-6 uppercase tracking-wider">Classification</h3>
-                
-                {/* Main Verdict Card */}
-                <div className={`p-5 rounded-2xl border mb-6 ${currentResultProbability > 70 ? 'bg-red-500/10 border-red-500/30' : currentResultProbability > 40 ? 'bg-orange-500/10 border-orange-500/30' : 'bg-emerald-500/10 border-emerald-500/30'}`}>
-                  <div className="flex items-center gap-2 mb-3">
-                    {currentResultProbability > 70 ? <ShieldAlert className="text-red-400" size={20} /> : <ShieldCheck className="text-emerald-400" size={20} />}
-                    <span className={`text-xs font-bold uppercase tracking-wider ${currentResultProbability > 70 ? 'text-red-400' : currentResultProbability > 40 ? 'text-orange-400' : 'text-emerald-400'}`}>
-                      {currentResultProbability > 70 ? 'AI-Generated' : currentResultProbability > 40 ? 'Suspicious' : 'Authentic'}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-end gap-1">
-                    <span className="text-4xl font-extrabold text-white">
-                      {currentResultProbability <= 40 ? 100 - currentResultProbability : currentResultProbability}
-                    </span>
-                    <span className="text-lg text-gray-400 mb-1">%</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-2 font-mono">
-                    {currentResultProbability <= 40 ? 'AUTHENTICITY SCORE' : 'AI CONFIDENCE SCORE'}
-                  </p>
-                </div>
 
-                {/* Additional details based on type */}
-                {currentScanType === 'video' && (
-                  <div className="space-y-4">
-                    <div className="bg-[#12121f] rounded-xl p-4 border border-gray-800">
-                      <p className="text-[10px] text-gray-500 font-mono mb-2">ANOMALY BREAKDOWN</p>
-                      <div className="space-y-3">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-400">Vision Analysis</span>
-                          <span className={`font-semibold ${currentRawScores?.vision_model > 0.7 ? 'text-red-400' : currentRawScores?.vision_model > 0.4 ? 'text-orange-400' : 'text-emerald-400'}`}>
-                            {currentRawScores?.vision_model !== undefined ? `${(currentRawScores.vision_model * 100).toFixed(1)}% Fake` : 'Processing...'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-400">Audio Analysis</span>
-                          <span className={`font-semibold ${currentRawScores?.audio_cnn > 0.7 ? 'text-red-400' : currentRawScores?.audio_cnn > 0.4 ? 'text-orange-400' : 'text-emerald-400'}`}>
-                            {currentRawScores?.audio_cnn !== undefined ? `${(currentRawScores.audio_cnn * 100).toFixed(1)}% Fake` : 'N/A'}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-400">Lip-Sync Match</span>
-                          <span className={`font-semibold ${currentResultProbability > 70 ? 'text-red-400' : currentResultProbability > 40 ? 'text-orange-400' : 'text-emerald-400'}`}>
-                            {currentResultProbability > 70 ? 'Failed' : currentResultProbability > 40 ? 'Suspicious' : 'Accurate'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {/* Binary model prediction; no confidence score is displayed. */}
+                <div className={`p-5 rounded-2xl border mb-6 ${currentIsFake ? 'bg-red-500/10 border-red-500/30' : 'bg-emerald-500/10 border-emerald-500/30'}`}>
+                  <div className="flex items-center gap-3">{currentIsFake ? <ShieldAlert className="text-red-400" size={22} /> : <ShieldCheck className="text-emerald-400" size={22} />}<p className="text-xl font-bold text-white">{currentIsFake ? 'Fake' : 'Real'}</p></div>
+                  <p className="mt-3 text-xs leading-6 text-gray-400">Model prediction. This result is not proof of authenticity.</p>
+                </div>
                 {currentScanType === 'audio' && (
                   <div className="space-y-4">
                     <div className="bg-[#12121f] rounded-xl p-4 border border-gray-800">
                       <p className="text-[10px] text-gray-500 font-mono mb-2">VOICE FORENSICS</p>
                       <div className="space-y-3">
                         <div className="flex justify-between text-xs">
-                          <span className="text-gray-400">Model Match</span>
+                          <span className="text-gray-400">Detector</span>
                           <span className="text-white font-medium">
-                            {currentResultProbability > 70 ? 'ElevenLabs' : currentResultProbability > 40 ? 'Unknown Synth' : 'No Match'}
+                            Multilingual audio model
                           </span>
                         </div>
                         <div className="flex justify-between text-xs">
-                          <span className="text-gray-400">Frequency Gaps</span>
-                          <span className={`font-semibold ${currentResultProbability > 40 ? 'text-red-400' : 'text-emerald-400'}`}>
-                            {currentResultProbability > 40 ? 'Detected' : 'Clear'}
+                          <span className="text-gray-400">Assessment</span>
+                          <span className={`font-semibold ${currentAudioNeedsReview ? 'text-orange-400' : currentIsFake ? 'text-red-400' : 'text-slate-300'}`}>
+                            {currentIsFake ? 'Fake' : 'Real'}
                           </span>
                         </div>
                       </div>
@@ -498,25 +472,34 @@ export default function Dashboard() {
               </div>
 
               {/* Main Visualizer Area */}
-              <div className="flex-1 p-6 md:p-8 bg-black/20 overflow-y-auto flex items-center justify-center">
+              <div className={`min-w-0 flex-1 p-4 sm:p-6 xl:p-8 bg-black/20 xl:overflow-y-auto flex justify-center ${currentScanType === 'audio' ? 'items-start' : 'items-center'}`}>
                 <div className="w-full max-w-5xl">
                   {currentScanType === 'video' && (
                     <div className="flex flex-col gap-6">
-                      <VideoVisualizer 
-                        mediaUrl={currentMediaUrl || '/placeholder.mp4'} 
-                        onPlayStateChange={setIsVideoPlaying} 
+                      <VideoVisualizer
+                        mediaUrl={currentMediaUrl || '/placeholder.mp4'}
+                        onPlayStateChange={setIsVideoPlaying}
                         externalVideoRef={videoElementRef}
                       />
-                      <AudioVisualizer 
-                        mediaUrl={currentMediaUrl || '/placeholder.mp4'} 
+                      <AudioVisualizer
+                        mediaUrl={currentMediaUrl || '/placeholder.mp4'}
                         isExternalPlaying={isVideoPlaying}
                         hideAudioElement={true}
                         externalMediaRef={videoElementRef}
                       />
                     </div>
                   )}
-                  {currentScanType === 'audio' && <AudioVisualizer mediaUrl={currentMediaUrl || '/placeholder.mp3'} />}
-                  {currentScanType === 'image' && <ImageVisualizer mediaUrl={currentMediaUrl || '/placeholder.jpg'} probability={currentResultProbability} aiSummary={currentAiSummary} />}
+                  {currentScanType === 'audio' && (
+                    <div className="space-y-4">
+                      <audio controls src={currentMediaUrl || undefined} className="w-full" />
+                      <AudioWaveform mediaUrl={currentMediaUrl} />
+                      {currentAudioNeedsReview && <p className="text-sm text-orange-300">Review recommended.</p>}
+                      <p className="text-sm text-gray-300">Model prediction: {currentIsFake ? 'Fake' : 'Real'}. This prediction is not proof of authenticity.</p>
+                    </div>
+                  )}
+                  {currentScanType === 'image' && <ImageVisualizer mediaUrl={currentMediaUrl || '/placeholder.jpg'} aiSummary={currentAiSummary} detectedTool={currentDetectedTool} />}
+
+
                 </div>
               </div>
             </div>

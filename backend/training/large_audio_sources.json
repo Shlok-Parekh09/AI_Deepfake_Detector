@@ -1,0 +1,14 @@
+{
+  "target_train_per_class": 700000,
+  "heldout_per_class_per_split": 5000,
+  "train_per_class_per_shard": 5000,
+  "seed": 42,
+  "heldout_generators": ["freevc24"],
+  "sources": [
+    {"id": "ai4bharat/IndicVoices", "kind": "indicvoices", "label": 0, "audio_field": "audio_filepath", "train_path": "*/train-*.parquet", "license": "CC-BY-4.0"},
+    {"id": "MLCommons/peoples_speech", "kind": "peoples", "label": 0, "audio_field": "audio", "train_path": "clean/train-*.parquet", "license": "CC-BY-4.0"},
+    {"id": "vdivyasharma/IndicSynth", "kind": "indicsynth", "label": 1, "audio_field": "audio", "train_path": "*/train-*.parquet", "license": "CC-BY-NC-4.0"},
+    {"id": "ajaykarthick/codecfake-audio", "kind": "codecfake", "audio_field": "audio", "train_path": "data/*.parquet", "license": "CC-BY-NC-ND-4.0"},
+    {"id": "Bisher/ASVspoof_2019_LA", "kind": "asvspoof", "audio_field": "audio", "train_path": "data/train-*.parquet", "license": "See original ASVspoof dataset terms"}
+  ]
+}

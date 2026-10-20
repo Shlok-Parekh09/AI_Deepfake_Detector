@@ -41,6 +41,7 @@ export function VideoVisualizer({ mediaUrl, onPlayStateChange, externalVideoRef 
         setIsLoaded(true);
       } catch (error) {
         console.error("Failed to load FaceLandmarker:", error);
+        if (active) setIsLoaded(true);
       }
     }
 
@@ -137,7 +138,7 @@ export function VideoVisualizer({ mediaUrl, onPlayStateChange, externalVideoRef 
       animationFrameId = requestAnimationFrame(renderLoop);
     };
 
-    if (isLoaded) {
+    if (isLoaded && faceLandmarker) {
       animationFrameId = requestAnimationFrame(renderLoop);
     }
 
@@ -162,6 +163,7 @@ export function VideoVisualizer({ mediaUrl, onPlayStateChange, externalVideoRef 
         className="absolute w-full h-full object-contain"
         muted={false}
         loop
+        controls
         playsInline
         crossOrigin={mediaUrl.startsWith('blob:') ? undefined : "anonymous"}
         onPlay={() => onPlayStateChange?.(true)}

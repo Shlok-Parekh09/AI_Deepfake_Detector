@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "repository": "Shlok0829/universal-audio-deepfake-master",
+  "sources": [
+    {
+      "id": "ylacombe/english_dialects",
+      "revision": "ed3d69abb765fd304ccdcc646ec6ca3c49740d15",
+      "label": 0,
+      "audio_field": "audio",
+      "patterns": [
+        "*/train-*.parquet"
+      ],
+      "language": "english",
+      "language_field": null
+    },
+    {
+      "id": "MohamedRashad/multilingual-tts",
+      "revision": "14729fbf35870fe21a8ae76d6d37e36dff0c08f8",
+      "label": 1,
+      "audio_field": "audio",
+      "patterns": [
+        "data/train-*.parquet"
+      ],
+      "language": null,
+      "language_field": "languages"
+    },
+    {
+      "id": "ai4bharat/Kathbath",
+      "revision": "5b9e92849222026d9141acba4e8434fe816396bf",
+      "label": 0,
+      "audio_field": "audio_filepath",
+      "patterns": [
+        "*/*.parquet"
+      ],
+      "language": null,
+      "language_field": "lang"
+    },
+    {
+      "id": "vdivyasharma/IndicSynth",
+      "revision": "c0a10386b723717aff682f757bd67f72983f269f",
+      "label": 1,
+      "audio_field": "audio",
+      "patterns": [
+        "*/*.parquet"
+      ],
+      "language": null,
+      "language_field": null
+    },
+    {
+      "id": "ai4bharat/IndicVoices",
+      "revision": "c96f9088f138cf89d419da7e8e643e1f05c00a87",
+      "label": 0,
+      "audio_field": "audio_filepath",
+      "patterns": [
+        "*/*.parquet"
+      ],
+      "language": null,
+      "language_field": "lang"
+    },
+    {
+      "id": "ai4bharat/Svarah",
+      "revision": "ebbf7777fe771490696a3f7b007097606fa8c924",
+      "label": 0,
+      "audio_field": "audio_filepath",
+      "patterns": [
+        "data/*.parquet"
+      ],
+      "language": "english",
+      "language_field": null
+    },
+    {
+      "id": "MushanW/GLOBE_V2",
+      "revision": "ff1d667d02492b92f6c019c2c35b2db04e61a077",
+      "label": 0,
+      "audio_field": "audio",
+      "patterns": [
+        "data/*.parquet"
+      ],
+      "language": "english",
+      "language_field": null
+    },
+    {
+      "id": "MLCommons/peoples_speech",
+      "revision": "f10597c5d3d3a63f8b6827701297c3afdf178272",
+      "label": 0,
+      "audio_field": "audio",
+      "patterns": [
+        "clean/*.parquet"
+      ],
+      "language": "english",
+      "language_field": null
+    }
+  ],
+  "training_ready": false
+}

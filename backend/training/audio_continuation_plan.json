@@ -1,0 +1,19 @@
+{
+  "version": 5,
+  "per_class_per_segment": 5000,
+  "corpus_passes": 20,
+  "validation_per_class": 200,
+  "lr": 5e-06,
+  "target_train_per_class": null,
+  "automatic_model_promotion": false,
+  "source_admission": "Full eligible training coverage of the five supported source configurations. Other researched repositories need explicit adapters and provenance checks before new phases.",
+  "completion": "Twenty complete passes over every eligible deduplicated training reference from supported pinned source configurations, followed by held-out evaluation. No early stopping before the requested coverage.",
+  "coverage_mode": "all_eligible_training",
+  "volume_reporting": "Unique source audio bytes and full-recording duration are reported separately from four-second crops actually presented to the model.",
+  "session_hard_limit_seconds": 32400,
+  "session_work_seconds": 28800,
+  "start_interval_seconds": 36000,
+  "minimum_cooldown_seconds": 3600,
+  "spectral_residual": true,
+  "architecture": "Saved XLS-R waveform encoder plus zero-initialized learned multi-resolution STFT residual head"
+}

@@ -50,6 +50,25 @@ class DetectionResult(BaseModel):
     frames_analysed: int | None = None
     error: str | None = None
     ai_summary: str | None = None
+    detected_tool: str | None = None
+    decision_threshold: float | None = None
+    audio_segments: list[dict] | None = None
+    audio_duration_seconds: float | None = None
+    spectrogram_is_attribution: bool | None = None
+    model_evaluation: dict | None = None
+    review_required: bool | None = None
+    audio_assessment: dict | None = None
+    label: str | None = None
+    p_fake: float | None = None
+    p_fake_int: int | None = None
+    surety_int: int | None = None
+    surety_percentage: str | None = None
+    score_calibrated: bool = False
+    video_frame_scores: list[dict] | None = None
+    analysis_scope: str | None = None
+    score_calibrated: bool = False
+    video_frame_scores: list[dict] | None = None
+    analysis_scope: str | None = None
 
 
 # ── Endpoints ─────────────────────────────────────────────────
@@ -72,11 +91,15 @@ async def detect_deepfake(file: UploadFile = File(...)):
         try:
             result = predictor.predict(tmp_path)
             return DetectionResult(**result)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
         except RuntimeError as exc:
             logger.warning("Detection unavailable: %s", exc)
             raise HTTPException(status_code=503, detail=str(exc))
         finally:
             os.unlink(tmp_path)
+    except HTTPException:
+        raise
     except Exception as exc:
         # Sentinel: Removed stack trace and specific error message to prevent information leakage
         logger.exception("Detection failed")
@@ -95,6 +118,10 @@ async def detect_from_url(request: URLRequest):
     except RuntimeError as exc:
         logger.warning("URL detection unavailable: %s", exc)
         raise HTTPException(status_code=503, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
         # Sentinel: Removed specific error message to prevent information leakage
         logger.exception("URL detection failed")
@@ -169,8 +196,54 @@ async def model_status():
         "ml_available": getattr(predictor, "ml_available", False),
         "vision_trained": getattr(predictor, "model", None) is not None,
         "audio_trained": getattr(predictor, "audio_model", None) is not None,
+        "audio_architecture": getattr(predictor, "audio_metadata", {}).get("arch"),
+        "audio_model_source": getattr(predictor, "audio_metadata", {}).get("source"),
+        "audio_model_revision": getattr(predictor, "audio_metadata", {}).get("revision"),
+        "audio_weights_sha256": getattr(predictor, "audio_metadata", {}).get("weights_sha256"),
+        "video_checkpoint": getattr(predictor, "video_checkpoint_path", None),
+        "video_trained": getattr(predictor, "video_model", None) is not None,
+        "video_architecture": "genconvit_vae" if getattr(predictor, "video_model", None) is not None else None,
+        "weights_repository": "Shlok0829/deepfake-models",
         "trained_only": True,
     }
+
+
+@router.get('/media/capabilities')
+def media_capabilities():
+    """Format candidates are decoder-dependent, not guarantees of model accuracy."""
+    from backend.preprocessing.media_io import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, AUDIO_EXTENSIONS, ffmpeg_binary
+    import shutil
+    try:
+        ffmpeg_available = bool(shutil.which(ffmpeg_binary()))
+    except RuntimeError:
+        ffmpeg_available = False
+    return {'routing':'decoded content', 'ffmpeg_available':ffmpeg_available,
+            'image_extensions':sorted(IMAGE_EXTENSIONS),
+            'video_extensions':sorted(VIDEO_EXTENSIONS),
+            'audio_extensions':sorted(AUDIO_EXTENSIONS),
+            'limitations':['Codec support depends on the installed decoder build.',
+                           'Encrypted/DRM, corrupt and unsupported proprietary files cannot be analyzed.',
+                           'Images use the first page/frame; video uses sampled faces; audio uses sampled speech windows.',
+                           'Successful decoding does not establish detection accuracy.']}
+
+
+@router.get('/media/capabilities')
+def media_capabilities():
+    """Format candidates are decoder-dependent, not guarantees of model accuracy."""
+    from backend.preprocessing.media_io import IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, AUDIO_EXTENSIONS, ffmpeg_binary
+    import shutil
+    try:
+        ffmpeg_available = bool(shutil.which(ffmpeg_binary()))
+    except RuntimeError:
+        ffmpeg_available = False
+    return {'routing':'decoded content', 'ffmpeg_available':ffmpeg_available,
+            'image_extensions':sorted(IMAGE_EXTENSIONS),
+            'video_extensions':sorted(VIDEO_EXTENSIONS),
+            'audio_extensions':sorted(AUDIO_EXTENSIONS),
+            'limitations':['Codec support depends on the installed decoder build.',
+                           'Encrypted/DRM, corrupt and unsupported proprietary files cannot be analyzed.',
+                           'Images use the first page/frame; video uses sampled faces; audio uses sampled speech windows.',
+                           'Successful decoding does not establish detection accuracy.']}
 
 
 @router.get("/proxy-media")

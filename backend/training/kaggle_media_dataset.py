@@ -214,6 +214,34 @@ DEFAULT_AUDIO_SOURCES = (
         folder_labels={"bonafide": 0, "spoof": 1, "real": 0, "fake": 1},
         media_exts=frozenset(AUDIO_EXTS),
     ),
+    # Zenodo dataset (CommonLanguage - Real Speech)
+    KaggleSource(
+        "zenodo_dataset",
+        "/kaggle/working/zenodo_dataset",
+        default_label=0,
+        media_exts=frozenset(AUDIO_EXTS),
+    ),
+    # Massive fake audio datasets
+    KaggleSource(
+        "deep-voice-deepfake-voice-recognition",
+        "/kaggle/input/deep-voice-deepfake-voice-recognition",
+        folder_labels={"KAGGLE": 1}, # This dataset is mostly fake voices
+        default_label=1,
+        media_exts=frozenset(AUDIO_EXTS),
+    ),
+    KaggleSource(
+        "deepfake-audio-dataset",
+        "/kaggle/input/deepfake-audio-dataset",
+        folder_labels={"fake": 1, "real": 0},
+        media_exts=frozenset(AUDIO_EXTS),
+    ),
+    KaggleSource(
+        "codecfake-audio-deepfake",
+        "/kaggle/input/codecfake-audio-deepfake",
+        folder_labels={"fake": 1, "real": 0},
+        default_label=1, # it is a 1 million fake audio dataset
+        media_exts=frozenset(AUDIO_EXTS),
+    ),
 )
 
 

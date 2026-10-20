@@ -1,0 +1,176 @@
+{
+  "phase": "native15_fp32_voxceleb2",
+  "source_document": "datasets.docx updated 2026-10-17",
+  "minimum_duration_seconds": 1,
+  "require_all_declared_sources": true,
+  "allow_verified_source_phase": false,
+  "sources": [
+    {
+      "id": "shlokparekh08/voxceleb2-real-audio-500k",
+      "provider": "kaggle",
+      "label": 0,
+      "include_folders": ["audio"],
+      "note": "Real-only as explicitly labeled by the user; M4A speech recordings."
+    },
+    {
+      "id": "shlokparekh08/kathbath-real-audio",
+      "provider": "kaggle",
+      "label": 0,
+      "original_source": "ai4bharat/Kathbath"
+    },
+    {
+      "id": "shlokparekh08/indicsynth-cleaned-fake-audio",
+      "provider": "kaggle",
+      "label": 1,
+      "original_source": "vdivyasharma/IndicSynth"
+    },
+    {
+      "id": "shlokparekh08/garystafford-deepfake-audio",
+      "provider": "kaggle",
+      "folder_labels": {
+        "real": 0,
+        "fake": 1
+      },
+      "original_source": "garystafford/deepfake-audio-detection"
+    },
+    {
+      "id": "trapka/mlaadthe-multi-languagaudioanti-spoofing-dataset",
+      "provider": "kaggle",
+      "include_folders": [
+        "fake"
+      ],
+      "label": 1,
+      "language_after_folder": "fake"
+    },
+    {
+      "id": "adarshsingh0903/audio-deepfake-detection-dataset",
+      "provider": "kaggle",
+      "folder_labels": {
+        "real_samples": 0,
+        "FlashSpeech": 1,
+        "NaturalSpeech3": 1,
+        "OpenAI": 1,
+        "PromptTTS2": 1,
+        "VALLE": 1,
+        "VoiceBox": 1,
+        "seedtts_files": 1,
+        "xTTS": 1
+      }
+    },
+    {
+      "id": "mohammedabdeldayem/the-fake-or-real-dataset",
+      "provider": "kaggle",
+      "include_folders": [
+        "training"
+      ],
+      "exclude_folders": [
+        "testing",
+        "validation",
+        "test",
+        "valid"
+      ],
+      "folder_labels": {
+        "real": 0,
+        "fake": 1
+      },
+      "note": "User explicitly admits training partitions; official testing stays reserved. Do not call full FoR an independent external benchmark after this phase."
+    },
+    {
+      "id": "bhaveshkumars/release-in-the-wild",
+      "provider": "kaggle",
+      "include_folders": [
+        "train"
+      ],
+      "exclude_folders": [
+        "test",
+        "validation",
+        "valid"
+      ],
+      "folder_labels": {
+        "real": 0,
+        "fake": 1
+      }
+    },
+    {
+      "id": "kambingbersayaphitam/speech-dataset-of-human-and-ai-generated-voices",
+      "provider": "kaggle",
+      "folder_labels": {
+        "real": 0,
+        "fake": 1
+      }
+    },
+    {
+      "id": "abdallamohamed312/asv-2021-pa-pt12-into-real-and-fake",
+      "provider": "kaggle",
+      "folder_labels": {
+        "real": 0,
+        "fake": 1
+      },
+      "note": "Physical replay attacks, not only generated speech; no independent ASV2021 PA evaluation claim after training on these files."
+    },
+    {
+      "id": "abdallamohamed312/asv-2021-pa-part-3",
+      "provider": "kaggle",
+      "folder_labels": {
+        "real": 0,
+        "fake": 1
+      }
+    },
+    {
+      "id": "triciaestella/gender-balanced-audio-deepfake-dataset",
+      "provider": "kaggle",
+      "include_folders": [
+        "01. Training",
+        "training"
+      ],
+      "exclude_folders": [
+        "02. Validation",
+        "03. Testing",
+        "validation",
+        "testing",
+        "test"
+      ],
+      "folder_labels": {
+        "real": 0,
+        "fake": 1
+      }
+    },
+    {
+      "id": "shlokparekh08/ljspeech",
+      "provider": "kaggle",
+      "label": 0,
+      "include_folders": [
+        "wavs"
+      ],
+      "fixed_speakers": [
+        "LJ"
+      ],
+      "fixed_split": "train",
+      "note": "Single human speaker explicitly assigned to training; no LJSpeech speaker-disjoint validation claim."
+    },
+    {
+      "id": "shlokparekh08/indian-english-fake-audio",
+      "provider": "kaggle",
+      "label": 1
+    },
+    {
+      "id": "birdy654/deep-voice-deepfake-voice-recognition",
+      "provider": "kaggle",
+      "include_folders": [
+        "AUDIO"
+      ],
+      "folder_labels": {
+        "real": 0,
+        "fake": 1
+      }
+    }
+  ],
+  "label_policy": "Real=0, fake=1. Exact path-component rules only; unrecognized audio folders block source admission rather than inventing labels.",
+  "deduplication": "Encountered waveform hashes during loading; no upfront global scan. Cleaned IndicSynth export used as supplied. Global duplicate freedom is not certified.",
+  "coverage": "20 full passes over the admitted unique training split, with separate held-out groups and exclusion reports. No per-source file caps.",
+  "pending_sources": [],
+  "other_requested_sources": [],
+  "external_admission_queue": [],
+  "verification_mode": "decode_during_training",
+  "require_exact_source_set": true
+}

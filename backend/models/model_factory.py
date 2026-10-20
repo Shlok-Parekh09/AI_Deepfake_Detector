@@ -11,8 +11,6 @@ import torch
 import torch.nn as nn
 
 from backend.config import CHECKPOINTS_DIR
-from backend.models.cnn_model import CNNDetector
-from backend.models.vit_model import ViTDetector
 
 
 VISION_CHECKPOINT_NAMES = (
@@ -22,6 +20,7 @@ VISION_CHECKPOINT_NAMES = (
 )
 
 AUDIO_CHECKPOINT_NAMES = (
+    "audio_candidate.pth",
     "audio_best.pth",
 )
 
@@ -39,6 +38,8 @@ def find_checkpoint(env_name: str, names: tuple[str, ...]) -> str | None:
 
 
 def load_vision_model(checkpoint_path: str, device: torch.device) -> nn.Module:
+    from backend.models.cnn_model import CNNDetector
+    from backend.models.vit_model import ViTDetector
     state = torch.load(checkpoint_path, map_location=device)
     metadata = state.get("metadata", {}) if isinstance(state, dict) else {}
     state_dict = state.get("model_state_dict", state) if isinstance(state, dict) else state

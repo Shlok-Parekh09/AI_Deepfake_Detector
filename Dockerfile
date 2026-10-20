@@ -22,7 +22,8 @@ WORKDIR $HOME/app
 COPY --chown=user backend/requirements-space.txt .
 
 # Install dependencies (as user 1000, this will install to ~/.local/bin and ~/.local/lib)
-RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+RUN python -m pip install --no-cache-dir --upgrade pip
+RUN python -m pip install --no-cache-dir torch==2.14.1+cpu torchvision==0.29.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir -r requirements-space.txt
 
 # Copy application

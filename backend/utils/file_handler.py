@@ -7,6 +7,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+from backend.preprocessing.media_io import probe_media, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, AUDIO_EXTENSIONS
 
 
 class FileHandler:
@@ -19,9 +20,9 @@ class FileHandler:
     * Classify files as video / image / audio
     """
 
-    SUPPORTED_VIDEO = {".mp4", ".avi", ".mov", ".mkv", ".webm"}
-    SUPPORTED_IMAGE = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"}
-    SUPPORTED_AUDIO = {".mp3", ".wav", ".ogg", ".m4a", ".flac"}
+    SUPPORTED_VIDEO = {'.'+ext for ext in VIDEO_EXTENSIONS}
+    SUPPORTED_IMAGE = {'.'+ext for ext in IMAGE_EXTENSIONS}
+    SUPPORTED_AUDIO = {'.'+ext for ext in AUDIO_EXTENSIONS}
     MAX_SIZE_MB_DEFAULT = 100
 
     def __init__(self, temp_dir: str | None = None):
@@ -41,7 +42,7 @@ class FileHandler:
 
         Returns the absolute path to the saved file.
         """
-        dest = os.path.join(self.temp_dir, filename)
+        dest = os.path.join(self.temp_dir, Path(filename.replace('\\', '/')).name)
         with open(dest, "wb") as f:
             f.write(file_data)
         return dest
@@ -50,14 +51,7 @@ class FileHandler:
         """
         Return ``'video'``, ``'image'``, ``'audio'``, or ``None``.
         """
-        ext = Path(filepath).suffix.lower()
-        if ext in self.SUPPORTED_VIDEO:
-            return "video"
-        if ext in self.SUPPORTED_IMAGE:
-            return "image"
-        if ext in self.SUPPORTED_AUDIO:
-            return "audio"
-        return None
+        return probe_media(filepath) if os.path.isfile(filepath) else None
 
     def validate_file(self, filepath: str, max_size_mb: int = MAX_SIZE_MB_DEFAULT) -> dict:
         """
@@ -72,11 +66,16 @@ class FileHandler:
         if not os.path.isfile(filepath):
             return {"valid": False, "error": "File not found", "file_type": None}
 
+        size_mb = os.path.getsize(filepath) / (1024 * 1024)
+        if size_mb > max_size_mb:
+            return {"valid": False, "error": f"File exceeds the {max_size_mb} MB upload limit", "file_type": None}
+        if size_mb == 0:
+            return {"valid": False, "error": "The uploaded file is empty", "file_type": None}
         file_type = self.get_file_type(filepath)
         if file_type is None:
             return {
                 "valid": False,
-                "error": f"Unsupported file extension: {Path(filepath).suffix}",
+                "error": "No readable image, video or audio stream. The codec may be unsupported, damaged or encrypted.",
                 "file_type": None,
             }
 

@@ -1,0 +1,129 @@
+
+######################################################################
+#  PHASE 1: VISION TRAINING
+######################################################################
+
+======================================================================
+  LIGHTNING AI STUDIO — SEQUENTIAL DEEPFAKE TRAINING
+======================================================================
+  GPU: Tesla T4  (14.6 GB)
+  Data root: /teamspace/studios/this_studio/data
+  Checkpoint dir: /teamspace/studios/this_studio/checkpoints
+  HF repo: Shlok0829/deepfake-detector
+  Epochs per dataset: 1
+  Batch size: 32
+  AMP: on
+======================================================================
+
+  Datasets to process (12):
+    1. [VISION] deepfake-real-images            (deepfake-and-real-images)
+    2. [VISION] 140k-real-fake                  (140k-real-and-fake-faces)
+    3. [VISION] deepfake-image-detection        (deepfake-image-detection)
+    4. [VISION] dfdc-cropped                    (deep-fake-detection-cropped-dataset)
+    5. [VISION] comprehensive-dfd               (comprehensive-deepfake-detection-dataset)
+    6. [VISION] million-fake-faces-7            (1-million-fake-faces-7)
+    7. [VISION] million-fake-faces              (1-million-fake-faces)
+    8. [VISION] 1m-ai-faces-128                 (1m-ai-generated-faces-128x128)
+    9. [VISION] million-fake-faces-2            (1-million-fake-faces-2)
+    10. [VISION] million-fake-faces-6            (1-million-fake-faces-6)
+    11. [VISION] ms1m-arcface                    (ms1m-arcface-dataset)
+    12. [VISION] dfd-original                    (deep-fake-detection-dfd-entire-original-dataset)
+
+2026-07-15 20:46:57 │ [32mINFO[0m │ backend.models.cnn_model │ CNNDetector initialised: backbone=efficientnet_b4  feature_dim=1792  num_classes=2
+/teamspace/studios/this_studio/AI_Deepfake_Detector/backend/utils/amp_utils.py:24: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  return torch.cuda.amp.GradScaler()
+
+  Starting at dataset index 0, 12 remaining
+
+
+  [Step 1] Downloading: deepfake-and-real-images
+    [Download] deepfake-and-real-images (attempt 1/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...
+    [Download] deepfake-and-real-images (attempt 2/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...
+    [Download] deepfake-and-real-images (attempt 3/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    [GIVE UP] deepfake-and-real-images failed after 3 attempts
+  [SKIP] Could not download deepfake-and-real-images — moving on
+
+  [Step 1] Downloading: 140k-real-and-fake-faces
+    [Download] 140k-real-and-fake-faces (attempt 1/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...
+    [Download] 140k-real-and-fake-faces (attempt 2/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...
+    [Download] 140k-real-and-fake-faces (attempt 3/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    [GIVE UP] 140k-real-and-fake-faces failed after 3 attempts
+  [SKIP] Could not download 140k-real-and-fake-faces — moving on
+
+  [Step 1] Downloading: deepfake-image-detection
+    [Download] deepfake-image-detection (attempt 1/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...
+    [Download] deepfake-image-detection (attempt 2/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...
+    [Download] deepfake-image-detection (attempt 3/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    [GIVE UP] deepfake-image-detection failed after 3 attempts
+  [SKIP] Could not download deepfake-image-detection — moving on
+
+  [Step 1] Downloading: deep-fake-detection-cropped-dataset
+    [Download] deep-fake-detection-cropped-dataset (attempt 1/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...
+    [Download] deep-fake-detection-cropped-dataset (attempt 2/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...
+    [Download] deep-fake-detection-cropped-dataset (attempt 3/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    [GIVE UP] deep-fake-detection-cropped-dataset failed after 3 attempts
+  [SKIP] Could not download deep-fake-detection-cropped-dataset — moving on
+
+  [Step 1] Downloading: comprehensive-deepfake-detection-dataset
+    [Download] comprehensive-deepfake-detection-dataset (attempt 1/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...
+    [Download] comprehensive-deepfake-detection-dataset (attempt 2/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...
+    [Download] comprehensive-deepfake-detection-dataset (attempt 3/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    [GIVE UP] comprehensive-deepfake-detection-dataset failed after 3 attempts
+  [SKIP] Could not download comprehensive-deepfake-detection-dataset — moving on
+
+  [Step 1] Downloading: 1-million-fake-faces-7
+    [Download] 1-million-fake-faces-7 (attempt 1/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...
+    [Download] 1-million-fake-faces-7 (attempt 2/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...
+    [Download] 1-million-fake-faces-7 (attempt 3/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    [GIVE UP] 1-million-fake-faces-7 failed after 3 attempts
+  [SKIP] Could not download 1-million-fake-faces-7 — moving on
+
+  [Step 1] Downloading: 1-million-fake-faces
+    [Download] 1-million-fake-faces (attempt 1/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...
+    [Download] 1-million-fake-faces (attempt 2/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...
+    [Download] 1-million-fake-faces (attempt 3/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    [GIVE UP] 1-million-fake-faces failed after 3 attempts
+  [SKIP] Could not download 1-million-fake-faces — moving on
+
+  [Step 1] Downloading: 1m-ai-generated-faces-128x128
+    [Download] 1m-ai-generated-faces-128x128 (attempt 1/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...
+    [Download] 1m-ai-generated-faces-128x128 (attempt 2/3)...
+    [FAIL] 403 Client Error: Forbidden for url: https://api.kaggle.com/v1/datasets.DatasetApiService/GetDatasetMetadata
+    Retrying in 10s...

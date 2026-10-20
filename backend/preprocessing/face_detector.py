@@ -7,6 +7,12 @@ Uses MTCNN from facenet-pytorch as the default backend.
 import numpy as np
 from PIL import Image
 from facenet_pytorch import MTCNN
+import cv2
+
+try:
+    import insightface
+except ImportError:
+    insightface = None
 
 from backend.config import FACE_DETECTION_CONFIDENCE, FACE_MARGIN
 from backend.utils.logger import get_logger
@@ -25,25 +31,37 @@ class FaceDetector:
 
     def __init__(
         self,
-        backend: str = "mtcnn",
+        backend: str = "insightface",
         confidence_threshold: float = FACE_DETECTION_CONFIDENCE,
         margin: float = FACE_MARGIN,
         device: str | None = None,
     ):
         self.confidence_threshold = confidence_threshold
         self.margin = margin
+        self.backend = backend.lower()
 
         if device is None:
             import torch
             device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        # MTCNN returns bounding boxes and landmarks
-        self.detector = MTCNN(
-            keep_all=True,
-            device=device,
-            thresholds=[0.6, 0.7, confidence_threshold],
-            post_process=False,
-        )
+        if self.backend == "insightface":
+            if insightface is None:
+                logger.warning("InsightFace not installed, falling back to MTCNN.")
+                self.backend = "mtcnn"
+            else:
+                self.detector = insightface.app.FaceAnalysis(
+                    name="buffalo_l",
+                    providers=["CUDAExecutionProvider", "CPUExecutionProvider"] if device == "cuda" else ["CPUExecutionProvider"]
+                )
+                self.detector.prepare(ctx_id=0 if device == "cuda" else -1, det_size=(640, 640))
+
+        if self.backend == "mtcnn":
+            self.detector = MTCNN(
+                keep_all=True,
+                device=device,
+                thresholds=[0.6, 0.7, confidence_threshold],
+                post_process=False,
+            )
 
     def detect_faces(self, image: np.ndarray) -> list[dict]:
         """
@@ -55,31 +73,52 @@ class FaceDetector:
             Each dict contains ``bbox`` ([x1,y1,x2,y2]), ``confidence``,
             and ``landmarks`` (5-point dict).
         """
-        pil_img = Image.fromarray(image) if isinstance(image, np.ndarray) else image
-
-        boxes, probs, landmarks = self.detector.detect(pil_img, landmarks=True)
-
-        if boxes is None:
-            return []
-
         results = []
-        for i, (box, prob) in enumerate(zip(boxes, probs)):
-            if prob < self.confidence_threshold:
-                continue
-            entry: dict = {
-                "bbox": box.tolist(),
-                "confidence": float(prob),
-            }
-            if landmarks is not None and i < len(landmarks):
-                pts = landmarks[i]
-                entry["landmarks"] = {
-                    "left_eye": pts[0].tolist(),
-                    "right_eye": pts[1].tolist(),
-                    "nose": pts[2].tolist(),
-                    "mouth_left": pts[3].tolist(),
-                    "mouth_right": pts[4].tolist(),
+
+        if self.backend == "insightface":
+            # InsightFace expects BGR image
+            bgr_img = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            faces = self.detector.get(bgr_img)
+
+            for face in faces:
+                if face.det_score < self.confidence_threshold:
+                    continue
+                entry: dict = {
+                    "bbox": face.bbox.tolist(),
+                    "confidence": float(face.det_score),
                 }
-            results.append(entry)
+                if face.kps is not None:
+                    pts = face.kps
+                    entry["landmarks"] = {
+                        "left_eye": pts[0].tolist(),
+                        "right_eye": pts[1].tolist(),
+                        "nose": pts[2].tolist(),
+                        "mouth_left": pts[3].tolist(),
+                        "mouth_right": pts[4].tolist(),
+                    }
+                results.append(entry)
+        else:
+            pil_img = Image.fromarray(image) if isinstance(image, np.ndarray) else image
+            boxes, probs, landmarks = self.detector.detect(pil_img, landmarks=True)
+
+            if boxes is not None:
+                for i, (box, prob) in enumerate(zip(boxes, probs)):
+                    if prob is None or not np.isfinite(prob) or prob < self.confidence_threshold:
+                        continue
+                    entry: dict = {
+                        "bbox": box.tolist(),
+                        "confidence": float(prob),
+                    }
+                    if landmarks is not None and i < len(landmarks):
+                        pts = landmarks[i]
+                        entry["landmarks"] = {
+                            "left_eye": pts[0].tolist(),
+                            "right_eye": pts[1].tolist(),
+                            "nose": pts[2].tolist(),
+                            "mouth_left": pts[3].tolist(),
+                            "mouth_right": pts[4].tolist(),
+                        }
+                    results.append(entry)
 
         logger.debug("Detected %d face(s) above threshold", len(results))
         return results
@@ -110,7 +149,8 @@ class FaceDetector:
             y1 = max(0, int(y1 - bh * margin))
             x2 = min(w, int(x2 + bw * margin))
             y2 = min(h, int(y2 + bh * margin))
-            faces.append(image[y1:y2, x1:x2])
+            if x2 > x1 and y2 > y1:
+                faces.append(image[y1:y2, x1:x2])
 
         return faces
 
