@@ -16,7 +16,7 @@ export function ScanningView({ progress, statusText, mediaUrl, mediaType }: Scan
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   return (
-    <div className="relative w-full h-[340px] sm:h-[380px] bg-[#0e0e18] rounded-2xl border border-gray-800 overflow-hidden flex flex-col items-center justify-center">
+    <div className="relative w-full h-[340px] sm:h-[380px] lg:h-[500px] bg-[#0e0e18] rounded-2xl border border-gray-800 overflow-hidden flex flex-col items-center justify-center">
       {/* Background Blur Overlay (simulate analyzing) */}
       <div className="absolute inset-0 z-0 overflow-hidden opacity-30">
         {mediaType === 'video' && mediaUrl ? (

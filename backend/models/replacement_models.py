@@ -100,16 +100,16 @@ class GenDDetector(nn.Module):
         processor = CLIPImageProcessor()
         return processor(images=Image.fromarray(face).convert('RGB'), return_tensors='pt')['pixel_values'][0]
 
-    def faces(self, frame, detector=None):
+    def faces(self, frame, detector=None, max_faces=1):
         """Five-landmark similarity alignment, adapted from GenD detector.py (MIT)."""
         import cv2
         faces = []
         boxes, landmarks = self.landmark_detector.detect(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
         if len(boxes) == 0 or landmarks is None:
             return faces
-        # Match the official pipeline: largest visible face per sampled frame.
+        # Default preserves upstream single-face behavior; callers can request multiple faces.
         areas = (boxes[:,2]-boxes[:,0]) * (boxes[:,3]-boxes[:,1])
-        for index in [int(np.argmax(areas))]:
+        for index in np.argsort(areas)[::-1][:max_faces]:
             src = landmarks[index].astype(np.float32)
             dst = np.asarray([[.34,.46],[.66,.46],[.5,.64],[.37,.82],[.63,.82]], dtype=np.float32)
             upper = np.triu_indices(5, k=1)

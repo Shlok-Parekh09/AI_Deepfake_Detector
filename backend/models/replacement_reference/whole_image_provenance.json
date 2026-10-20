@@ -1,0 +1,12 @@
+{
+  "source": "OwensLab/commfor-model-384",
+  "revision": "6076002bf0d9dd37537f965ee2f06f826c333b61",
+  "sha256": "b89f36275f3bf5e2b040eee36597a8f19db051bff9a473a9cf7b2466284fb387",
+  "license": "MIT",
+  "architecture": "vit_small_patch16_384",
+  "preprocessing": "Resize shortest edge 440, center crop 384, ImageNet normalization",
+  "class_order": "sigmoid: real=0, fake=1",
+  "decision_threshold": 0.5,
+  "video_use": "Image classifier on sampled frames only; not a temporal or audio-video detector",
+  "validation_limits": "Routing and inference smoke tests do not establish accuracy. Earlier concept-trailer test was a false negative."
+}

@@ -15,8 +15,8 @@ logger = get_logger(__name__)
 app = FastAPI(
     title="AI Deepfake Detector API",
     description=(
-        "Analyze images, face videos and speech for deepfake indicators. "
-        "Audio: Spectra-AASIST3. Video: GenD CLIP-L/14."
+        "Analyze images, sampled video frames and speech for deepfake indicators. "
+        "Audio: Spectra-AASIST3. Face video: GenD CLIP-L/14. No-face images/video frames: ViT-S/16."
     ),
     version="1.0.0",
 )

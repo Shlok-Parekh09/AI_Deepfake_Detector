@@ -40,6 +40,7 @@ class BatchURLRequest(BaseModel):
 
 
 class DetectionResult(BaseModel):
+    image_face_scores: list[dict] | None = None
     audit_report: dict | None = None
     report_pdf_base64: str | None = None
     report_filename: str | None = None
@@ -204,6 +205,10 @@ async def model_status():
         "video_model_revision": getattr(predictor, "video_metadata", {}).get("revision"),
         "video_weights_sha256": getattr(predictor, "video_metadata", {}).get("weights_sha256"),
         "weights_repository": "Shlok0829/deepfake-models",
+        "whole_image_architecture": "vit_small_patch16_384",
+        "whole_image_loaded": getattr(predictor, "whole_image_model", None) is not None,
+        "no_face_video_method": "Sampled image-classifier evidence; no temporal analysis",
+        "max_faces_per_image_or_frame": 16,
         "trained_only": True,
     }
 

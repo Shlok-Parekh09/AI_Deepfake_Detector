@@ -48,6 +48,7 @@ class Predictor:
         self.model = None
         self.audio_model = None
         self.video_model = None
+        self.whole_image_model = None
         self.ml_available = ML_AVAILABLE
 
         if ML_AVAILABLE:
@@ -187,11 +188,6 @@ class Predictor:
                 raise RuntimeError('The dedicated video checkpoint is unavailable')
             return self._with_report(self.predict_video(file_path), file_path, original_name)
 
-        if getattr(self, "model", None) is None:
-            raise RuntimeError(
-                "Vision inference is unavailable. Check the vision checkpoint and installed image/video dependencies."
-            )
-
         if file_type == "image":
             return self._with_report(self.predict_image(file_path), file_path, original_name)
         else:
@@ -222,31 +218,45 @@ class Predictor:
             logger.warning(f"Failed to read EXIF: {e}")
 
         decoded_image = load_image(image_path)
-        with torch.no_grad():
-            img = np.array(decoded_image)
-            faces = self.face_detector.extract_faces(img)
-
-            if not faces:
-                raise ValueError('No face was detected. This face-image model cannot assess non-face image authenticity.')
-            else:
-                probs: list[float] = []
+        img = np.array(decoded_image)
+        faces = self.face_detector.extract_faces(img)[:16]
+        with torch.inference_mode():
+            if faces:
+                probs = []
                 for face in faces:
-                    tensor = self.preprocessor.preprocess(face).to(self.device)
-                    logits = self.model(tensor)
-                    prob = torch.softmax(logits, dim=1)[0, 1].item()
-                    probs.append(prob)
-                avg_prob = self.postprocessor.aggregate_frame_predictions(probs, strategy="weighted")
-                reasons = ["Trained vision checkpoint analysis"]
-
-            result = self.postprocessor.format_result(avg_prob)
-            result["file_type"] = "image"
-            result["num_faces_analysed"] = len(faces) if faces else 0
-            result["reasons"] = reasons
-            result["raw_scores"] = {"vision_model": round(avg_prob, 4)}
-            result["explainability_heatmap"] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
-            result["ai_summary"] = self._get_ai_summary(result["is_fake"], avg_prob, "image")
-            result["detected_tool"] = detected_tool or 'Unknown'
-            result["score_calibrated"] = False
+                    if self.model is None: raise RuntimeError('Face-image checkpoint unavailable')
+                    logits = self.model(self.preprocessor.preprocess(face).to(self.device))
+                    if not torch.isfinite(logits).all(): raise RuntimeError('Nonfinite face-image prediction')
+                    probs.append(float(logits.softmax(-1)[0,1]))
+                # Mixed images must retain evidence from a suspicious face instead of averaging it away.
+                probability = max(probs)
+                metadata = dict(arch='efficientnet_b4')
+                scope = 'Up to 16 detected faces, assessed independently; maximum face evidence. Background authenticity is not assessed.'
+                method = 'EfficientNet-B4 scores each detected face independently after face preprocessing. Maximum face evidence is compared with 0.5. This multi-face application rule is not calibrated certainty; background edits are not assessed.'
+            else:
+                if getattr(self, 'whole_image_model', None) is None:
+                    from backend.models.whole_image import load_whole_image
+                    self.whole_image_model = load_whole_image(self.device)
+                model = self.whole_image_model
+                logits = model(model.preprocess(decoded_image).to(self.device).unsqueeze(0))
+                if not torch.isfinite(logits).all(): raise RuntimeError('Nonfinite whole-image prediction')
+                probability = float(logits.sigmoid().item())
+                probs = []
+                metadata = dict(model.metadata)
+                scope = 'Whole-image synthetic-content classifier: aspect-preserving resize to shortest edge 440, then central 384 x 384 crop. No face required; peripheral regions can be omitted.'
+                method = ('ViT-S/16 at 384 pixels uses ImageNet normalization and a binary sigmoid head. '
+                          'Evidence at or above 0.5 produces Fake; otherwise Real. This detects learned image synthesis patterns, '
+                          'not every possible edit, and does not identify a generator or establish authenticity.')
+            result = self.postprocessor.format_result(probability)
+            result.update(file_type='image', num_faces_analysed=len(faces),
+                reasons=['Independent detected-face assessment' if faces else 'Whole-image synthesis assessment'],
+                raw_scores={'image_model':round(probability,4)}, explainability_heatmap=None,
+                detected_tool=detected_tool or 'Unknown', score_calibrated=False,
+                decision_threshold=.5, is_fake=probability>=.5, label='FAKE' if probability>=.5 else 'REAL',
+                fake_probability=probability, review_required=True, confidence='uncalibrated',
+                analysis_scope=scope, detector_metadata=metadata, detector_method=method,
+                image_face_scores=[{'face_index':i,'fake_probability':p} for i,p in enumerate(probs)])
+            result['ai_summary'] = 'Model prediction: '+result['label']+'. '+scope
             return result
 
     def predict_video(self, video_path: str) -> dict:
@@ -265,10 +275,10 @@ class Predictor:
         with torch.inference_mode():
             for position, frame in frames:
                 is_gend = getattr(self, 'video_metadata', {}).get('arch') == 'gend_clip_l14'
-                faces = (self.video_model.faces(frame, self.face_detector) if is_gend
+                faces = (self.video_model.faces(frame, self.face_detector, max_faces=16) if is_gend
                          else self.face_detector.extract_faces(frame,margin=0.))
                 current = []
-                for face in faces[:4]:
+                for face in faces[:16]:
                     if not face.size:
                         continue
                     if is_gend:
@@ -285,12 +295,34 @@ class Predictor:
                     probability = evidence[1] / max(sum(evidence), 1e-12)
                     scores.append(evidence); current.append(probability)
                 if current:
-                    frame_scores.append({'frame_index':int(position),'fake_probability':sum(current)/len(current)})
+                    frame_scores.append({'frame_index':int(position),'fake_probability':max(current),
+                        'faces_analysed':len(current),'face_scores':current})
         if not scores:
-            raise ValueError('No face was detected in the sampled video frames; the video detector cannot assess this clip')
+            if not frames: raise ValueError('No readable video frames were decoded')
+            from PIL import Image
+            if getattr(self, 'whole_image_model', None) is None:
+                from backend.models.whole_image import load_whole_image
+                self.whole_image_model = load_whole_image(self.device)
+            model = self.whole_image_model
+            with torch.inference_mode():
+                for position, frame in frames:
+                    logits = model(model.preprocess(Image.fromarray(frame)).to(self.device).unsqueeze(0))
+                    if not torch.isfinite(logits).all(): raise RuntimeError('Nonfinite whole-frame video prediction')
+                    frame_scores.append({'frame_index':int(position),'fake_probability':float(logits.sigmoid().item()),'faces_analysed':0})
+            probability = float(np.mean([item['fake_probability'] for item in frame_scores]))
+            result = self.postprocessor.format_result(probability)
+            result.update(file_type='video',is_fake=probability>=.5,fake_probability=probability,
+                label='FAKE' if probability>=.5 else 'REAL',num_faces_analysed=0,
+                frames_analysed=len(frame_scores),video_frame_scores=frame_scores,
+                score_calibrated=False,review_required=True,confidence='uncalibrated',decision_threshold=.5,
+                explainability_heatmap=None,detector_metadata=dict(model.metadata),
+                analysis_scope='No detected faces in sampled frames. Whole-frame image synthesis classification on central 384 x 384 crops; mean across sampled frames. No motion, soundtrack or confirmed temporal localization analysis.',
+                detector_method='ViT-S/16: shortest-edge resize 440, central crop 384, ImageNet normalization, sigmoid head. Mean frame evidence at or above 0.5 gives Fake. This is an image detector applied to sampled video frames, not a temporal video model.',
+                ai_summary='Whole-frame sampled video assessment. Image-based synthesis evidence only; not proof of authenticity.')
+            return result
         real_evidence, fake_evidence = np.asarray(scores).mean(axis=0).tolist()
-        # Normalize evidence for a binary score; argmax matches the reference class decision.
-        probability = fake_evidence / max(real_evidence + fake_evidence, 1e-12)
+        # Multi-face extension: strongest face in each frame, averaged over sampled frames.
+        probability = float(np.mean([frame['fake_probability'] for frame in frame_scores]))
         result = self.postprocessor.format_result(probability)
         result.update(file_type='video',num_faces_analysed=len(scores),frames_analysed=len(frame_scores),
             raw_scores={getattr(self, 'video_metadata', {}).get('arch', 'genconvit_vae'):round(probability,4),
@@ -301,7 +333,7 @@ class Predictor:
             label='FAKE' if probability>=.5 else 'REAL',p_fake=probability,p_fake_int=round(100*probability))
         result.update(score_calibrated=False, review_required=True, confidence='uncalibrated',
                       video_frame_scores=frame_scores,
-                      analysis_scope='Sampled visible faces only; video audio and non-face manipulations are not assessed.')
+                      analysis_scope='Up to 16 faces per sampled frame: maximum face evidence per frame, then mean across frames. Video audio and non-face manipulations are not assessed.')
         result['ai_summary'] = (f"Video model prediction: {result['label']}. Synthetic score: {round(100*probability)}%. "
                                 'Sampled face analysis only. The score is uncalibrated and is not proof of authenticity.')
         return result
