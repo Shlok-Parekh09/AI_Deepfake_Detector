@@ -45,9 +45,14 @@ class URLDownloader:
             raise ValueError(f"Invalid or unreachable URL: {url}")
 
         if output_path is None:
-            suffix = os.path.splitext(urlparse(url).path)[1][:16]
+            suffix = os.path.basename(os.path.splitext(urlparse(url).path)[1])[:16]
             descriptor, output_path = tempfile.mkstemp(dir=self.download_dir, suffix=suffix)
             os.close(descriptor)
+        else:
+            safe_filename = os.path.basename(output_path)
+            output_path = os.path.abspath(os.path.join(self.download_dir, safe_filename))
+            if not output_path.startswith(os.path.abspath(self.download_dir) + os.sep):
+                raise ValueError("Invalid file path: Path traversal detected.")
 
         if self._is_youtube(url):
             return self.download_youtube(url, output_path)
@@ -72,10 +77,28 @@ class URLDownloader:
             parsed = urlparse(current_url)
             if parsed.scheme not in ("http", "https"):
                 raise ValueError(f"Invalid scheme in URL: {current_url}")
-            if not URLDownloader._is_safe_public_url(current_url):
-                 raise ValueError(f"Unsafe URL: {current_url}")
 
-            # codeql[py/full-ssrf] Validated by _is_safe_public_url above
+            host = parsed.hostname
+            if not host:
+                raise ValueError(f"No hostname in URL: {current_url}")
+            if host.lower() == "localhost":
+                raise ValueError(f"Unsafe URL: {current_url}")
+
+            try:
+                addr_info = socket.getaddrinfo(host, parsed.port or (443 if parsed.scheme == "https" else 80))
+            except socket.gaierror:
+                raise ValueError(f"Could not resolve hostname: {current_url}")
+
+            ips = {entry[4][0] for entry in addr_info if entry and entry[4]}
+            if not ips:
+                raise ValueError(f"Could not resolve IPs for: {current_url}")
+
+            for ip_str in ips:
+                ip_obj = ipaddress.ip_address(ip_str)
+                if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local or ip_obj.is_multicast or ip_obj.is_reserved:
+                    raise ValueError(f"Unsafe URL: {current_url}")
+
+            # codeql[py/full-ssrf] Validated by explicit IP check above
             response = session.get(current_url, stream=True, timeout=60, allow_redirects=False)
             if response.is_redirect:
                 # Close the body to avoid leaking connections in the pool
@@ -163,6 +186,22 @@ class URLDownloader:
             return None
 
         try:
+            parsed = urlparse(url)
+            host = parsed.hostname
+            if not host:
+                return None
+            if host.lower() == "localhost":
+                return None
+            addr_info = socket.getaddrinfo(host, parsed.port or (443 if parsed.scheme == "https" else 80))
+            ips = {entry[4][0] for entry in addr_info if entry and entry[4]}
+            if not ips:
+                return None
+            for ip_str in ips:
+                ip_obj = ipaddress.ip_address(ip_str)
+                if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local or ip_obj.is_multicast or ip_obj.is_reserved:
+                    return None
+
+            # codeql[py/full-ssrf] Validated by explicit IP check above
             resp = requests.head(url, timeout=10, allow_redirects=False)
             length = resp.headers.get("content-length")
             return int(length) if length else None

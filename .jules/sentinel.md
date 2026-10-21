@@ -1,25 +1,4 @@
-## 2024-05-24 - Fix Server-Side Request Forgery in Proxy Media
-**Vulnerability:** Unauthenticated `proxy_media` endpoint allowed fetching arbitrary local files/internal network URLs because it proxied requests without validating if the destination IP is public.
-**Learning:** Found an unused SSRF protection helper (`_is_safe_public_url`) in the `URLDownloader` class. Refactored it into a static method to use it directly in API routes.
-**Prevention:** Always validate and filter user-supplied URLs against an allowlist or ensure they resolve to safe public IP space before proxying them using a backend client (like `httpx`).
-## 2026-10-02 - [Error Leakage]\n**Vulnerability:** The API returned raw stack traces and internal error messages in 500/400 HTTP responses.\n**Learning:** Unhandled exceptions exposed server details via `traceback.format_exc()` directly to clients.\n**Prevention:** Catch generic exceptions and return sanitized messages, logging the full traceback only server-side.
-## 2024-05-25 - Fix Redirect SSRF and Filter Bypass in URL Downloader
-**Vulnerability:** Despite validating the initial URL, `httpx` (in `proxy-media`) and `requests` (in `URLDownloader.download_direct`) automatically followed HTTP redirects, allowing attackers to redirect allowed public URLs to internal services (SSRF via redirect). Furthermore, `yt-dlp` extracted URLs were fetched without validation, and `URLDownloader._is_youtube` used a permissive substring match (`in host`), allowing domains like `attacker-youtube.com`.
-**Learning:** Checking the initial URL is insufficient if the HTTP client auto-follows redirects to internal networks. Many libraries (`requests`, `httpx`) default to or can easily be configured to blindly follow redirects. `yt-dlp` extracts URLs that also need validation before fetching.
-**Prevention:** Disable auto-redirects and manually resolve+validate each hop, or use event hooks (like `event_hooks={'response': [check_redirect]}` in `httpx`) to validate redirect `Location` headers before following them. Apply exact string/domain matching for whitelist checks instead of substring matching. Validate output of third-party command tools (like `yt-dlp`) before making HTTP requests.
-## 2026-10-07 - Fix Command Injection in Shell Commands
-**Vulnerability:** Command injection vulnerability due to unsanitized user input passed directly to `os.system()` within `backend/scripts/sync_kaggle.py`.
-**Learning:** Found that string formatting user input into shell commands is a high-risk pattern that allows execution of arbitrary commands.
-**Prevention:** Avoid `os.system` and `subprocess.run` with `shell=True`. Instead, always pass command arguments as a list to `subprocess.run()` to ensure arguments are properly escaped and treated as data rather than executable code.
-## 2024-05-26 - [Hardcoded Secret Leakage]
-**Vulnerability:** A hardcoded `VERCEL_OIDC_TOKEN` was checked into version control via `frontend/.env.vercel`.
-**Learning:** Automatically generated Vercel environment files containing secrets can easily be committed if `.gitignore` rules are not explicitly configured to ignore them.
-**Prevention:** Added `*.env.vercel` to `.gitignore` to prevent tracking of Vercel env configs with sensitive tokens.
-## 2024-05-18 - SSRF via unsafe redirect following in requests
-**Vulnerability:** The application was vulnerable to SSRF because `requests.head()` was used with `allow_redirects=True`. While the initial URL was validated against internal/private IP checks, an attacker could provide a safe public URL that redirects to a private IP, which `requests` would blindly follow.
-**Learning:** Even if an initial URL is safe, redirects must be treated as untrusted input. The `allow_redirects=True` option in HTTP clients can bypass initial URL validation mechanisms and lead to SSRF.
-**Prevention:** Always use `allow_redirects=False` in HTTP clients and manually handle redirects in a loop. Validate the URL of each `Location` header redirect against the same SSRF safety checks before following it.
-## 2025-03-09 - Command Injection and SSRF in proxy_media
-**Vulnerability:** Command option injection existed in the `proxy_media` endpoint where the user-supplied `url` was passed directly to the `yt-dlp` subprocess. Additionally, SSRF risk existed in `url_downloader.py`'s `get_file_size` which would blindly follow redirects to any URL.
-**Learning:** External commands that accept positional arguments from user input must use `--` to indicate the end of options. Functions that fetch data (even HEAD requests) must not blindly follow redirects without re-validating the URL against the safety lists.
-**Prevention:** Always use `--` when passing user input as positional arguments to external commands. Ensure all network fetch functions (including utility/helper methods) validate both the initial URL and any subsequent redirects against a safe URL check.
+## 2024-05-24 - SSRF, Command Injection, and Path Traversal Remediations
+**Vulnerability:** Found full SSRF via automatic redirect following, Command Injection via unsafe `subprocess.run` usage in proxy routes, Path Traversal via untrusted user input in file paths, and Information Leakage via raw `str(exc)` details in API endpoints.
+**Learning:** External tools like CodeQL require explicit taint-clearing patterns (e.g., explicit IP validation prior to requests, strict boundary prefix checking for paths) that standard frameworks do not natively enforce. Raw exceptions were directly surfaced to end users, exposing internal logic.
+**Prevention:** Always use `shell=False` for subprocess execution, enforce containment bounds with `.startswith()` on absolute paths, block private IP ranges explicitly using the `ipaddress` module before making external requests, and return generic HTTP exceptions instead of traceback strings.

@@ -94,10 +94,11 @@ async def detect_deepfake(file: UploadFile = File(...)):
             result = predictor.predict(tmp_path, original_name=file.filename)
             return DetectionResult(**result)
         except ValueError as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
+            logger.warning("Detection error: %s", exc)
+            raise HTTPException(status_code=422, detail="Invalid media format or processing error.") from exc
         except RuntimeError as exc:
             logger.warning("Detection unavailable: %s", exc)
-            raise HTTPException(status_code=503, detail=str(exc))
+            raise HTTPException(status_code=503, detail="Detection service is currently unavailable.")
         finally:
             os.unlink(tmp_path)
     except HTTPException:
@@ -119,11 +120,10 @@ async def detect_from_url(request: URLRequest):
         return DetectionResult(**result)
     except RuntimeError as exc:
         logger.warning("URL detection unavailable: %s", exc)
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise HTTPException(status_code=503, detail="Detection service is currently unavailable.")
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        logger.warning("URL detection error: %s", exc)
+        raise HTTPException(status_code=422, detail="Invalid media format or processing error.") from exc
     except Exception as exc:
         # Sentinel: Removed specific error message to prevent information leakage
         logger.exception("URL detection failed")
@@ -148,9 +148,10 @@ async def detect_batch(files: list[UploadFile] = File(...)):
                 result = predictor.predict(path)
                 results.append(DetectionResult(**result))
             except RuntimeError as exc:
+                logger.warning("Batch detection unavailable for file: %s", exc)
                 results.append(DetectionResult(
                     fake_probability=0.0, is_fake=False,
-                    confidence="none", error=str(exc),
+                    confidence="none", error="Detection service is currently unavailable.",
                 ))
             except Exception as exc:
                 # Sentinel: Log exception and hide specific error message to prevent information leakage
@@ -271,6 +272,8 @@ async def proxy_media(url: str):
     host = urlparse(url).hostname or ""
     if "youtube.com" in host or "youtu.be" in host:
         try:
+            if not url.startswith(("http://", "https://")):
+                raise HTTPException(status_code=400, detail="Invalid URL protocol.")
             cmd = [
                 sys.executable, "-m", "yt_dlp",
                 "-f", "best[ext=mp4]/best",
@@ -279,7 +282,7 @@ async def proxy_media(url: str):
                 "--extractor-args", "youtube:player_client=android",
                 "-g", "--", url
             ]
-            result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=25)
+            result = subprocess.run(cmd, shell=False, check=True, capture_output=True, text=True, timeout=25)
             # The last line of stdout is typically the URL (ignoring warnings)
             direct_url = result.stdout.strip().split("\n")[-1]
             if direct_url.startswith("http"):
