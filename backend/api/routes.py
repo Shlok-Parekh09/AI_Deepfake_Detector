@@ -277,7 +277,7 @@ async def proxy_media(url: str):
                 "--no-warnings",
                 "--geo-bypass",
                 "--extractor-args", "youtube:player_client=android",
-                "-g", url
+                "-g", "--", url
             ]
             result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=25)
             # The last line of stdout is typically the URL (ignoring warnings)
