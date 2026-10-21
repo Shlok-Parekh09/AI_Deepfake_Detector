@@ -73,7 +73,7 @@
     "@vitejs/plugin-react": "6.0.5",
     "tailwindcss": "4.1.12",
     "typescript": "^7.0.2",
-    "vite": "8.2.1"
+    "vite": "8.3.5"
   },
   "peerDependencies": {
     "react": "18.3.1",
@@ -89,7 +89,7 @@
   },
   "pnpm": {
     "overrides": {
-      "vite": "8.2.1"
+      "vite": "8.3.5"
     }
   }
 }
