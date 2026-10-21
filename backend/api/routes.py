@@ -272,15 +272,17 @@ async def proxy_media(url: str):
     host = urlparse(url).hostname or ""
     if "youtube.com" in host or "youtu.be" in host:
         try:
-            if not url.startswith(("http://", "https://")):
+            parsed_url = urlparse(url)
+            if parsed_url.scheme not in ("http", "https"):
                 raise HTTPException(status_code=400, detail="Invalid URL protocol.")
+            safe_url = parsed_url.geturl()
             cmd = [
                 sys.executable, "-m", "yt_dlp",
                 "-f", "best[ext=mp4]/best",
                 "--no-warnings",
                 "--geo-bypass",
                 "--extractor-args", "youtube:player_client=android",
-                "-g", "--", url
+                "-g", "--", safe_url
             ]
             result = subprocess.run(cmd, shell=False, check=True, capture_output=True, text=True, timeout=25)
             # The last line of stdout is typically the URL (ignoring warnings)

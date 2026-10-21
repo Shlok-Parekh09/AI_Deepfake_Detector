@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 from backend.preprocessing.media_io import probe_media, IMAGE_EXTENSIONS, VIDEO_EXTENSIONS, AUDIO_EXTENSIONS
 
-BASE_UPLOAD_DIR = os.path.abspath(tempfile.gettempdir())
+BASE_UPLOAD_DIR = os.path.realpath(os.environ.get('BASE_UPLOAD_DIR', tempfile.gettempdir()))
 
 
 class FileHandler:
@@ -95,8 +95,8 @@ class FileHandler:
         delete the entire temp directory.
         """
         if filepath is not None:
-            target_path = os.path.abspath(filepath)
-            if not target_path.startswith(os.path.abspath(self.temp_dir) + os.sep) and not target_path.startswith(BASE_UPLOAD_DIR + os.sep):
+            target_path = os.path.realpath(filepath)
+            if not target_path.startswith(os.path.realpath(self.temp_dir) + os.sep) and not target_path.startswith(os.path.realpath(BASE_UPLOAD_DIR) + os.sep):
                  raise ValueError("Invalid file path: Path traversal detected.")
 
             if os.path.isfile(target_path):

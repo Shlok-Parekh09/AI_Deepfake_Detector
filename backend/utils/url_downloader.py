@@ -185,28 +185,52 @@ class URLDownloader:
         if not self.validate_url(url):
             return None
 
-        try:
-            parsed = urlparse(url)
+        session = requests.Session()
+        current_url = url
+        max_redirects = 10
+        redirects = 0
+
+        while redirects < max_redirects:
+            parsed = urlparse(current_url)
             host = parsed.hostname
-            if not host:
+            if not host or host.lower() == "localhost":
                 return None
-            if host.lower() == "localhost":
+
+            try:
+                addr_info = socket.getaddrinfo(host, parsed.port or (443 if parsed.scheme == "https" else 80))
+            except socket.gaierror:
                 return None
-            addr_info = socket.getaddrinfo(host, parsed.port or (443 if parsed.scheme == "https" else 80))
+
             ips = {entry[4][0] for entry in addr_info if entry and entry[4]}
             if not ips:
                 return None
+
             for ip_str in ips:
-                ip_obj = ipaddress.ip_address(ip_str)
-                if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local or ip_obj.is_multicast or ip_obj.is_reserved:
+                try:
+                    ip_obj = ipaddress.ip_address(ip_str)
+                    if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local or ip_obj.is_multicast or ip_obj.is_reserved:
+                        return None
+                except ValueError:
                     return None
 
-            # codeql[py/full-ssrf] Validated by explicit IP check above
-            resp = requests.head(url, timeout=10, allow_redirects=False)
-            length = resp.headers.get("content-length")
-            return int(length) if length else None
-        except Exception:
-            return None
+            try:
+                # codeql[py/full-ssrf] Validated by explicit IP check above
+                resp = session.head(current_url, timeout=10, allow_redirects=False)
+                if resp.is_redirect:
+                    resp.close()
+                    redirects += 1
+                    location = resp.headers.get("Location")
+                    if not location:
+                        return None
+                    from urllib.parse import urljoin
+                    current_url = urljoin(current_url, location)
+                else:
+                    length = resp.headers.get("content-length")
+                    return int(length) if length else None
+            except requests.RequestException:
+                return None
+
+        return None
 
     # ── helpers ────────────────────────────────────────────────
 

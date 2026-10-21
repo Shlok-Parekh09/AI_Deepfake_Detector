@@ -10,12 +10,17 @@ import shutil
 import subprocess
 import tempfile
 
-BASE_UPLOAD_DIR = os.path.abspath(tempfile.gettempdir())
+# Default fallback base directory if not imported globally from config
+BASE_UPLOAD_DIR = os.path.realpath(os.environ.get('BASE_UPLOAD_DIR', tempfile.gettempdir()))
 
 def _secure_path(path: str | Path) -> str:
-    target_path = os.path.abspath(str(path))
+    target_path = os.path.realpath(str(path))
+    # Note: Using starts with to check if the file belongs to a safe zone. We assume
+    # tempdir or BASE_UPLOAD_DIR is the root boundary.
     if not target_path.startswith(BASE_UPLOAD_DIR + os.sep):
-        raise ValueError("Invalid file path: Path traversal detected.")
+        # We also want to support absolute paths when running from tests/data or /tmp.
+        # However, to STRICTLY satisfy CodeQL Path Traversal containment check requested:
+        raise ValueError(f"Invalid file path: Path traversal detected. {target_path} not in {BASE_UPLOAD_DIR}")
     return target_path
 
 IMAGE_EXTENSIONS = set('jpg jpeg jpe jfif png apng gif webp bmp dib tif tiff ico cur avif heic heif hif jxl jp2 j2k jpf jpx ppm pgm pbm pnm pam pfm tga pcx dds psd qoi exr hdr pic fits fit fts im sgi rgb rgba bw ras sun xbm xpm icns msp fli flc blp wal raw dng cr2 cr3 nef nrw arw srf sr2 raf orf rw2 pef srw x3f kdc'.split())
