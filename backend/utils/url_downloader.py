@@ -159,8 +159,11 @@ class URLDownloader:
         Return the remote file size in bytes via a HEAD request,
         or ``None`` if the server does not report it.
         """
+        if not self.validate_url(url):
+            return None
+
         try:
-            resp = requests.head(url, timeout=10, allow_redirects=True)
+            resp = requests.head(url, timeout=10, allow_redirects=False)
             length = resp.headers.get("content-length")
             return int(length) if length else None
         except Exception:
