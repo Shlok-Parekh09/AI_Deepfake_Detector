@@ -47,7 +47,10 @@ class URLDownloader:
         base_dir = os.path.abspath(self.download_dir)
 
         if output_path is None:
-            suffix = os.path.splitext(urlparse(url).path)[1][:16]
+            safe_suffix = os.path.basename(urlparse(url).path)
+            suffix = os.path.splitext(safe_suffix)[1][:16]
+            # Strip invalid path characters to appease CodeQL
+            suffix = "".join(c for c in suffix if c.isalnum() or c in (".", "-", "_"))
             descriptor, output_path = tempfile.mkstemp(dir=base_dir, suffix=suffix)
             os.close(descriptor)
         else:
