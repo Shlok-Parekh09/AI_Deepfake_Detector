@@ -33,7 +33,7 @@ def run_ffmpeg(arguments, timeout=120):
     command = [ffmpeg_binary(), '-nostdin', '-hide_banner', '-v', 'error',
                '-protocol_whitelist', 'file,pipe', *arguments]
     try:
-        result = subprocess.run(command, capture_output=True, timeout=timeout)
+        result = subprocess.run(command, capture_output=True, timeout=timeout, shell=False)
     except FileNotFoundError as exc:
         raise RuntimeError('The configured FFmpeg decoder was not found') from exc
     except subprocess.TimeoutExpired as exc:
@@ -65,7 +65,7 @@ def probe_media(path):
     if probe:
         try:
             result = subprocess.run([probe, '-v', 'error', '-protocol_whitelist', 'file,pipe',
-                '-show_streams', '-show_format', '-of', 'json', str(Path(path).resolve())], capture_output=True, timeout=20)
+                '-show_streams', '-show_format', '-of', 'json', '--', str(Path(path).resolve())], capture_output=True, timeout=20, shell=False)
             metadata = json.loads(result.stdout) if result.returncode == 0 else {}
             streams = metadata.get('streams', [])
             if any(s.get('codec_type') == 'video' and not s.get('disposition', {}).get('attached_pic') for s in streams):
@@ -79,7 +79,7 @@ def probe_media(path):
     try:
         result = subprocess.run([ffmpeg_binary(), '-nostdin', '-hide_banner',
             '-protocol_whitelist', 'file,pipe', '-i', str(Path(path).resolve())],
-            capture_output=True, timeout=20)
+            capture_output=True, timeout=20, shell=False)
         header = result.stderr.decode('utf-8', errors='replace')
         streams = [line for line in header.splitlines() if re.search(r'Stream #.*(?:Video|Audio):', line)]
         if any('Video:' in s and 'attached pic' not in s for s in streams):
@@ -148,7 +148,7 @@ def sample_video_frames(path, limit=15):
     try:
         info = subprocess.run([ffmpeg_binary(), '-nostdin', '-hide_banner',
             '-protocol_whitelist', 'file,pipe', '-i', str(Path(path).resolve())],
-            capture_output=True, timeout=20).stderr.decode('utf-8', errors='replace')
+            capture_output=True, timeout=20, shell=False).stderr.decode('utf-8', errors='replace')
         match = re.search(r'Duration: (\d+):(\d+):([\d.]+)', info)
         duration = (int(match[1])*3600 + int(match[2])*60 + float(match[3])) if match else None
     except (OSError, subprocess.TimeoutExpired) as exc:
