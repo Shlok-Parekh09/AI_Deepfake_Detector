@@ -94,10 +94,11 @@ async def detect_deepfake(file: UploadFile = File(...)):
             result = predictor.predict(tmp_path, original_name=file.filename)
             return DetectionResult(**result)
         except ValueError as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
+            logger.error("Validation error: %s", exc)
+            raise HTTPException(status_code=422, detail="Invalid media file provided.") from exc
         except RuntimeError as exc:
             logger.warning("Detection unavailable: %s", exc)
-            raise HTTPException(status_code=503, detail=str(exc))
+            raise HTTPException(status_code=503, detail="Service temporarily unavailable.")
         finally:
             os.unlink(tmp_path)
     except HTTPException:
@@ -119,11 +120,10 @@ async def detect_from_url(request: URLRequest):
         return DetectionResult(**result)
     except RuntimeError as exc:
         logger.warning("URL detection unavailable: %s", exc)
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable.")
     except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        logger.error("Validation error: %s", exc)
+        raise HTTPException(status_code=422, detail="Invalid URL or media file.") from exc
     except Exception as exc:
         # Sentinel: Removed specific error message to prevent information leakage
         logger.exception("URL detection failed")
@@ -279,7 +279,7 @@ async def proxy_media(url: str):
                 "--extractor-args", "youtube:player_client=android",
                 "-g", "--", url
             ]
-            result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=25)
+            result = subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=25, shell=False)
             # The last line of stdout is typically the URL (ignoring warnings)
             direct_url = result.stdout.strip().split("\n")[-1]
             if direct_url.startswith("http"):

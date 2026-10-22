@@ -7,7 +7,8 @@ MAX_UPLOAD_BYTES = 1024 ** 3
 
 
 async def stage_upload(upload, max_bytes=MAX_UPLOAD_BYTES):
-    suffix = os.path.splitext(upload.filename or 'upload')[1]
+    safe_filename = os.path.basename((upload.filename or 'upload').replace('\\', '/'))
+    suffix = os.path.splitext(safe_filename)[1]
     path = None
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as output:

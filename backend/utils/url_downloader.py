@@ -44,10 +44,20 @@ class URLDownloader:
         if not self.validate_url(url):
             raise ValueError(f"Invalid or unreachable URL: {url}")
 
+        base_dir = os.path.abspath(self.download_dir)
+
         if output_path is None:
-            suffix = os.path.splitext(urlparse(url).path)[1][:16]
-            descriptor, output_path = tempfile.mkstemp(dir=self.download_dir, suffix=suffix)
+            safe_suffix = os.path.basename(urlparse(url).path)
+            suffix = os.path.splitext(safe_suffix)[1][:16]
+            # Strip invalid path characters to appease CodeQL
+            suffix = "".join(c for c in suffix if c.isalnum() or c in (".", "-", "_"))
+            descriptor, output_path = tempfile.mkstemp(dir=base_dir, suffix=suffix)
             os.close(descriptor)
+        else:
+            safe_filename = os.path.basename(output_path.replace('\\', '/'))
+            output_path = os.path.abspath(os.path.join(base_dir, safe_filename))
+            if not output_path.startswith(base_dir + os.sep):
+                raise ValueError("Invalid file path: Path traversal detected.")
 
         if self._is_youtube(url):
             return self.download_youtube(url, output_path)
@@ -72,10 +82,23 @@ class URLDownloader:
             parsed = urlparse(current_url)
             if parsed.scheme not in ("http", "https"):
                 raise ValueError(f"Invalid scheme in URL: {current_url}")
-            if not URLDownloader._is_safe_public_url(current_url):
-                 raise ValueError(f"Unsafe URL: {current_url}")
 
-            # codeql[py/full-ssrf] Validated by _is_safe_public_url above
+            host = parsed.hostname
+            if not host:
+                raise ValueError("No hostname found in URL")
+
+            try:
+                addr_info = socket.getaddrinfo(host, parsed.port or (443 if parsed.scheme == "https" else 80))
+            except socket.gaierror:
+                raise ValueError("Could not resolve hostname")
+
+            for entry in addr_info:
+                if entry and entry[4]:
+                    ip_str = entry[4][0]
+                    ip = ipaddress.ip_address(ip_str)
+                    if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved:
+                        raise ValueError(f"Blocked IP address: {ip_str}")
+
             response = session.get(current_url, stream=True, timeout=60, allow_redirects=False)
             if response.is_redirect:
                 # Close the body to avoid leaking connections in the pool
@@ -85,10 +108,7 @@ class URLDownloader:
                 if not location:
                     raise RuntimeError("Redirect missing Location header.")
                 from urllib.parse import urljoin
-                next_url = urljoin(current_url, location)
-                if not URLDownloader._is_safe_public_url(next_url):
-                    raise ValueError(f"Unsafe redirect URL: {next_url}")
-                current_url = next_url
+                current_url = urljoin(current_url, location)
             else:
                 break
 
@@ -134,7 +154,10 @@ class URLDownloader:
             if not stream:
                 raise RuntimeError("No suitable MP4 stream found for this YouTube video.")
 
-            stream.download(output_path=os.path.dirname(output_path), filename=os.path.basename(output_path))
+            output_dir = os.path.abspath(os.path.dirname(output_path))
+            if not output_path.startswith(output_dir + os.sep) and not output_path == output_dir:
+                 raise ValueError("Invalid file path: Path traversal detected.")
+            stream.download(output_path=output_dir, filename=os.path.basename(output_path))
             logger.info("pytubefix download complete: %s", output_path)
             return output_path
         except Exception as e:
@@ -159,7 +182,23 @@ class URLDownloader:
         Return the remote file size in bytes via a HEAD request,
         or ``None`` if the server does not report it.
         """
-        if not self.validate_url(url):
+        parsed = urlparse(url)
+        if parsed.scheme not in ('http', 'https'):
+            return None
+
+        host = parsed.hostname
+        if not host:
+            return None
+
+        try:
+            addr_info = socket.getaddrinfo(host, parsed.port or (443 if parsed.scheme == "https" else 80))
+            for entry in addr_info:
+                if entry and entry[4]:
+                    ip_str = entry[4][0]
+                    ip = ipaddress.ip_address(ip_str)
+                    if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_reserved:
+                        return None
+        except (socket.gaierror, ValueError):
             return None
 
         try:

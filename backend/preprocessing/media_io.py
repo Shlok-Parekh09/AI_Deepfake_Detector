@@ -33,7 +33,7 @@ def run_ffmpeg(arguments, timeout=120):
     command = [ffmpeg_binary(), '-nostdin', '-hide_banner', '-v', 'error',
                '-protocol_whitelist', 'file,pipe', *arguments]
     try:
-        result = subprocess.run(command, capture_output=True, timeout=timeout)
+        result = subprocess.run(command, capture_output=True, timeout=timeout, shell=False)
     except FileNotFoundError as exc:
         raise RuntimeError('The configured FFmpeg decoder was not found') from exc
     except subprocess.TimeoutExpired as exc:
@@ -65,7 +65,7 @@ def probe_media(path):
     if probe:
         try:
             result = subprocess.run([probe, '-v', 'error', '-protocol_whitelist', 'file,pipe',
-                '-show_streams', '-show_format', '-of', 'json', str(Path(path).resolve())], capture_output=True, timeout=20)
+                '-show_streams', '-show_format', '-of', 'json', '--', str(Path(path).resolve())], capture_output=True, timeout=20, shell=False)
             metadata = json.loads(result.stdout) if result.returncode == 0 else {}
             streams = metadata.get('streams', [])
             if any(s.get('codec_type') == 'video' and not s.get('disposition', {}).get('attached_pic') for s in streams):
@@ -78,8 +78,8 @@ def probe_media(path):
     # The bundled Windows FFmpeg does not ship ffprobe. Inspect its stream header.
     try:
         result = subprocess.run([ffmpeg_binary(), '-nostdin', '-hide_banner',
-            '-protocol_whitelist', 'file,pipe', '-i', str(Path(path).resolve())],
-            capture_output=True, timeout=20)
+            '-protocol_whitelist', 'file,pipe', '-i', '--', str(Path(path).resolve())],
+            capture_output=True, timeout=20, shell=False)
         header = result.stderr.decode('utf-8', errors='replace')
         streams = [line for line in header.splitlines() if re.search(r'Stream #.*(?:Video|Audio):', line)]
         if any('Video:' in s and 'attached pic' not in s for s in streams):
@@ -116,7 +116,7 @@ def load_image(path):
             raise RuntimeError('Camera RAW decoding requires the rawpy package') from exc
         except Exception as exc:
             raise ValueError('Cannot decode this camera RAW image') from exc
-    pixels = run_ffmpeg(['-i', str(Path(path).resolve()), '-map', '0:v:0', '-frames:v', '1',
+    pixels = run_ffmpeg(['-i', '--', str(Path(path).resolve()), '-map', '0:v:0', '-frames:v', '1',
                          '-f', 'image2pipe', '-c:v', 'png', 'pipe:1'])
     try:
         with Image.open(io.BytesIO(pixels)) as image:
@@ -147,15 +147,15 @@ def sample_video_frames(path, limit=15):
     # ffmpeg reports duration even on installations without ffprobe.
     try:
         info = subprocess.run([ffmpeg_binary(), '-nostdin', '-hide_banner',
-            '-protocol_whitelist', 'file,pipe', '-i', str(Path(path).resolve())],
-            capture_output=True, timeout=20).stderr.decode('utf-8', errors='replace')
+            '-protocol_whitelist', 'file,pipe', '-i', '--', str(Path(path).resolve())],
+            capture_output=True, timeout=20, shell=False).stderr.decode('utf-8', errors='replace')
         match = re.search(r'Duration: (\d+):(\d+):([\d.]+)', info)
         duration = (int(match[1])*3600 + int(match[2])*60 + float(match[3])) if match else None
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise ValueError('Cannot inspect video streams') from exc
     with tempfile.TemporaryDirectory(prefix='decoded_frames_') as folder:
         fps = limit / duration if duration and duration > 0 else 1
-        run_ffmpeg(['-i', str(Path(path).resolve()), '-map', '0:v:0', '-an',
+        run_ffmpeg(['-i', '--', str(Path(path).resolve()), '-map', '0:v:0', '-an',
             '-vf', f'fps={fps:.9f},scale=min(1280\\,iw):-2', '-frames:v', str(limit),
             '-c:v', 'png', str(Path(folder) / '%03d.png')])
         for index, image_path in enumerate(sorted(Path(folder).glob('*.png'))):

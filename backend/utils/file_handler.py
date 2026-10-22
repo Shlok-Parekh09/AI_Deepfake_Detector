@@ -42,10 +42,16 @@ class FileHandler:
 
         Returns the absolute path to the saved file.
         """
-        dest = os.path.join(self.temp_dir, Path(filename.replace('\\', '/')).name)
-        with open(dest, "wb") as f:
+        base_dir = os.path.abspath(self.temp_dir)
+        safe_filename = os.path.basename(filename.replace('\\', '/'))
+        target_path = os.path.abspath(os.path.join(base_dir, safe_filename))
+
+        if not target_path.startswith(base_dir + os.sep):
+            raise ValueError("Invalid file path: Path traversal detected.")
+
+        with open(target_path, "wb") as f:
             f.write(file_data)
-        return dest
+        return target_path
 
     def get_file_type(self, filepath: str) -> str | None:
         """
