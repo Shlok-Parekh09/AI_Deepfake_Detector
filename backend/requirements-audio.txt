@@ -1,6 +1,6 @@
 # Dedicated training environment; use a CUDA build of torch on the training host.
 torch>=2.6,<3
-transformers>=4.48,<5
+transformers>=5.10.1,<6
 safetensors>=0.5.3
 datasets>=3.3,<4
 huggingface-hub>=0.28,<1
