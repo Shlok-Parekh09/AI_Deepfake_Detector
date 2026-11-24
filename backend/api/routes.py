@@ -257,6 +257,7 @@ async def proxy_media(url: str):
     Proxy media URL to bypass CORS for the frontend visualizers.
     """
     import httpx
+    import re
     import subprocess
     import sys
     from urllib.parse import urlparse
@@ -264,8 +265,23 @@ async def proxy_media(url: str):
     from fastapi import HTTPException
     from backend.utils.url_downloader import URLDownloader
 
+    def _sanitize_media_url(candidate: str) -> str:
+        parsed = urlparse(candidate)
+        if parsed.scheme not in {"http", "https"}:
+            raise HTTPException(status_code=400, detail="Only http(s) URLs are allowed.")
+        if not parsed.hostname:
+            raise HTTPException(status_code=400, detail="URL must include a valid host.")
+        if parsed.username or parsed.password:
+            raise HTTPException(status_code=400, detail="Credentials in URL are not allowed.")
+        if parsed.fragment:
+            raise HTTPException(status_code=400, detail="URL fragments are not allowed.")
+        if not re.fullmatch(r"[A-Za-z0-9.-]+", parsed.hostname):
+            raise HTTPException(status_code=400, detail="Invalid hostname.")
+        return parsed.geturl()
+
     if not URLDownloader._is_safe_public_url(url):
         raise HTTPException(status_code=400, detail="Invalid or unsafe URL.")
+    url = _sanitize_media_url(url)
 
     # Extract direct MP4 URL for YouTube links
     host = urlparse(url).hostname or ""
@@ -285,7 +301,7 @@ async def proxy_media(url: str):
             if direct_url.startswith("http"):
                 if not URLDownloader._is_safe_public_url(direct_url):
                     raise HTTPException(status_code=400, detail="Unsafe URL extracted from YouTube.")
-                url = direct_url
+                url = _sanitize_media_url(direct_url)
         except subprocess.TimeoutExpired:
             raise HTTPException(status_code=400, detail="YouTube extraction timed out (likely due to IP block on Hugging Face).")
         except HTTPException:
